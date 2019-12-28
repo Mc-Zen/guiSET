@@ -16,5 +16,5 @@ The main goals of _guiSET_ are:
 
 
 
-If you're new to _setGUI_ take a look at the [Introduction](../../wiki/Introduction-for-beginners) and the [here](../../wiki/Examples). 
+If you're new to _setGUI_ take a look at the [Introduction](../../wiki/Introduction-for-beginners) and the [Examples](../../wiki/Examples). 
 Further elaborations and the main concept can be found [here](../../wiki/The-deep-shit) if you want to develop own Components or contribute to the library. 
