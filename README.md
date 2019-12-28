@@ -8,7 +8,7 @@ Ok, so once I was working on a rather complex project with Processing and badly 
 
 ### What is this
 
-_guiSET_ is a large library to include proper _graphical user interfaces_ in Processing sketches. It features quite a few classes to create Buttons, Textboxes, Lists, nested Containers and many more (for a complete list look [here]).
+_guiSET_ is a large library to include proper _graphical user interfaces_ in Processing sketches. It features quite a few classes to create Buttons, Textboxes, Lists, nested Containers and many more (for a complete list look [here](../../wiki/List-of-available-Components)).
 The main goals of _guiSET_ are:
 - Highly customizable styles
 - Listeners and a lot of functionality
@@ -16,5 +16,5 @@ The main goals of _guiSET_ are:
 
 
 
-If you're new to _setGUI_ take a look at the [Introduction] and the [Examples]. 
-Further elaborations and the main concept can be found [here] if you want to develop own Components or contribute to the library. 
+If you're new to _setGUI_ take a look at the [Introduction](../../wiki/Introduction-for-beginners) and the [here](../../wiki/Examples). 
+Further elaborations and the main concept can be found [here](../../wiki/The-deep-shit) if you want to develop own Components or contribute to the library. 
