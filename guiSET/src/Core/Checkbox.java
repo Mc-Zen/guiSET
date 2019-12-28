@@ -1,5 +1,5 @@
 
-package pGUI.core;
+package guiSET.core;
 
 
 /*
@@ -17,6 +17,13 @@ package pGUI.core;
 import processing.core.*;
 import processing.event.*;
 
+
+/**
+ * Checkbox class that features a check change event.
+ * 
+ * @author Mc-Zen
+ *
+ */
 public class Checkbox extends Control {
 
 	protected int uncheckedBackgroundColor;
@@ -35,10 +42,21 @@ public class Checkbox extends Control {
 
 	}
 
+	/**
+	 * Initalize checkbox with text
+	 * 
+	 * @param text
+	 */
 	public Checkbox(String text) {
 		this(text, false);
 	}
 
+	/**
+	 * Initalize checkbox with text and set checked.
+	 * 
+	 * @param text
+	 * @param checked
+	 */
 	public Checkbox(String text, boolean checked) {
 		super();
 		size = 20;
@@ -56,7 +74,7 @@ public class Checkbox extends Control {
 		setChecked(checked);
 	}
 
-
+	@Override
 	protected void render() {
 
 		if (visualBackgroundColor != 0) {
@@ -104,22 +122,38 @@ public class Checkbox extends Control {
 	 * SETTER
 	 */
 
-	// back color of checkbox when not checked
+	/**
+	 * Set back color of checkbox when not checked.
+	 * 
+	 * @param clr
+	 */
 	public void setUncheckedBackgroundColor(int clr) {
 		uncheckedBackgroundColor = clr;
 	}
 
-	// back color of checkbox when checked
+	/**
+	 * Set back color of checkbox when checked.
+	 * 
+	 * @param clr
+	 */
 	public void setCheckedBackgroundColor(int clr) {
 		checkedBackgroundColor = clr;
 	}
 
-	// color of the check sign
+	/**
+	 * Set color of the check sign.
+	 * 
+	 * @param clr
+	 */
 	public void setCheckmarkColor(int clr) {
 		checkmarkColor = clr;
 	}
 
-	// zoom factor for the checkbox
+	/**
+	 * Set zoom factor for the checkbox.
+	 * 
+	 * @param size
+	 */
 	public void setSize(int size) {
 		this.size = size;
 		autosize();
@@ -137,6 +171,11 @@ public class Checkbox extends Control {
 
 	}
 
+	/**
+	 * Set checked state.
+	 * 
+	 * @param checked
+	 */
 	public void setChecked(boolean checked) {
 		if (enabled) {
 			this.checked = checked;
@@ -145,8 +184,17 @@ public class Checkbox extends Control {
 		}
 	}
 
-	public boolean isReactToEntireField() {
-		return reactToEntireField;
+
+
+
+	/**
+	 * If set to true pressing anywhere on the Component toggles the checkbox, else
+	 * only the box itself is active.
+	 * 
+	 * @param reactToEntireField
+	 */
+	public void setReactToEntireField(boolean reactToEntireField) {
+		this.reactToEntireField = reactToEntireField;
 	}
 
 	/*
@@ -173,8 +221,8 @@ public class Checkbox extends Control {
 		return checked;
 	}
 
-	public void setReactToEntireField(boolean reactToEntireField) {
-		this.reactToEntireField = reactToEntireField;
+	public boolean isReactToEntireComponent() {
+		return reactToEntireField;
 	}
 
 
@@ -188,6 +236,13 @@ public class Checkbox extends Control {
 
 	protected static final int CHECK_EVENT = Frame.numberMouseListeners;
 
+	/**
+	 * Add a listener for when the the checkbox has been checked/unchecked. Only
+	 * triggered when the user presses the Checkbox and not if set programatically.
+	 * 
+	 * @param methodName
+	 * @param target
+	 */
 	public void addCheckedChangedListener(String methodName, Object target) {
 		registerEventRMethod(CHECK_EVENT, methodName, target, null);
 	}
@@ -200,10 +255,12 @@ public class Checkbox extends Control {
 		deregisterEventRMethod(CHECK_EVENT);
 	}
 
+	@Override
 	protected void press(MouseEvent e) {
 		if (enabled) {
 			if (!reactToEntireField) {
-				if (!(e.getX() > bounds.X0 && e.getX() < bounds.X0 + size && e.getY() > bounds.Y0 + paddingTop && e.getY() < bounds.Y0 + size + paddingTop)) 
+				if (!(e.getX() > bounds.X0 && e.getX() < bounds.X0 + size && e.getY() > bounds.Y0 + paddingTop
+						&& e.getY() < bounds.Y0 + size + paddingTop))
 					return;
 			}
 			checked = !checked;

@@ -1,4 +1,4 @@
-package pGUI.core;
+package guiSET.core;
 
 /*
  * Slider to select a value between minValue and maxValue with the mouse (through dragging or clicking)
@@ -9,6 +9,14 @@ package pGUI.core;
 
 import processing.event.*;
 
+
+/**
+ * A value slider/progress bar.
+ * 
+ * 
+ * @author Mc-Zen
+ *
+ */
 public class Slider extends Control {
 
 	protected float value;
@@ -51,6 +59,7 @@ public class Slider extends Control {
 
 		activateInternalMouseListener();
 	}
+
 
 	public Slider(float minValue, float maxValue) {
 		this();
@@ -117,6 +126,11 @@ public class Slider extends Control {
 	 * Getter & Setter
 	 */
 
+	/**
+	 * Set the value of the slider. This triggers the valueChanged event.
+	 * 
+	 * @param value
+	 */
 	public void setValue(float value) {
 		float tempValue = this.value;
 		this.value = value >= minValue ? (value <= maxValue ? value : maxValue) : minValue;
@@ -160,6 +174,11 @@ public class Slider extends Control {
 		update();
 	}
 
+	/**
+	 * Set diameter of the slider value "ball".
+	 * 
+	 * @param ballSize
+	 */
 	public void setBallSize(int ballSize) {
 		this.ballSize = ballSize;
 
@@ -171,6 +190,11 @@ public class Slider extends Control {
 		update();
 	}
 
+	/**
+	 * Set orientation to horizontal or vertical
+	 * 
+	 * @param orientation {@link Slider#HORIZONTAL} or {@link Slider#VERTICAL}
+	 */
 	public void setOrientation(int orientation) {
 		if (orientation == HORIZONTAL) {
 			if (this.orientation == VERTICAL) {
@@ -190,10 +214,22 @@ public class Slider extends Control {
 	}
 
 
+	/**
+	 * Specify if scrolling while mouse is over the slider changes the value.
+	 * Default is false.
+	 * 
+	 * @param wheelEnabled
+	 */
 	public void setWheelEnabled(boolean wheelEnabled) {
 		this.wheelEnabled = wheelEnabled;
 	}
 
+	/**
+	 * Set the scroll speed a.k.a the amount to scroll if wheelEnabled is set to
+	 * true.
+	 * 
+	 * @param scrollSpeed
+	 */
 	public void setScrollSpeed(int scrollSpeed) {
 		this.scrollSpeed = scrollSpeed;
 	}
@@ -242,6 +278,14 @@ public class Slider extends Control {
 
 	protected static final int CHANGE_EVENT = numberMouseListeners;
 
+
+	/**
+	 * Add a value changed listener. The event is also triggered when the value is
+	 * changed programatically.
+	 * 
+	 * @param methodName
+	 * @param target
+	 */
 	public void addValueChangedListener(String methodName, Object target) {
 		registerEventRMethod(CHANGE_EVENT, methodName, target, null);
 	}
@@ -254,6 +298,11 @@ public class Slider extends Control {
 		deregisterEventRMethod(CHANGE_EVENT);
 	}
 
+	/**
+	 * internal method for setting the actual position of the ball
+	 * 
+	 * @param position
+	 */
 	protected void setBallPosition(float position) {
 		if (orientation == HORIZONTAL) {
 			setValue(((position - bounds.X0 - ballSize / 2) * Math.abs(maxValue - minValue) / (float) (width - ballSize)) + minValue);
@@ -263,13 +312,6 @@ public class Slider extends Control {
 		}
 
 	}
-
-	/*
-	 * Special mouseEvent method that enables starting to drag within the slider and
-	 * continue dragging when mouse leaves the slider while dragging
-	 * 
-	 * @see pGUI.core.Control#mouseEvent(processing.event.MouseEvent)
-	 */
 
 	protected boolean startedDrag = false;
 

@@ -1,10 +1,10 @@
 
 
-package pGUI.core;
+package guiSET.core;
 
+import guiSET.classes.*;
 import processing.core.*;
 import processing.event.*;
-import pGUI.classes.*;
 
 
 public class KeyListener {

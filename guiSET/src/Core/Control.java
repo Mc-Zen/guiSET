@@ -1,11 +1,12 @@
-package pGUI.core;
+package guiSET.core;
 
 import processing.core.*;
 import processing.event.*;
 import java.lang.reflect.Method;
 
+import guiSET.classes.*;
+
 import java.lang.reflect.InvocationTargetException;
-import pGUI.classes.*;
 
 /**
  * (Abstract) Base class for all other visual components.
@@ -1626,7 +1627,7 @@ public abstract class Control {
 	}
 
 	/**
-	 * @see Control#addResizeListener(String) , target is the PApplet sketch
+	 * @see #addResizeListener(String) , target is the PApplet sketch
 	 * 
 	 * @param methodName method to call. 
 	 */

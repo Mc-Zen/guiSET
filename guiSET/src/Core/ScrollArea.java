@@ -1,4 +1,4 @@
-package pGUI.core;
+package guiSET.core;
 
 
 /*
@@ -15,6 +15,16 @@ package pGUI.core;
 import processing.core.*;
 import processing.event.*;
 
+
+/**
+ * A Container that allows both horizontal and vertical scrolling if the content
+ * exceeds the ScrollAreas size. It does not layout its content as
+ * {@link VScrollContainer} or {@link VScrollContainer} but keeps the relative x
+ * and y positions of the items. 
+ * 
+ * @author Mc-Zen
+ *
+ */
 public class ScrollArea extends Container {
 
 	protected int scrollPositionX;
@@ -207,25 +217,51 @@ public class ScrollArea extends Container {
 	/*
 	 * SETTER
 	 */
-
+	/**
+	 * Amount of pixels to scroll for each step with the mouse wheel in horizontal
+	 * direction.
+	 * 
+	 * @param scrollSpeed
+	 */
 	public void setScrollSpeedX(int s) {
 		scrollSpeedX = s;
 	}
 
+	/**
+	 * Amount of pixels to scroll for each step with the mouse wheel in vertical
+	 * direction.
+	 * 
+	 * @param scrollSpeed
+	 */
 	public void setScrollSpeedY(int s) {
 		scrollSpeedY = s;
 	}
 
+	/**
+	 * Set horizontal scroll position in pixel from left.
+	 * 
+	 * @param scrollPosition
+	 */
 	public void setScrollPositionX(int x) {
 		scrollPositionX = x;
 		update();
 	}
 
+	/**
+	 * Set vertical scroll position in pixel from top.
+	 * 
+	 * @param scrollPosition
+	 */
 	public void setScrollPositionY(int y) {
 		scrollPositionY = y;
 		update();
 	}
 
+	/**
+	 * Enable a slim (mobile phone like) scroll handle instead of the bold one.
+	 * 
+	 * @param light_scrollhandle
+	 */
 	public void setSlimScrollHandle(boolean light_scrollhandle) {
 		this.slim_scrollhandle = light_scrollhandle;
 		if (light_scrollhandle) {

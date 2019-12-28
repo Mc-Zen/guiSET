@@ -1,4 +1,4 @@
-package pGUI.core;
+package guiSET.core;
 
 /*
  * VScrollContainer is a container that allows vertical scrolling. 
@@ -13,6 +13,14 @@ package pGUI.core;
 import processing.core.*;
 import processing.event.*;
 
+
+/**
+ * A Container that layouts its content vertically and enables a scrollbar if
+ * the content overflows.
+ * 
+ * @author Mc-Zen
+ *
+ */
 public class VScrollContainer extends VFlowContainer {
 
 	// Width the scrollContainer would have summing up all its content
@@ -219,7 +227,11 @@ public class VScrollContainer extends VFlowContainer {
 	/*
 	 * SETTER
 	 */
-
+	/**
+	 * Set scroll position in pixel from top.
+	 * 
+	 * @param scrollPosition
+	 */
 	public void setScrollPosition(int scrollPosition) {
 		// will be constrained in render(), because since fullScrollHeight has been
 		// calculated last time there might have been added a new item
@@ -227,10 +239,20 @@ public class VScrollContainer extends VFlowContainer {
 		update();
 	}
 
+	/**
+	 * Amount of pixels to scroll for each step with the mouse wheel.
+	 * 
+	 * @param scrollSpeed
+	 */
 	public void setScrollSpeed(int scrollSpeed) {
 		this.scrollSpeed = scrollSpeed;
 	}
 
+	/**
+	 * Enable a slim (mobile phone like) scroll handle instead of the bold one.
+	 * 
+	 * @param light_scrollhandle
+	 */
 	public void setSlimScrollHandle(boolean light_scrollhandle) {
 		this.slim_scrollhandle = light_scrollhandle;
 		if (light_scrollhandle) {

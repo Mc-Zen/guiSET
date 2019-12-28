@@ -1,7 +1,8 @@
-package pGUI.core;
+package guiSET.core;
 
 import java.lang.reflect.Field;
-import pGUI.classes.*;
+
+import guiSET.classes.*;
 
 
 /**
@@ -112,16 +113,25 @@ public class Animation {
 		}
 	}
 
+	/**
+	 * Cancel the animation next frame.
+	 */
+	public void cancel() {
+		cancel = true;
+	}
+
+	private boolean cancel = false;
 
 
-
-
-
-	/*
-	 * animation process
+	/**
+	 * Animation process, called by {@link Frame}
+	 * 
+	 * @return false if animation finished
 	 */
 
 	protected boolean animate() {
+		if (cancel)
+			return false;
 
 		// check if there's still work to do
 		if (counter <= numberOfSteps) {

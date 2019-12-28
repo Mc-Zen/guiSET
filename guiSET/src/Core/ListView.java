@@ -1,12 +1,21 @@
-package pGUI.core;
+package guiSET.core;
 
 import processing.core.*;
 import processing.event.*;
 
 import java.util.ArrayList;
 
-import pGUI.classes.*;
+import guiSET.classes.*;
 
+/**
+ * The list view allows to display easily a lot of items in a vertical list.
+ * When adding a String a new ListItem will be created and added. You can add
+ * items that inherit from {@link Control} other than ListItems but they cannot
+ * receive the itemSelected() event.
+ * 
+ * @author E-Bow
+ *
+ */
 public class ListView extends VScrollContainer {
 
 	// default background color for new Items generated with add(String)
@@ -117,14 +126,24 @@ public class ListView extends VScrollContainer {
 
 	}
 
-	// simple adding method just giving the text
-
+	/**
+	 * Simple adding method just giving the text as String will create automatically
+	 * new ListItems.
+	 * 
+	 * @param newItems arbitrary number of item texts
+	 */
 	public void add(String... newItems) {
 		for (String newItem : newItems) {
 			add(newItem);
 		}
 	}
 
+	/**
+	 * Simple adding method just giving the text as String will create automatically
+	 * new ListItems - one-item-version.
+	 * 
+	 * @param newItems item text
+	 */
 	public void add(String newItem) {
 		ListItem newListItem = new ListItem();
 
@@ -147,9 +166,11 @@ public class ListView extends VScrollContainer {
 
 
 
-
-	/*
-	 * get list index of an item, returns -1 if item is not in the list
+	/**
+	 * Get list index of the given item, returns -1 if item is not in the list.
+	 * 
+	 * @param item item
+	 * @return returns -1 if item is not in the list.
 	 */
 
 	public int getIndex(Control item) {
@@ -185,7 +206,7 @@ public class ListView extends VScrollContainer {
 			((ListItem) selectedItem).setSelected(true);
 			selectedItem.update();
 
-			handleRegisteredEventMethod(SELECT_EVENT, null);
+			handleRegisteredEventMethod(SELECT_EVENT, selectedItem);
 		}
 	}
 
@@ -221,11 +242,23 @@ public class ListView extends VScrollContainer {
 	 * SETTER
 	 */
 
-	public void setItemBackgroundColor(int itemBackgroundColor) {
+	/**
+	 * Settimg this colo will affect all items added afterwards through the
+	 * {@link #add(String)} method.
+	 * 
+	 * @param itemBackgroundColor background color for new items
+	 */
+	public void setNewItemBackgroundColor(int itemBackgroundColor) {
 		this.itemBackgroundColor = itemBackgroundColor;
 		update();
 	}
 
+
+	/**
+	 * Background color for selected items.
+	 * 
+	 * @param selectionColor selection color
+	 */
 	public void setSelectionColor(int selectionColor) {
 		this.selectionColor = selectionColor;
 		int r = (int) Frame.frame0.papplet.red(selectionColor);
@@ -243,11 +276,20 @@ public class ListView extends VScrollContainer {
 	}
 
 
-
+	/**
+	 * Hover color for selected items.
+	 * 
+	 * @param selectionHoverColor selection hover color
+	 */
 	public void setSelectionHoverColor(int selectionHoverColor) {
 		this.selectionHoverColor = selectionHoverColor;
 	}
 
+	/**
+	 * Enable/Disable multiple selections.
+	 * 
+	 * @param multiSelect multiSelect
+	 */
 	public void setMultiSelect(boolean multiSelect) {
 		this.multiSelect = multiSelect;
 
@@ -271,11 +313,12 @@ public class ListView extends VScrollContainer {
 		}
 	}
 
-	/*
-	 * Set the selected item programatically. Also deselecting all previously
+	/**
+	 * Set one item to be selected programatically. Also deselecting all previously
 	 * selected items.
+	 * 
+	 * @param index
 	 */
-
 	public void setSelectedItem(int index) {
 
 		if (multiSelect) {
@@ -336,15 +379,26 @@ public class ListView extends VScrollContainer {
 
 	protected static final int SELECT_EVENT = Frame.numberMouseListeners;
 
-	public void addItemChangedListener(String methodName) {
-		addItemChangedListener(methodName, Frame.frame0.papplet);
+	/**
+	 * Add a listener for when an item is selected. The event passes the item that
+	 * has been selected.
+	 * 
+	 * @param methodName callback method name
+	 */
+	public void addItemSelectedListener(String methodName) {
+		addItemSelectedListener(methodName, Frame.frame0.papplet);
 	}
 
-	public void addItemChangedListener(String methodName, Object target) {
+	/**
+	 * @see #addItemSelectedListener(String)
+	 * @param methodName methodName
+	 * @param target     target
+	 */
+	public void addItemSelectedListener(String methodName, Object target) {
 		registerEventRMethod(SELECT_EVENT, methodName, target, null);
 	}
 
-	public void removeItemChangedListener() {
+	public void removeItemSelectedListener() {
 		deregisterEventRMethod(SELECT_EVENT);
 	}
 

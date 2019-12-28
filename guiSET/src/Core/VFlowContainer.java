@@ -1,13 +1,20 @@
-package pGUI.core;
+package guiSET.core;
 
+
+/**
+ * A Container that layouts its content vertically.
+ * 
+ * @author Mc-Zen
+ *
+ */
 public class VFlowContainer extends Container {
 
 	public VFlowContainer() {
 		this(100,100);
 	}
 
-	public VFlowContainer(int Width, int Height) {
-		super(Width, Height);
+	public VFlowContainer(int width, int height) {
+		super(width, height);
 		autoLayout = true;
 	}
 

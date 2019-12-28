@@ -1,4 +1,4 @@
-package pGUI.core;
+package guiSET.core;
 
 import processing.event.MouseEvent;
 

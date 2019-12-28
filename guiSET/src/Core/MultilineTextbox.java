@@ -1,4 +1,4 @@
-package pGUI.core; //<>// //<>// //<>// //<>// //<>// //<>// //<>// //<>//
+package guiSET.core; //<>// //<>// //<>// //<>// //<>// //<>// //<>// //<>//
 
 /*
  * A multi-line textbox for inserting text via keyboard.
@@ -28,6 +28,14 @@ import java.awt.datatransfer.DataFlavor;
 
 
 
+/**
+ * The MultilineTextbox allows entering and pasting multi-line text. If the
+ * width of a line exceeds the MultilineTextboxs width a line-break is
+ * performed.
+ * 
+ * @author Mc-Zen
+ *
+ */
 public class MultilineTextbox extends VScrollContainer {
 
 
@@ -345,6 +353,10 @@ public class MultilineTextbox extends VScrollContainer {
 	 */
 
 	// cursor blink animation
+	/**
+	 * DO NOT CALL THIS METHOD. It is for internal purposes only and unfortunately
+	 * needs to be public.
+	 */
 	public void pre() {
 		if (this.focused) {
 			int t = Frame.frame0.papplet.millis();
@@ -611,28 +623,79 @@ public class MultilineTextbox extends VScrollContainer {
 	/*
 	 * GETTER AND SETTER
 	 */
-
+	/**
+	 * Set the color of the cursor.
+	 * 
+	 * @param cursorColor rgb integer color
+	 */
 	public void setCursorColor(int cursorColor) {
 		this.cursorColor = cursorColor;
 		update();
 	}
 
+	/**
+	 * Set the cursor to a specific index position in the text.
+	 * 
+	 * @param cursorPosition
+	 */
 	public void setCursorPosition(int cursorPosition) {
 		moveCursorTo(cursorPosition);
 	}
 
+	/**
+	 * Set the start for the text selection. Selection start index can never be
+	 * higher than end index
+	 * 
+	 * @param selectionStart selection start position
+	 */
+	public void setSelectionStart(int selectionStart) {
+		this.selectionStart = Math.max(0, Math.min(text.length(), selectionStart));
+	}
+
+	/**
+	 * Set the end for the text selection. Selection end index can never be less
+	 * than start index
+	 * 
+	 * @param selectionEnd selection end position
+	 */
+	public void setSelectionEnd(int selectionEnd) {
+		this.selectionEnd = Math.max(0, Math.min(text.length(), selectionEnd));
+
+	}
+
+	/**
+	 * Set highlight color of selection
+	 * 
+	 * @param selectionColor rgb integer color
+	 */
 	public void setSelectionColor(int selectionColor) {
 		this.selectionColor = selectionColor;
 	}
 
+	/**
+	 * Set a hint for the textbox that is displayed when the textbox is empty.
+	 * 
+	 * @param hint hint
+	 */
 	public void setHint(String hint) {
 		this.hint = hint;
 	}
 
+	/**
+	 * if false then clicking on the Textbox does not set the cursor to where the
+	 * user clicked. Not really necessary but I needed it once.
+	 * 
+	 * @param clickSetsCursor clickSetsCursor
+	 */
 	public void setClickSetsCursor(boolean clickSetsCursor) {
 		this.clickSetsCursor = clickSetsCursor;
 	}
 
+	/**
+	 * Set the line height (distance between to lines).
+	 * 
+	 * @param lineHeight line height
+	 */
 	public void setLineHeight(int lineHeight) {
 		this.lineHeight = lineHeight;
 		update();
@@ -683,10 +746,21 @@ public class MultilineTextbox extends VScrollContainer {
 	protected static final int TEXTCHANGED_EVENT = Frame.numberMouseListeners + 1;
 
 
+	/**
+	 * Add a key listener to the textbox. Event is triggered each time any key is
+	 * pressed when the textbox has focus.
+	 * 
+	 * @param methodName name of callback method
+	 * @param target     object that declares callback method.
+	 */
 	public void addKeyListener(String methodName, Object target) {
 		registerEventRMethod(KEY_EVENT, methodName, target, KeyEvent.class);
 	}
 
+	/**
+	 * @see #addKeyListener(String, Object)
+	 * @param methodName name of callback method
+	 */
 	public void addKeyListener(String methodName) {
 		addKeyListener(methodName, Frame.frame0.papplet);
 	}
@@ -695,12 +769,22 @@ public class MultilineTextbox extends VScrollContainer {
 		deregisterEventRMethod(KEY_EVENT);
 	}
 
+	/**
+	 * Add a listener that fires when the text has actually changed (not the cursor
+	 * or selection).
+	 * 
+	 * @param methodName name of callback method
+	 * @param target     object that declares callback method.
+	 */
 	public void addTextChangedListener(String methodName, Object target) {
 		registerEventRMethod(TEXTCHANGED_EVENT, methodName, target, null);
 	}
 
-	public void addTextChangedListener(String methodName) { // Beware! At the moment this also reacts to setting the
-															 // cursor
+	/**
+	 * @see #addTextChangedListener(String, Object)
+	 * @param methodName name of callback method
+	 */
+	public void addTextChangedListener(String methodName) {
 		addTextChangedListener(methodName, Frame.frame0.papplet);
 	}
 
@@ -713,7 +797,7 @@ public class MultilineTextbox extends VScrollContainer {
 	int selectionStart, selectionEnd;
 
 	@Override
-	public void press(MouseEvent e) {
+	protected void press(MouseEvent e) {
 		if (e.getCount() < 2) {
 
 			// set cursor by clicking
@@ -726,7 +810,7 @@ public class MultilineTextbox extends VScrollContainer {
 			}
 
 			// shouldnt be necessary anymore as pressing always sets focus
-			//this.focus();
+			// this.focus();
 		} else { // double click
 			setCursorByClick(e.getX(), e.getY());
 
@@ -791,7 +875,7 @@ public class MultilineTextbox extends VScrollContainer {
 
 
 	@Override
-	public void onKeyPress(KeyEvent e) {
+	protected void onKeyPress(KeyEvent e) {
 		if (enabled) {
 			char key = e.getKey();
 			int code = e.getKeyCode();

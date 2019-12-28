@@ -1,15 +1,18 @@
-package pGUI.core;
+package guiSET.core;
 
 
-/*
- * Version of Checkbox that uses different looks and a switching animation. 
- */
-
-
-import pGUI.classes.*;
+import guiSET.classes.*;
 import processing.core.PApplet;
 import processing.event.MouseEvent;
 
+
+/**
+ * Switch class derived from Checkbox that looks more like an android switch and
+ * has a toggeling animation.
+ * 
+ * @author Mc-Zen
+ *
+ */
 public class Switch extends Checkbox {
 
 	// used for animating the switch movement
@@ -129,7 +132,8 @@ public class Switch extends Checkbox {
 	protected void press(MouseEvent e) {
 		if (enabled) {
 			if (!reactToEntireField) {
-				if (!(e.getX() > bounds.X0 && e.getX() < bounds.X0 + 1.75f * size && e.getY() > bounds.Y0 + height / 2 - size / 2 && e.getY() < bounds.Y0 + height / 2 + size / 2)) 
+				if (!(e.getX() > bounds.X0 && e.getX() < bounds.X0 + 1.75f * size && e.getY() > bounds.Y0 + height / 2 - size / 2
+						&& e.getY() < bounds.Y0 + height / 2 + size / 2))
 					return;
 			}
 			checked = !checked;

@@ -1,6 +1,6 @@
-package pGUI.core;
+package guiSET.core;
 
-import pGUI.classes.Color;
+import guiSET.classes.Color;
 import processing.core.*;
 import processing.event.*;
 

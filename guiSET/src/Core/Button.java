@@ -1,8 +1,14 @@
-package pGUI.core;
+package guiSET.core;
 
 import processing.core.*;
 import processing.event.*;
 
+/**
+ * Basic button template with automatic background colro hover and press effect.
+ * 
+ * @author Mc-Zen
+ *
+ */
 public class Button extends Control {
 
 	public Button() {
@@ -12,18 +18,33 @@ public class Button extends Control {
 		borderWidth = 1;
 	}
 
-	public Button(String Text) {
+	/**
+	 * Constructor for specifying button text.
+	 * 
+	 * @param text
+	 */
+	public Button(String text) {
 		this();
-		this.setText(Text);
+		this.setText(text);
 	}
 
-	public Button(String Text, int fontSize) {
-		this(Text);
+	/**
+	 * Constructor for specifying button text and font size.
+	 * 
+	 * @param text
+	 */
+	public Button(String text, int fontSize) {
+		this(text);
 		this.setFontSize(fontSize);
 	}
 
-	public Button(String Text, String pressMethod) {
-		this(Text);
+	/**
+	 * Constructor for specifying button text and press callback method name.
+	 * 
+	 * @param text
+	 */
+	public Button(String text, String pressMethod) {
+		this(text);
 		addMouseListener("press", pressMethod);
 	}
 
@@ -58,6 +79,8 @@ public class Button extends Control {
 
 	/*
 	 * EVENT METHODS
+	 * 
+	 * need to change some colors when hovered over or pressed.
 	 */
 	@Override
 	protected void enter(MouseEvent e) {

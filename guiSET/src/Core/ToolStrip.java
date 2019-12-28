@@ -1,16 +1,7 @@
-package pGUI.core;
+package guiSET.core;
 
 
-/*
- * Basically the ToolStrip is kind of a servant of the MenuItem. It does the rendering of 
- * strips and substrips and therefore always needs to be a child of Frame itself to have 
- * the freedom to be drawn anywhere on the sketch. 
- * The parent MenuItems keep a reference to their child ToolStrip which does nothing but 
- * the displaying when show() has been called and hiding when hide() has been called. 
- */
-
-
-import pGUI.classes.*;
+import guiSET.classes.*;
 
 public class ToolStrip extends Container {
 

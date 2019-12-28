@@ -1,4 +1,4 @@
-package pGUI.classes;
+package guiSET.classes;
 
 /*
  * Not much to say - just a class for storing absolute position values. 

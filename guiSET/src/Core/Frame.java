@@ -1,4 +1,4 @@
-package pGUI.core;
+package guiSET.core;
 
 
 /*
@@ -20,12 +20,14 @@ package pGUI.core;
 
 import processing.core.*;
 import processing.event.*;
-import pGUI.classes.*;
 
 //import java.awt.Font;
 import java.lang.Exception;
 import java.lang.reflect.Method;
 import java.util.HashMap;
+
+import guiSET.classes.*;
+
 import java.util.ArrayList;
 
 import java.lang.reflect.InvocationTargetException;
@@ -199,7 +201,7 @@ public class Frame extends Container {
 	 * when changes occured. This can save ressources
 	 *
 	 * - In continous mode the gui is drawn each frame new. This can be helpful when
-	 * the pGUI is combined with normal drawing functions in the draw()-method. This
+	 * the guiSET is combined with normal drawing functions in the draw()-method. This
 	 * way the gui itself will always be visible and not overdrawn in strange
 	 * manners. It is the most inefficient mode but not by far.
 	 *
@@ -216,7 +218,7 @@ public class Frame extends Container {
 	/**
 	 * Draw frequency mode. Continous makes Frame draw the entire GUI EACH time
 	 * (standard is 60 times per sec) if it hsa changed or not. This is useful if
-	 * pGUI is combined with manual drawing on the sketch but it is the most
+	 * guiSET is combined with manual drawing on the sketch but it is the most
 	 * wasteful mode.
 	 */
 	public static final int CONTINOUS = 0;
@@ -680,8 +682,8 @@ public class Frame extends Container {
 	/**
 	 * Set the size of the application window.
 	 * 
-	 * @param width
-	 * @param height
+	 * @param width width in pixel
+	 * @param height height in pixel
 	 */
 	public void setWindowSize(int width, int height) {
 		papplet.getSurface().setSize(width, height);
@@ -913,7 +915,7 @@ public class Frame extends Container {
 
 
 	/**
-	 * Get pGUI version.
+	 * Get guiSET version.
 	 * 
 	 * @return
 	 */

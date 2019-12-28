@@ -1,4 +1,4 @@
-package pGUI.core;
+package guiSET.core;
 
 /*
  * A one-line textbox for inserting text via keyboard.
@@ -25,6 +25,19 @@ import java.io.*;
 
 import java.awt.datatransfer.DataFlavor;
 
+
+
+/**
+ * A single-line Textbox that behaves just as you would expect one to behave.
+ * When focused (by click) text can be inserted via keyboard. Comes with
+ * expected features like cursor, selection, some keyboard shortcuts for
+ * cut/copy/paste, scrolling etc...
+ * 
+ * 
+ * 
+ * @author Mc-Zen
+ *
+ */
 public class Textbox extends HScrollContainer {
 
 	protected int selectionColor = -13395457;
@@ -43,6 +56,10 @@ public class Textbox extends HScrollContainer {
 	protected boolean currentDisplayCurs;
 
 	// loose focus and call submit event when hit enter
+	/**
+	 * If submitOnEnter isn't set to false the return/enter key will trigger the
+	 * submit-event and blur the focus on the textbox.
+	 */
 	public boolean submitOnEnter = true;
 
 
@@ -148,7 +165,7 @@ public class Textbox extends HScrollContainer {
 
 
 		standardDisabled();
-		
+
 
 	}
 
@@ -160,6 +177,10 @@ public class Textbox extends HScrollContainer {
 	 */
 
 	// cursor blink animation
+	/**
+	 * DO NOT CALL THIS METHOD. It is for internal purposes only and unfortunately
+	 * needs to be public.
+	 */
 	public void pre() {
 		if (this.focused) {
 			int t = Frame.frame0.papplet.millis();
@@ -294,28 +315,61 @@ public class Textbox extends HScrollContainer {
 	 * GETTER AND SETTER
 	 */
 
+
+	/**
+	 * Set the color of the cursor.
+	 * 
+	 * @param cursorColor rgb integer color
+	 */
 	public void setCursorColor(int cursorColor) {
 		this.cursorColor = cursorColor;
 		update();
 	}
 
+	/**
+	 * Set the cursor to a specific index position in the text.
+	 * 
+	 * @param cursorPosition
+	 */
 	public void setCursorPosition(int cursorPosition) {
 		moveCursorTo(cursorPosition);
 	}
 
+	/**
+	 * Set the start for the text selection. Selection start index can never be
+	 * higher than end index
+	 * 
+	 * @param selectionStart selection start position
+	 */
 	public void setSelectionStart(int selectionStart) {
 		this.selectionStart = Math.max(0, Math.min(text.length(), selectionStart));
 	}
 
+	/**
+	 * Set the end for the text selection. Selection end index can never be less
+	 * than start index
+	 * 
+	 * @param selectionEnd selection end position
+	 */
 	public void setSelectionEnd(int selectionEnd) {
 		this.selectionEnd = Math.max(0, Math.min(text.length(), selectionEnd));
 
 	}
 
+	/**
+	 * Set highlight color of selection
+	 * 
+	 * @param selectionColor rgb integer color
+	 */
 	public void setSelectionColor(int selectionColor) {
 		this.selectionColor = selectionColor;
 	}
 
+	/**
+	 * Set a hint for the textbox that is displayed when the textbox is empty.
+	 * 
+	 * @param hint hint
+	 */
 	public void setHint(String hint) {
 		this.hint = hint;
 	}
@@ -423,10 +477,21 @@ public class Textbox extends HScrollContainer {
 	protected static final int SUBMIT_EVENT = Frame.numberMouseListeners + 2;
 
 
+	/**
+	 * Add a key listener to the textbox. Event is triggered each time any key is
+	 * pressed when the textbox has focus.
+	 * 
+	 * @param methodName name of callback method
+	 * @param target     object that declares callback method.
+	 */
 	public void addKeyListener(String methodName, Object target) {
 		registerEventRMethod(KEY_EVENT, methodName, target, KeyEvent.class);
 	}
 
+	/**
+	 * @see #addKeyListener(String, Object)
+	 * @param methodName name of callback method
+	 */
 	public void addKeyListener(String methodName) {
 		addKeyListener(methodName, Frame.frame0.papplet);
 	}
@@ -435,10 +500,21 @@ public class Textbox extends HScrollContainer {
 		deregisterEventRMethod(KEY_EVENT);
 	}
 
+	/**
+	 * Add a listener that fires when the text has actually changed (not the cursor
+	 * or selection).
+	 * 
+	 * @param methodName name of callback method
+	 * @param target     object that declares callback method.
+	 */
 	public void addTextChangedListener(String methodName, Object target) {
 		registerEventRMethod(TEXTCHANGED_EVENT, methodName, target, null);
 	}
 
+	/**
+	 * @see #addTextChangedListener(String, Object)
+	 * @param methodName name of callback method
+	 */
 	public void addTextChangedListener(String methodName) {
 		addTextChangedListener(methodName, Frame.frame0.papplet);
 	}
@@ -447,10 +523,22 @@ public class Textbox extends HScrollContainer {
 		deregisterEventRMethod(TEXTCHANGED_EVENT);
 	}
 
+	/**
+	 * So long as {@link #submitOnEnter} is set to true a press on enter or return
+	 * will remove the focus of the textbox and call this event.
+	 * 
+	 * @param methodName name of callback method
+	 * @param target     object that declares callback method.
+	 */
 	public void addSubmitListener(String methodName, Object target) {
 		registerEventRMethod(SUBMIT_EVENT, methodName, target, null);
 	}
 
+	/**
+	 * @see #addSubmitListener(String, Object)
+	 * 
+	 * @param methodName name of callback method
+	 */
 	public void addSubmitListener(String methodName) {
 		addSubmitListener(methodName, Frame.frame0.papplet);
 	}
@@ -478,7 +566,7 @@ public class Textbox extends HScrollContainer {
 
 
 	@Override
-	public void press(MouseEvent e) {
+	protected void press(MouseEvent e) {
 
 		if (e.getCount() < 2) {
 			setCursorByClick(e.getX());
@@ -488,7 +576,7 @@ public class Textbox extends HScrollContainer {
 			selectionEnd = cursorPosition;
 
 			// should not be necessary as every control gets focus upon pressing it
-			//this.focus();
+			// this.focus();
 
 		} else { // double click
 			setCursorByClick(e.getX());
@@ -555,7 +643,7 @@ public class Textbox extends HScrollContainer {
 
 
 	@Override
-	public void onKeyPress(KeyEvent e) {
+	protected void onKeyPress(KeyEvent e) {
 		if (enabled) {
 			char key = e.getKey();
 			int code = e.getKeyCode();

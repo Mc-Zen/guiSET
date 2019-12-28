@@ -1,4 +1,4 @@
-package pGUI.core;
+package guiSET.core;
 
 /*
  * HScrollContainer is a container that allows horizontal scrolling. 
@@ -13,6 +13,14 @@ package pGUI.core;
 import processing.core.*;
 import processing.event.*;
 
+
+/**
+ * A Container that layouts its content horizontally and enables a scrollbar if
+ * the content overflows.
+ * 
+ * @author Mc-Zen
+ *
+ */
 public class HScrollContainer extends HFlowContainer {
 
 	// Width the scrollContainer would have summing up all its content
@@ -176,15 +184,31 @@ public class HScrollContainer extends HFlowContainer {
 	/*
 	 * SETTER
 	 */
+
+	/**
+	 * Set scroll position in pixel from left.
+	 * 
+	 * @param scrollPosition
+	 */
 	public void setScrollPosition(int scrollPosition) {
 		this.scrollPosition = scrollPosition; // will be constrained in render()
 		update();
 	}
 
+	/**
+	 * Amount of pixels to scroll for each step with the mouse wheel.
+	 * 
+	 * @param scrollSpeed
+	 */
 	public void setScrollSpeed(int scrollSpeed) {
 		this.scrollSpeed = scrollSpeed;
 	}
 
+	/**
+	 * Enable a slim (mobile phone like) scroll handle instead of the bold one.
+	 * 
+	 * @param light_scrollhandle
+	 */
 	public void setSlimScrollHandle(boolean light_scrollhandle) {
 		this.slim_scrollhandle = light_scrollhandle;
 		if (light_scrollhandle) {

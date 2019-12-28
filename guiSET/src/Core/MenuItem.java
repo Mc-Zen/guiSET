@@ -1,13 +1,14 @@
-package pGUI.core;
+package guiSET.core;
 
 import processing.core.PApplet;
 
 import processing.event.*;
-import pGUI.classes.*;
 
 import java.util.ArrayList;
 import java.util.Timer;
 import java.util.TimerTask;
+
+import guiSET.classes.*;
 
 
 /*

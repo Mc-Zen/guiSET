@@ -1,5 +1,11 @@
-package pGUI.core;
+package guiSET.core;
 
+/**
+ * A Container that layouts its content horizontally.
+ * 
+ * @author Mc-Zen
+ *
+ */
 public class HFlowContainer extends Container {
 
 	protected boolean Break = false;
@@ -8,8 +14,8 @@ public class HFlowContainer extends Container {
 		this(100, 100);
 	}
 
-	public HFlowContainer(int Width, int Height) {
-		super(Width, Height);
+	public HFlowContainer(int width, int height) {
+		super(width, height);
 		autoLayout = true;
 	}
 

@@ -1,4 +1,4 @@
-package pGUI.core; //<>// //<>// //<>// //<>// //<>//
+package guiSET.core; //<>// //<>// //<>// //<>// //<>//
 
 import processing.event.*;
 
@@ -73,10 +73,7 @@ public class Container extends Control {
 
 
 	/**
-	 * Default Constructor sets width and height to 100.
-	 * 
-	 * @param width
-	 * @param height
+	 * Default Constructor sets width and height to 100
 	 */
 	public Container() {
 		this(100, 100);
@@ -267,7 +264,7 @@ public class Container extends Control {
 	/**
 	 * Remove a specific Component from item list.
 	 * 
-	 * @param c
+	 * @param c Component to remove. 
 	 */
 	public void remove(Control c) {
 		content.remove(c);

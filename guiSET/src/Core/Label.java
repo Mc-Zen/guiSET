@@ -1,7 +1,14 @@
-package pGUI.core;
+package guiSET.core;
 
 import processing.core.*;
 
+
+/**
+ * A basic template for plain text labels.
+ * 
+ * @author E-Bow
+ *
+ */
 public class Label extends Control {
 
 	public Label() {
@@ -12,6 +19,12 @@ public class Label extends Control {
 		this(text, 12);
 	}
 
+	/**
+	 * Constructor for specifying text content and font size.
+	 * 
+	 * @param text
+	 * @param fontSize
+	 */
 	public Label(String text, int fontSize) {
 		super();
 		this.setText(text);

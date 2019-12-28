@@ -1,6 +1,12 @@
-package pGUI.core;
+package guiSET.core;
 
 
+/**
+ * A Container that layouts its content from left to right and top to bottom.
+ * 
+ * @author Mc-Zen
+ *
+ */
 public class FlowContainer extends Container {
 
 	public FlowContainer() {
