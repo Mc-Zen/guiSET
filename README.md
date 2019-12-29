@@ -1,4 +1,4 @@
-# guiSET
+# guiSET - Preparing the docs and registration at the moment
 The REAL good GUIs for the Processing language ;)  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;    ([Wiki here](../../wiki))
 
 ### Little Introduction:
