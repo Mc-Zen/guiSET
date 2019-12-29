@@ -1,5 +1,5 @@
 # guiSET
-The REAL good GUIs for the Processing language ;)
+The REAL good GUIs for the Processing language ;)  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;    ([Wiki here](../../wiki))
 
 ### Little Introduction:
 
