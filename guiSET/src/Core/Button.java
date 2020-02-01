@@ -64,7 +64,10 @@ public class Button extends Control {
 	@Override
 	protected void autosize() {
 		width = (int) PApplet.constrain(textWidth(text) + paddingLeft + paddingRight, minWidth, maxWidth);
-		height = (int) PApplet.constrain(fontSize + textDescent() + paddingTop + paddingBottom, minHeight, maxHeight);
+		int numLines = text.split("\n").length;
+		// height = (int) PApplet.constrain(fontSize*1.1f + paddingTop + paddingBottom,
+		// minHeight, maxHeight);
+		height = (int) PApplet.constrain(numLines * textLeading() + paddingTop + paddingBottom, minHeight, maxHeight);
 	}
 
 	/*

@@ -129,9 +129,9 @@ public class ScrollArea extends Container {
 				pg.rect(width - 4, scrollhandle_posY(), scrollHandleStrength, scrollhandle_height(), 15);
 
 			} else {
-				pg.rect(width - 3 - scrollHandleStrength, 0, scrollHandleStrength + 3, scrollbar_height());
+				pg.rect(width - 2 - scrollHandleStrength, 0, scrollHandleStrength + 2, scrollbar_height());
 				pg.fill(190);
-				pg.rect(width - 2 - scrollHandleStrength, scrollhandle_posY(), scrollHandleStrength, scrollhandle_height(), 3);
+				pg.rect(width - 1 - scrollHandleStrength, scrollhandle_posY(), scrollHandleStrength, scrollhandle_height(), 3);
 			}
 		}
 	}
@@ -147,10 +147,10 @@ public class ScrollArea extends Container {
 			if (slim_scrollhandle) {
 				pg.rect(scrollhandle_posX(), height - 4, scrollhandle_width(), 3, 15);
 			} else {
-				pg.rect(0, height - 3 - scrollHandleStrength, scrollbar_width(), scrollHandleStrength + 3); // height is one more than necessary (just
+				pg.rect(0, height - 2 - scrollHandleStrength, scrollbar_width(), scrollHandleStrength + 3); // height is one more than necessary (just
 																											 // a buffer)
 				pg.fill(190);
-				pg.rect(scrollhandle_posX(), height - 2 - scrollHandleStrength, scrollhandle_width(), scrollHandleStrength, 3);
+				pg.rect(scrollhandle_posX(), height - 1 - scrollHandleStrength, scrollhandle_width(), scrollHandleStrength, 3);
 			}
 		}
 	}

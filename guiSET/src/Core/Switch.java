@@ -31,6 +31,10 @@ public class Switch extends Checkbox {
 		this(text, false);
 	}
 
+	public Switch(boolean checked) {
+		this("", checked);
+	}
+
 	public Switch(String text, boolean checked) {
 		super(text, checked);
 
@@ -39,7 +43,7 @@ public class Switch extends Checkbox {
 		checkmarkColor = Color.create(100, 50, 50);
 
 		// initialize currentPosition
-		currentPosition = (int) (checked ? (1.75 * size - (size - size / 4) / 2 - (size / 4) + 1) : ((size - size / 4) / 2 + (size / 4) - 1));
+		currentPosition = (int) (checked ? (1.75 * checkboxSize - (checkboxSize - checkboxSize / 4) / 2 - (checkboxSize / 4) + 1) : ((checkboxSize - checkboxSize / 4) / 2 + (checkboxSize / 4) - 1));
 
 	}
 
@@ -56,13 +60,13 @@ public class Switch extends Checkbox {
 		// draw rounded rectangle as switch background
 		pg.noStroke();
 		pg.fill(checked ? checkedBackgroundColor : uncheckedBackgroundColor);
-		pg.rect(0, height / 2 - size / 2, 1.75f * size, size, 100);
+		pg.rect(0, height / 2 - checkboxSize / 2, 1.75f * checkboxSize, checkboxSize, 100);
 
 		//
 		// create smooth animation from one to the other position
 		// call update() if animation isn't finished yet
 		//
-		int aimedPosition = (int) (checked ? (1.75 * size - (size - size / 4) / 2 - (size / 4) + 1) : ((size - size / 4) / 2 + (size / 4) - 1));
+		int aimedPosition = (int) (checked ? (1.75 * checkboxSize - (checkboxSize - checkboxSize / 4) / 2 - (checkboxSize / 4) + 1) : ((checkboxSize - checkboxSize / 4) / 2 + (checkboxSize / 4) - 1));
 
 		if (Frame.frame0.drawMode == Frame.SUPER_EFF) {
 			// no animation with super_eco-mode
@@ -70,10 +74,10 @@ public class Switch extends Checkbox {
 		} else {
 
 			if (currentPosition < aimedPosition && checked) {
-				currentPosition = Math.min(currentPosition + size / 20f, aimedPosition);
+				currentPosition = Math.min(currentPosition + checkboxSize / 20f, aimedPosition);
 				update();
 			} else if (currentPosition > aimedPosition && !checked) {
-				currentPosition = Math.max(currentPosition - size / 20f, aimedPosition);
+				currentPosition = Math.max(currentPosition - checkboxSize / 20f, aimedPosition);
 				update(); // update again next frame
 			}
 
@@ -81,22 +85,22 @@ public class Switch extends Checkbox {
 
 		// draw shadow of switch "ball"
 		pg.fill(0);
-		pg.ellipse(currentPosition, height / 2 + 1, size - size / 4, size - size / 4);
+		pg.ellipse(currentPosition, height / 2 + 1, checkboxSize - checkboxSize / 4, checkboxSize - checkboxSize / 4);
 
 		// draw switch "ball"
 		pg.fill(checkmarkColor);
-		pg.ellipse(currentPosition, height / 2, size - size / 4, size - size / 4);
+		pg.ellipse(currentPosition, height / 2, checkboxSize - checkboxSize / 4, checkboxSize - checkboxSize / 4);
 
 		// draw text
 		pg.textSize(fontSize);
 		pg.fill(foregroundColor);
-		pg.textAlign(37, 3);
-		pg.text(text, size * 1.75f + size / 4 + paddingLeft, height / 2);
+		pg.textAlign(37, 3); // LEFT, CENTER
+		pg.text(text, checkboxSize * 1.75f + checkboxSize / 4 + paddingLeft, height / 2 - 0.07f * fontSize);
 
 		// grey out if switch is disabled
 		if (!enabled) {
 			pg.fill(150, 150);
-			pg.rect(0, height / 2 - size / 2, 1.75f * size, size, 100);
+			pg.rect(0, height / 2 - checkboxSize / 2, 1.75f * checkboxSize, checkboxSize, 100);
 		}
 
 	}
@@ -109,20 +113,15 @@ public class Switch extends Checkbox {
 
 	@Override
 	protected void autosize() {
-		pg = Frame.frame0.papplet.createGraphics(1, 1);
-		pg.beginDraw();
-		pg.textSize(fontSize);
+		width = (int) PApplet.constrain(1.75f * checkboxSize + checkboxSize / 4 + textWidth(text) + paddingLeft + paddingRight, minWidth, maxWidth);
+		height = (int) PApplet.constrain(PApplet.max(checkboxSize, fontSize + textDescent(), 1) + paddingTop + paddingBottom, minHeight, maxHeight);
 
-		// Width: checkbox width + padding + textwidth
-		width = (int) (1.75f * size + size / 4 + pg.textWidth(text) + paddingLeft + paddingRight) + 2;
-		// Height: (greater of checkobs height or text height) + padding
-		height = (int) PApplet.max(size, fontSize + pg.textDescent(), 1) + paddingTop + paddingBottom;
 	}
 
 
 	@Override
-	public void setSize(int size) {
-		this.size = size;
+	public void setCheckboxSize(int size) {
+		this.checkboxSize = size;
 		currentPosition = (int) (checked ? (1.75 * size - (size - size / 4) / 2 - (size / 4) + 1) : ((size - size / 4) / 2 + (size / 4) - 1));
 		autosize();
 	}
@@ -132,8 +131,8 @@ public class Switch extends Checkbox {
 	protected void press(MouseEvent e) {
 		if (enabled) {
 			if (!reactToEntireField) {
-				if (!(e.getX() > bounds.X0 && e.getX() < bounds.X0 + 1.75f * size && e.getY() > bounds.Y0 + height / 2 - size / 2
-						&& e.getY() < bounds.Y0 + height / 2 + size / 2))
+				if (!(e.getX() > bounds.X0 && e.getX() < bounds.X0 + 1.75f * checkboxSize && e.getY() > bounds.Y0 + height / 2 - checkboxSize / 2
+						&& e.getY() < bounds.Y0 + height / 2 + checkboxSize / 2))
 					return;
 			}
 			checked = !checked;

@@ -4,6 +4,13 @@ import guiSET.classes.Color;
 import processing.core.*;
 import processing.event.*;
 
+/**
+ * Optimal item to add to {@link ListView} as it features firing the
+ * itemSelected event of ListView.
+ * 
+ * @author Mc-Zen
+ *
+ */
 public class ListItem extends Control {
 
 	// back color for selected state
@@ -20,13 +27,18 @@ public class ListItem extends Control {
 		super();
 		activateInternalMouseListener();
 		setPadding(3);
-		paddingLeft = 5;
 		borderWidth = 1;
 		setSelectionColor(-12171706);
 		selectionForegroundColor = 255;
 
 		autosize();
 	}
+
+	/**
+	 * Immediately set text of ListItem with this constructor.
+	 * 
+	 * @param text
+	 */
 	public ListItem(String text) {
 		this();
 		setText(text);
@@ -36,7 +48,7 @@ public class ListItem extends Control {
 	protected void render() {
 		// Exception: Width is set in render() method for once which is okay because
 		// parent expects that
-		width = PApplet.max(1, parent.width - marginLeft - marginRight - 5);
+		width = PApplet.max(1, parent.width -parent.paddingLeft - parent.paddingRight - marginLeft - marginRight - 5); // getAvailableWidth() would be nice, but parent is a control not container
 
 		pg = Frame.frame0.papplet.createGraphics(width, height);
 		pg.beginDraw();
@@ -58,8 +70,6 @@ public class ListItem extends Control {
 			drawDefaultText();
 		}
 
-
-		pg.endDraw();
 	}
 
 	@Override
@@ -71,10 +81,16 @@ public class ListItem extends Control {
 	 * Getter and Setter
 	 */
 
-	/*
-	 * set selection color AND selection hover color (a little darker / brighter)
+	/**
+	 * set selection color
 	 */
-
+	/**
+	 * Sets the background color for when the item is in its selected state. This
+	 * also sets selectionHoverColor (a little darker / brighter depending on the
+	 * brightness of the selectionColor).
+	 * 
+	 * @param selectionColor selection color
+	 */
 	public void setSelectionColor(int selectionColor) {
 		this.selectionColor = selectionColor;
 		int r = (int) Frame.frame0.papplet.red(selectionColor);
@@ -91,16 +107,28 @@ public class ListItem extends Control {
 		update();
 	}
 
+	/**
+	 * Sets the background color for when the item is selecteed AND hovered over
+	 * with the mouse.
+	 * 
+	 * @param selectionHoverColor
+	 */
 	public void setSelectionHoverColor(int selectionHoverColor) {
 		this.selectionHoverColor = selectionHoverColor;
 		update();
 	}
 
+	/**
+	 * Sets the text color for when the item is selected.
+	 * 
+	 * @param selectionForegroundColor
+	 */
 	public void setSelectionForegroundColor(int selectionForegroundColor) {
 		this.selectionForegroundColor = selectionForegroundColor;
 		update();
 	}
 
+	// only used by ListView (not anymore)
 	protected void setSelected(boolean selected) {
 		this.selected = selected;
 		update();
@@ -126,6 +154,8 @@ public class ListItem extends Control {
 	 * EVENTS
 	 */
 
+	// all of these override empty methods so no need to call super method.
+
 	@Override
 	protected void enter(MouseEvent e) {
 		visualBackgroundColor = hoverColor;
@@ -140,8 +170,12 @@ public class ListItem extends Control {
 
 	@Override
 	protected void press(MouseEvent e) {
-		((ListView) parent).itemSelected((Control) this);
-		update();
+		super.press(e);
+		try {
+			((ListView) parent).itemPressed((Control) this);
+		} catch (ClassCastException cce) {
+			// just ignore
+		}
 	}
 
 	@Override

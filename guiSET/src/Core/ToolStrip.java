@@ -3,6 +3,13 @@ package guiSET.core;
 
 import guiSET.classes.*;
 
+/**
+ * @see MenuItem, which explains almost everything :).
+ * 
+ * 
+ * @author Mc-Zen
+ *
+ */
 public class ToolStrip extends Container {
 
 	public ToolStrip() {
@@ -96,14 +103,29 @@ public class ToolStrip extends Container {
 		}
 	}
 
+
+	// also used internally by MenuItem
+	/**
+	 * Show this ToolStrip.
+	 */
 	public void show() {
 		setVisible(true);
 	}
 
+
+	// also used internally by MenuItem
+	/**
+	 * Hide this ToolStrip.
+	 */
 	public void hide() {
-		visible = false;
+		setVisible(false); // not sure if the update() is necessary here
 	}
 
+	/**
+	 * Add menu items by passing their text.
+	 * 
+	 * @param strings arbitrary number of text Strings
+	 */
 	public void add(String... strings) {
 		for (String s : strings) {
 			MenuItem newItem = new MenuItem();

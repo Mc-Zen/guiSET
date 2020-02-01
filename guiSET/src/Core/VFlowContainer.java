@@ -10,22 +10,22 @@ package guiSET.core;
 public class VFlowContainer extends Container {
 
 	public VFlowContainer() {
-		this(100,100);
+		this(100, 100);
 	}
 
 	public VFlowContainer(int width, int height) {
 		super(width, height);
-		autoLayout = true;
+		containerMakesAutoLayout = true; // this container overrides items x/y property and gives them new location
 	}
 
 	@Override
 	protected void calcBounds() {
 		int usedSpace = paddingTop;
-		
+
 		for (int i = 0; i < content.size(); i++) {
 			Control c = content.get(i);
 			if (c.visible) {
-				Frame.calcBoundsCount++;
+				Frame.calcBoundsCount++; // profiling/debugging value
 
 				// set bounds of child so it has absolute values for listener processing
 				c.bounds.X0 = this.bounds.X0 + c.marginLeft + paddingLeft;
@@ -40,8 +40,8 @@ public class VFlowContainer extends Container {
 				c.bounds.Y0 = Math.max(c.bounds.Y0, this.bounds.Y0);
 
 				usedSpace += (c.height + c.marginTop + c.marginBottom);
-				
-				if (c.cType == CONTAINER) {
+
+				if (c.cType == CONTAINER) { // if item is a container too, call calcBounds for it here
 					c.calcBounds();
 				}
 			}
@@ -50,10 +50,6 @@ public class VFlowContainer extends Container {
 
 	@Override
 	protected void render() {
-		// if AutoSize is on, first get minimal dimensions
-		if (autoSize) {
-			setAutoSize();
-		}
 
 		drawDefaultBackground();
 
@@ -75,15 +71,15 @@ public class VFlowContainer extends Container {
 				 * c.bounds.X0 = Math.max(c.bounds.X0, this.bounds.X0); c.bounds.Y0 =
 				 * Math.max(c.bounds.Y0, this.bounds.Y0);
 				 */
-				
+
 				containerRenderItem(c, c.marginLeft + paddingLeft, usedSpace + c.marginTop);
 
-				/*if (c.changedVisuals) {
-					c.changedVisuals = false;
-					c.render();
-				}
-
-				pg.image(c.getGraphics(), c.marginLeft + paddingLeft, usedSpace + c.marginTop);*/
+				/*
+				 * if (c.changedVisuals) { c.changedVisuals = false; c.render(); }
+				 * 
+				 * pg.image(c.getGraphics(), c.marginLeft + paddingLeft, usedSpace +
+				 * c.marginTop);
+				 */
 				usedSpace += (c.height + c.marginTop + c.marginBottom);
 			}
 		}

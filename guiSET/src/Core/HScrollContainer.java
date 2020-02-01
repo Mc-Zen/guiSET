@@ -31,7 +31,7 @@ public class HScrollContainer extends HFlowContainer {
 	protected int scrollPosition;
 
 	// speed at which container will be scrolled, can be set externally
-	protected int scrollSpeed = 10;
+	protected int scrollSpeed = 20;
 
 
 
@@ -97,10 +97,6 @@ public class HScrollContainer extends HFlowContainer {
 
 	@Override
 	protected void render() {
-		// if AutoSize is on, first get minimal dimensions
-		if (autoSize) {
-			setAutoSize();
-		}
 
 		drawDefaultBackground();
 
@@ -142,12 +138,12 @@ public class HScrollContainer extends HFlowContainer {
 			pg.noStroke();
 
 			if (slim_scrollhandle) {
-				pg.rect(scrollhandle_posX(), height - 4, scrollhandle_width(), 3, 15);
+				pg.rect(scrollhandle_posX(), height - 1 - scrollHandleStrength, scrollhandle_width(), scrollHandleStrength, 15);
 			} else {
-				pg.rect(0, height - 3 - scrollHandleStrength, scrollbar_width(), scrollHandleStrength + 3); // height is one more than necessary (just
+				pg.rect(0, height - 2 - scrollHandleStrength, scrollbar_width(), scrollHandleStrength + 3); // height is one more than necessary (just
 																											 // a buffer)
 				pg.fill(190);
-				pg.rect(scrollhandle_posX(), height - 2 - scrollHandleStrength, scrollhandle_width(), scrollHandleStrength, 3);
+				pg.rect(scrollhandle_posX(), height - 1 - scrollHandleStrength, scrollhandle_width(), scrollHandleStrength, 3);
 			}
 		}
 	}
@@ -237,6 +233,11 @@ public class HScrollContainer extends HFlowContainer {
 
 	public int getFullScrollWidth() {
 		return fullScrollWidth;
+	}
+	
+	@Override
+	public int getAvailableHeight() {
+		return height - paddingTop - paddingBottom - scrollHandleStrength - 1;
 	}
 
 

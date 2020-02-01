@@ -13,7 +13,7 @@ import guiSET.classes.*;
  */
 public class Animation {
 
-	protected Object target;
+	protected Control target;
 	protected Field field;
 	protected String attributeName;
 	protected String fieldType;   // "int", "double", "float" etc.
@@ -39,6 +39,21 @@ public class Animation {
 
 	protected boolean needToCallAutosize;
 
+	/*
+	 * Animations access fields of components directly! That means no setter is used
+	 * and stuff usually done in setters is omitted.
+	 * 
+	 * Animations call target.animated() instead of target.update() so the target
+	 * will know.
+	 * 
+	 * Also Animations call target.autosize() if field to animate is
+	 * minHeight/maxHeight/height/fontSize/text(?)/paddings
+	 * 
+	 * Might need some adjustments here.
+	 * 
+	 * Also a checker should be implemented checking. that the attribute has an
+	 * allowed type.
+	 */
 
 
 
@@ -53,7 +68,7 @@ public class Animation {
 	 * @param aimedValue   Final value
 	 * @param milliseconds Time to perform the animation in.
 	 */
-	public Animation(String attribute, Object target, float aimedValue, double milliseconds) {
+	public Animation(String attribute, Control target, float aimedValue, double milliseconds) {
 
 		this.target = target;
 
@@ -63,6 +78,12 @@ public class Animation {
 				// try to find the field in the object.
 				field = getField(target.getClass(), attribute);
 				fieldType = field.getType().toString();
+
+				if (fieldType.equals("class java.lang.String") || fieldType.equals("boolean")) {
+					System.out.println("Strings and booleans cannot be animated for obvious reasons.");
+					cancel();
+					return;
+				}
 
 				// Make it accessible even if its private or protected.
 				field.setAccessible(true);
@@ -78,7 +99,7 @@ public class Animation {
 
 
 				// colors need to be animate differently than ordinary numerics
-				if (attribute.contains("Color")) { // all color attributes have the substring "Color" in them (:
+				if (attribute.contains("Color")) { // all color attributes actually have the substring "Color" in them (:
 					animationType = COLOR;
 					a1 = ((int) currentValue >> 24) & 0xff;
 					r1 = ((int) currentValue >> 16) & 0xff;
@@ -94,16 +115,22 @@ public class Animation {
 					animationType = NUMBER;
 					this.valueStart = currentValue;
 					this.valueEnd = aimedValue;
-					/*
-					 * switch(attribute) { case "MinHeight": needToCallAutosize = true; break; case
-					 * "Maxheight": needToCallAutosize = true; break; case "MinWidth":
-					 * needToCallAutosize = true; break; case "MaxWidth": needToCallAutosize = true;
-					 * break; case "FontSize": needToCallAutosize = true; break; case "Text":
-					 * needToCallAutosize = true; break; case "PaddingTop": needToCallAutosize =
-					 * true; break; case "PaddingBottom": needToCallAutosize = true; break; case
-					 * "PaddingRight": needToCallAutosize = true; break; case "PaddingLeft":
-					 * needToCallAutosize = true; break; }
-					 */
+
+					switch (attribute) {
+					case "minHeight":
+					case "maxheight":
+					case "minWidth":
+					case "maxWidth":
+					case "fontSize":
+					case "text":
+					case "paddingTop":
+					case "paddingBottom":
+					case "paddingRight":
+					case "paddingLeft":
+						needToCallAutosize = true;
+						break;
+					}
+
 				}
 			} catch (NoSuchFieldException nsfe) {
 				nsfe.printStackTrace();
@@ -162,21 +189,24 @@ public class Animation {
 				field.setInt(target, (int) currentValue);
 				break;
 			case "float":
-				field.setInt(target, (int) currentValue);
+				field.setFloat(target, (float) currentValue);
 				break;
 			case "double":
-				field.setInt(target, (int) currentValue);
+				field.setDouble(target, currentValue);
 				break;
 			case "long":
-				field.setInt(target, (int) currentValue);
+				field.setLong(target, (long) currentValue);
 				break;
 			}
 		} catch (IllegalAccessException ia) {
 			ia.printStackTrace();
 		}
-		// if (needToCallAutosize) { ((Control)target).autosize();
+		if (needToCallAutosize)
+			target.autosize();
 
-		((Control) target).update();
+		// notify target that it has been unknowingly changed.
+		// animated() usually just calls update()
+		target.animated();
 		return true;
 	}
 

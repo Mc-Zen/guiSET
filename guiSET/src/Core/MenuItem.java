@@ -11,32 +11,29 @@ import java.util.TimerTask;
 import guiSET.classes.*;
 
 
-/*
- * Basic brick for creating menus. Just take a HFlowContainer, make its width
- * fill out the window and height = 25 and add MenuItems to it.
+/**
+ * Basic brick for creating menus. Just take a {@link HFlowContainer}, make its
+ * width fill out the window and height = 25 and add MenuItems to it.
  * 
  * You can add other MenuItems to them and so on to create any structure of menu
- * items. Also take a look at the MenuSeparator which provides a non-clickable
- * and slim version for separating parts of the menu strip.
+ * items. Also take a look at the {@link MenuSeparator} which provides a
+ * non-clickable and slim line for separating parts of the menu strip.
  * 
- * There is only this one class for every position in the structure tree (read
- * more about this in the comment about the type parameter).
+ * There is only this one class for every position in the structure tree.
  * 
  * 
  * The MenuItems aren't displayed and rendered at the position of the hierachy
- * they are added to. Instead they create a ToolStrip (called "dropdown") Object
- * (if they have children/subitems at all) which then is added to the frame
- * directly. This is necessary to be able to display it at any place. By default
- * the ToolStrips are invisible and are only set to visible when opening a strip
- * by clicking on it. When removing all subitems from an item the ToolStrip will
- * be removed too.
+ * they are added to. Instead they create a {@link ToolStrip} (called
+ * "dropdown") Object (if they have children/subitems at all) which then is
+ * added to the Frame directly. This is necessary to be able to display it at
+ * any place. By default the ToolStrips are invisible and are only set to
+ * visible when opening a strip by clicking on it. When removing all subitems
+ * from an item the ToolStrip will be removed too.
  * 
- * MenuItems and ToolStrips can also be used to create menus that pop up when i.e. 
- * right-clicking on something. 
+ * MenuItems and ToolStrips can also be used to create menus that pop up when
+ * i.e. right-clicking on something.
  * 
  */
-
-
 public class MenuItem extends Control {
 
 
@@ -44,6 +41,10 @@ public class MenuItem extends Control {
 	 * sub items (a menuitem is not really the parent of its subitems. Instead it
 	 * references a Toolstrip that is placed in the Frame with high z-index and that
 	 * is the real parent of all subitems.
+	 * 
+	 * It's easier to keep this list a Control-List and not a MenuItem-List because
+	 * the ToolStrip extends Container which has Control list and both lists are
+	 * synchronized.
 	 */
 	protected ArrayList<Control> items;
 
@@ -52,16 +53,16 @@ public class MenuItem extends Control {
 	/*
 	 * There are two types of menuitems: one is the "menu header" which is always
 	 * visible on the screen and the parent of the entire strip it belongs to. The
-	 * other on e is the "menu item", the basic items/subitems that make up the
-	 * structure of the strip.
+	 * other is the "menu item", the basic items/subitems that make up the structure
+	 * of the strip.
 	 * 
 	 * Both have different drawing and handling of special events etc... MenuItems
 	 * should not change their position at runtime because the type change won't be
 	 * recognized.
 	 * 
-	 * @param type gives the possibility to discern between the two versions The
-	 * type is only determined at runtime when the graphics have been initialized
-	 * and the position of the item is obvious.
+	 * "type" gives the possibility to discern between the two versions intenally.
+	 * The type is only determined at runtime when the graphics have been
+	 * initialized and the position of the item is obvious.
 	 * 
 	 */
 
@@ -97,6 +98,8 @@ public class MenuItem extends Control {
 
 	protected boolean checked = false;
 
+	protected static final int MENUITEM_HEIGHT = 23; // default height for menu items and menu bars - looks good in my opinion
+
 
 
 	public MenuItem() {
@@ -105,7 +108,7 @@ public class MenuItem extends Control {
 
 	public MenuItem(String text) {
 		super();
-		height = 23;
+		height = MENUITEM_HEIGHT;
 		setPadding(0, 6, 10, 6);
 		setText(text);
 		fontSize = 13;
@@ -116,21 +119,34 @@ public class MenuItem extends Control {
 		pressedColor = 1677721600; 		// only used by menu headers
 
 
-		items = new ArrayList<Control>();
+		items = new ArrayList<Control>(0);
 		setupListeners(1); // 1 additional listener (itemSelectedListener)
 
 		activateInternalMouseListener();
 	}
 
 
-	public MenuItem(String text, String method) {
+	/**
+	 * Constructor for immediatley setting text and name of method to call when
+	 * pressed.
+	 * 
+	 * @param text       text
+	 * @param methodName method name
+	 */
+	public MenuItem(String text, String methodName) {
 		this(text);
 
 		// specified method will be executed on mose release
-		addMouseListener("release", method);
+		addMouseListener("release", methodName);
 	}
 
+	public MenuItem(String text, String methodName, Shortcut shortcut) {
+		this(text, methodName);
 
+		// specified method will be executed on mose release
+		setShortcut(shortcut);
+		Frame.frame0.registerShortcut(shortcut, methodName);
+	}
 
 
 
@@ -272,7 +288,7 @@ public class MenuItem extends Control {
 
 
 	@Override
-	protected void autosize() {			
+	protected void autosize() {
 		float shortcutWidth = (shortcut != null ? textWidth(shortcut.toString()) + 30 : 0);
 		int w = (int) (textWidth(text) + paddingLeft + paddingRight + shortcutWidth);
 
@@ -367,7 +383,9 @@ public class MenuItem extends Control {
 	 * close recursively all items from (first layer menu items (header)) to
 	 * subitems
 	 */
-
+	/**
+	 * Close this item/strip. Recursively closes all subitems and parent strips.
+	 */
 	public void close() {
 		if (open) {
 			visualBackgroundColor = backgroundColor;
@@ -400,11 +418,12 @@ public class MenuItem extends Control {
 
 
 
-	/*
-	 * set the displayed shortcut (shortcut has no real effect unless set manually
-	 * at Frame)
+	/**
+	 * Set the displayed shortcut (shortcut has no real effect unless set manually
+	 * at Frame).
+	 * 
+	 * @param s
 	 */
-
 	public void setShortcut(Shortcut s) {
 		this.shortcut = s;
 		autosize();
@@ -425,6 +444,12 @@ public class MenuItem extends Control {
 
 	protected static final int ITEM_SELECTED_EVENT = Frame.numberMouseListeners;
 
+	/**
+	 * Add a listener for the item selected event.
+	 * 
+	 * @param methodName
+	 * @param target
+	 */
 	public void addItemSelectedListener(String methodName, Object target) {
 		registerEventRMethod(ITEM_SELECTED_EVENT, methodName, target, MenuItem.class);
 	}
@@ -576,6 +601,12 @@ public class MenuItem extends Control {
 		return checked;
 	}
 
+	/**
+	 * MenuItems can be checked / unchecked with this method (little icon on the
+	 * left of the MenuItem text).
+	 * 
+	 * @param checked checked
+	 */
 	public void setChecked(boolean checked) {
 		this.checked = checked;
 		update();
@@ -591,7 +622,7 @@ public class MenuItem extends Control {
 
 	// internal adding method
 
-	protected void addItem(int position, Control c) {
+	protected void addItem(int position, MenuItem c) {
 		items.add(position, c);
 
 		// need to create the toolstrip if not already existent
@@ -615,19 +646,30 @@ public class MenuItem extends Control {
 		// drawing
 		c.parent = dropDown;
 
-		update();
-		((MenuItem) c).setHeader(this.headerStrip);
+		// update(); update in public add/insert methods. No need to call update too
+		// often.
+		c.setHeader(this.headerStrip);
 	}
 
 
-	public void add(Control... controls) {
-		for (Control c : controls) {
+	/**
+	 * Add subitems for this item.
+	 * 
+	 * @param controls
+	 */
+	public void add(MenuItem... controls) {
+		for (MenuItem c : controls) {
 			addItem(items.size(), c);
 		}
 		update();
 	}
 
 
+	/**
+	 * Create and add subitems for each text String passed.
+	 * 
+	 * @param strings arbitrary number of text.
+	 */
 	public void add(String... strings) {
 		for (String s : strings) {
 			addItem(items.size(), new MenuItem(s));
@@ -636,10 +678,17 @@ public class MenuItem extends Control {
 	}
 
 
-	public void insert(int position, Control... controls) {
+	/**
+	 * Insert subitems at given position
+	 * 
+	 * @param position
+	 * @param controls arbitrary number of items
+	 */
+	public void insert(int position, MenuItem... controls) {
 		for (int i = 0; i < controls.length; i++) {
 			addItem(position + i, controls[i]);
 		}
+		update();
 	}
 
 

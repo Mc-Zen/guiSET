@@ -42,7 +42,7 @@ import java.util.Comparator;
  * Other classes inheriting from Container should use this method if they implement a new render() method. 
  * 
  * Panel containers (containers that pay respect to the position aspired by their children without setting them to new locations (autolayout)) also need sorting the content by z coordinate!
- * This is already done and distinguished under the hood but it is necessary for each inheriting class that uses an automatic layout to change the autoLayout property to true!
+ * This is already done and distinguished under the hood but it is necessary for each inheriting class that uses an automatic layout to change the containerMakesAutoLayout property to true!
  * 
  * 
  * 
@@ -62,14 +62,13 @@ public class Container extends Control {
 	 * list of items
 	 */
 	protected ArrayList<Control> content;
-	protected boolean autoSize = false;
 
 
 	/*
 	 * If a child of this class applies auto layout (overrides coordinates of items)
-	 * then set this to true.
+	 * then set this to true in constructor.
 	 */
-	protected boolean autoLayout = false;
+	protected boolean containerMakesAutoLayout = false;
 
 
 	/**
@@ -87,7 +86,10 @@ public class Container extends Control {
 
 		activateInternalMouseListener();
 
-		content = new ArrayList<Control>();
+		// is this better? It seems that ArrayList has a default capacity of 10 at
+		// first.
+		// This might be wasteful if a lot of containers are used. Lets start with 1
+		content = new ArrayList<Control>(1);
 	}
 
 
@@ -96,10 +98,8 @@ public class Container extends Control {
 	@Override
 	protected void initialize() {
 		super.initialize();
-
-		for (Control c : content) {
+		for (Control c : content)
 			c.initialize();
-		}
 	}
 
 
@@ -155,22 +155,19 @@ public class Container extends Control {
 
 	@Override
 	protected void render() {
-		// if AutoSize is on, first get minimal dimensions
-		if (autoSize) {
-			setAutoSize();
-		}
 		drawDefaultBackground();
 
 		for (int i = 0; i < content.size(); i++) {
 			Control c = content.get(i);
-			if (c.visible) {
+			if (c.visible)
 				containerRenderItem(c, c.x, c.y);
-
-			}
 		}
 	}
 
 	protected final void containerRenderItem(Control item, int x, int y) {
+		// check visiblity in render(), because some containers need to check it in
+		// render() anyway
+
 		if (item.changedVisuals) {
 			item.changedVisuals = false; // do this before render, so it can use animations by calling update again
 
@@ -209,7 +206,8 @@ public class Container extends Control {
 	protected void addItem(int position, Control c) {
 		content.add(position, c);
 		c.parent = this;
-		update();
+		c.addedToParent(); // notify control it has been added to this parent
+		// update(); // called once by public add/insert
 	}
 
 	/**
@@ -223,9 +221,10 @@ public class Container extends Control {
 		for (Control c : controls) {
 			addItem(content.size(), c);
 		}
-		if (!autoLayout) { // don't sort auto-layout containers!
+		if (!containerMakesAutoLayout) { // don't sort auto-layout containers!
 			sortContent();
 		}
+		update();
 	}
 
 	/**
@@ -238,9 +237,10 @@ public class Container extends Control {
 		for (int i = 0; i < controls.length; i++) {
 			addItem(position + i, controls[i]);
 		}
-		if (!autoLayout) { // don't sort auto-layout containers!
+		if (!containerMakesAutoLayout) { // don't sort auto-layout containers!
 			sortContent();
 		}
+		update();
 	}
 
 	/**
@@ -252,7 +252,7 @@ public class Container extends Control {
 	}
 
 	/**
-	 * Remove item at position in item list.
+	 * Remove item at position in item list. Throws error if index is bad.
 	 * 
 	 * @param index position
 	 */
@@ -262,13 +262,23 @@ public class Container extends Control {
 	}
 
 	/**
-	 * Remove a specific Component from item list.
+	 * Remove a specific item from item list.
 	 * 
-	 * @param c Component to remove. 
+	 * @param c item to remove.
 	 */
 	public void remove(Control c) {
 		content.remove(c);
 		update();
+	}
+
+	/**
+	 * Get list index given item. Returns -1 if item is no child of this container.
+	 * 
+	 * @param c item to get index for
+	 * @return index
+	 */
+	public int indexOf(Control c) {
+		return content.indexOf(c);
 	}
 
 	/**
@@ -284,7 +294,17 @@ public class Container extends Control {
 		return c;
 	}
 
-	// sort Content by z-Index
+	/**
+	 * Get item in content list at given index. Returns null if index exceeds list.
+	 * 
+	 * @param index index of requested item
+	 * @return item
+	 */
+	public Control get(int index) {
+		return content.get(index);
+	}
+
+	// sort items by z-Index
 	protected void sortContent() {
 		Collections.sort(content, new Comparator<Control>() {
 			@Override
@@ -293,11 +313,13 @@ public class Container extends Control {
 			}
 		});
 	}
+	
+	
 
 	/**
-	 * Resize container once so it fits its content
+	 * Resize container once so it fits its content.
 	 */
-	public void setAutoSize() {
+	public void fitContent() {
 		int mWidth = 1;
 		int mHeight = 1;
 		for (int i = 0; i < content.size(); i++) {

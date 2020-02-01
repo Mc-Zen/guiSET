@@ -1,5 +1,6 @@
 package guiSET.classes;
 
+import processing.core.*;
 
 /**
  * Class for storing keyboard shortcuts. Can store value for modifier keys
@@ -55,11 +56,25 @@ public class Shortcut {
 	}
 
 
-	// need a static method here as not to confuse the method overloading to much
-	// this is anyway only used by KeyListener as a performance-optimal Constructor
-	public static Shortcut directShortcut(int key, int modifiers) {
+	/*
+	 *
+	 */
+	/**
+	 * A method to create a shortcut with a given keyCode instead of a key and by
+	 * passing the modifiers coded as one single int (as uesd in internally in java
+	 * KeyEvents).
+	 * 
+	 * Need a static method here as not to confuse the constructor overloading too
+	 * much. This is only used by {@link KeyListener} as a performance-optimal
+	 * constructor.
+	 * 
+	 * @param keyCode key code
+	 * @param modifiers modifiers
+	 * @return created shortcut
+	 */
+	public static Shortcut shortcutFromKeyCode(int keyCode, int modifiers) {
 		Shortcut s = new Shortcut();
-		s.keyCode = key;
+		s.keyCode = keyCode;
 		s.modifiers = modifiers;
 		return s;
 	}
@@ -145,7 +160,45 @@ public class Shortcut {
 	 * "Shift+Alt+3".
 	 */
 	public String toString() {
-		return (getControl() ? "Ctrl+" : "") + (getShift() ? "Shift+" : "") + (getAlt() ? "Alt+" : "") + Character.toUpperCase((char) this.keyCode);
+		char c = Character.toUpperCase((char) this.keyCode);
+		String s;
+		switch (c) {
+		case PApplet.DELETE:
+			s = "DELETE";
+			break;
+		case PApplet.BACKSPACE:
+			s = "BACKSPACE";
+			break;
+		case ' ':
+			s = "SPACE";
+			break;
+		case PApplet.ENTER:
+			s = "ENTER";
+			break;
+		case PApplet.RETURN:
+			s = "RETURN";
+			break;
+		case PApplet.UP:
+			s = "Arrow Up";
+			break;
+		case PApplet.DOWN:
+			s = "Arrow Down";
+			break;
+		case PApplet.LEFT:
+			s = "Arrow Left";
+			break;
+		case PApplet.RIGHT:
+			s = "Arrow Right";
+			break;
+		case 35:
+			s = "END";
+			break;
+		default:
+			s = String.valueOf(c);
+		}
+		if (c >= 112 && c <= 123) // F!-F12
+			s = "F" + (char) (c - 111);
+		return (getControl() ? "Ctrl+" : "") + (getShift() ? "Shift+" : "") + (getAlt() ? "Alt+" : "") + s;
 	}
 
 }

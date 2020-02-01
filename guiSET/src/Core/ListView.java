@@ -20,9 +20,11 @@ public class ListView extends VScrollContainer {
 
 	// default background color for new Items generated with add(String)
 	protected int itemBackgroundColor;
+
 	// default back color for selected items for new Items generated with
 	// add(String)
 	protected int selectionColor;
+
 	// default hover color for selected items for new Items generated with
 	// add(String)
 	protected int selectionHoverColor;
@@ -32,10 +34,10 @@ public class ListView extends VScrollContainer {
 
 	// currrently selected (or last selected) item
 	protected Control selectedItem;
-	// index of selectedItem in list
-	protected int selectionIndex = -1;
+
+
 	// if multiSelect true then this list contains the selected items (one of which
-	// is "selectedItem")
+	// is "selectedItem"
 	protected ArrayList<Control> selectedItems;
 
 
@@ -55,8 +57,6 @@ public class ListView extends VScrollContainer {
 		setSelectionColor(-12171706);
 
 		itemBackgroundColor = -1; // white
-		fontSize = 20;
-		textAlign = 37;
 	}
 
 
@@ -64,16 +64,18 @@ public class ListView extends VScrollContainer {
 	 * Method called by the list items
 	 */
 
-	protected void itemSelected(Control item) {
+	protected void itemPressed(Control item) {
 		focus();
 
 		if (!multiSelect) {
 
 			// just deselect previous selectedItem and select the new one
-			deselect(selectedItem);
-			select(item);
+			if (item != selectedItem) { // dont raise itemSelected-event if already selected
+				deselect(selectedItem);
+				selectImpl(item);
+			}
 
-		} else { // if(multiSelect)
+		} else { // if (multiSelect)
 
 			if (Frame.frame0.isControlDown()) {
 
@@ -82,49 +84,175 @@ public class ListView extends VScrollContainer {
 				if (selectedItems.contains(item)) {
 					deselect(item);
 				} else {
-					select(item);
+					selectImpl(item);
 				}
 
 			} else if (Frame.frame0.isShiftDown()) {
 
 				// if shift pressed: select all items between this and previously selected item
 
-				int selStart = selectionIndex;
-				int selEnd = getIndex(item);
+				int selStart = getSelectionIndex();
+				int selEnd = indexOf(item);
 
 				if (selStart > -1 && selEnd > -1) {
 
 					if (selStart > selEnd) {
 						for (int i = selStart - 1; i >= selEnd; i--) {
-							select(i);
-							if (!selectedItems.contains(content.get(i))) {
-								selectedItems.add(content.get(i));
-							}
+							selectImpl(i);
 						}
 
 					} else if (selStart < selEnd) {
 
 						for (int i = selStart + 1; i <= selEnd; i++) {
-							select(i);
-							if (!selectedItems.contains(content.get(i))) {
-								selectedItems.add(content.get(i));
-							}
+							selectImpl(i);
 						}
 					}
 				}
 			} else {
-
 				// if no modifier pressed: deselect all selected and select the new item
 
-				for (Control control : selectedItems) {
-					deselect(control);
-				}
-				selectedItems.clear();
-				select(item);
+				deselectAll();
+				selectImpl(item);
 			}
 		}
 
 	}
+
+
+
+
+
+
+	/*
+	 * Officially select an item internally (also checks if item is in this list).
+	 * 
+	 * selectedItem is only modified here ! selectedItems is only modified here and
+	 * in deselect
+	 * 
+	 * The style of the selected item will be changed to fit background and hover
+	 * color for selected items.
+	 * 
+	 */
+	protected void selectImpl(int index) {
+		if (index >= 0 && index < content.size()) {
+			selectedItem = content.get(index);
+
+			if (!selectedItems.contains(selectedItem)) {
+				selectedItems.add(selectedItem);
+			}
+
+			try {
+				// only raise event if item has not been selected before
+				if (!((ListItem) selectedItem).selected) {
+					((ListItem) selectedItem).selected = true; // dont use setter here
+					selectedItem.update();
+
+					handleRegisteredEventMethod(SELECT_EVENT, selectedItem);
+				}
+			} catch (ClassCastException e) {
+			}
+
+		} else {
+			selectedItem = null;
+		}
+	}
+
+	protected void selectImpl(Control item) {
+		selectImpl(indexOf(item));
+	}
+
+
+
+
+	/*
+	 * Officially deselects an item
+	 */
+
+	/**
+	 * Deselect an item.
+	 * 
+	 * @param index index of item to deselect. Throws no error if index is bad.
+	 */
+	public void deselect(int index) {
+		if (index >= 0 && index < content.size()) {
+			Control c = content.get(index);
+			try {
+				// only raise event if item has not been selected before
+				if (((ListItem) c).selected) {
+					((ListItem) c).selected = false; // dont use setter here
+					c.update();
+				}
+			} catch (ClassCastException e) {
+			}
+
+			selectedItems.remove(c);	// does no harm if not in list
+			if (selectedItem == c)		// if this is head-of-selected-items, deselect
+				selectImpl(-1);
+		}
+	}
+
+	/**
+	 * Deselect an item.
+	 * 
+	 * @param item item to deselect.
+	 */
+	public void deselect(Control item) {
+		deselect(indexOf(item));
+	}
+
+	/**
+	 * Deselect all items
+	 */
+	public void deselectAll() {
+		while (selectedItems.size() > 0) {
+			deselect(selectedItems.get(0));
+		}
+		selectImpl(-1);
+	}
+
+
+
+
+	/**
+	 * Select item with given index. If multiselect is not activated then this will
+	 * deselect all other selected items. Throws no error if index is bad.
+	 * 
+	 * @param index index in listviews item list
+	 */
+	public void select(int index) {
+		if (!multiSelect)
+			deselectAll();
+		selectImpl(index);
+	}
+
+	/**
+	 * Select item by reference. If multiselect is not activated then this will
+	 * deselect all other selected items.
+	 * 
+	 * @param item item to select
+	 */
+	public void select(Control item) {
+		if (!multiSelect)
+			deselectAll();
+		selectImpl(item);
+	}
+
+
+	/**
+	 * Set one item to be selected programatically. Also deselecting all previously
+	 * selected items.
+	 * 
+	 * @param index index in listviews item list
+	 */
+	public void setSelectedItem(int index) {
+		deselectAll();
+		selectImpl(index);
+		scrollToItem(selectedItem);
+		update();
+	}
+
+
+
 
 	/**
 	 * Simple adding method just giving the text as String will create automatically
@@ -165,76 +293,36 @@ public class ListView extends VScrollContainer {
 	}
 
 
+	/**
+	 * Remove all items.
+	 */
+	public void clear() {
+		deselectAll();
+		content.clear();
+		update();
+	}
 
 	/**
-	 * Get list index of the given item, returns -1 if item is not in the list.
+	 * Remove item at position in item list.
 	 * 
-	 * @param item item
-	 * @return returns -1 if item is not in the list.
+	 * @param index position
 	 */
-
-	public int getIndex(Control item) {
-		for (int i = 0; i < content.size(); i++) {
-			if (item == content.get(i)) {
-				return i;
-			}
-		}
-		return -1;
+	public void remove(int index) {
+		deselect(index);
+		content.remove(index);
+		update();
 	}
 
-	/*
-	 * Officially select an item internally (also checks if item is in this list)
+	/**
+	 * Remove a specific item from item list.
 	 * 
-	 * The style of the selected item will be changed to fit background and hover
-	 * color for selected items
-	 * 
-	 * Sets selectionIndex and selectedItem. Also adds to selectedItems-list if
-	 * multiSelect is activated
+	 * @param c item to remove.
 	 */
-
-	protected void select(int index) {
-		if (index >= 0 && index < content.size()) {
-			selectedItem = content.get(index);
-			selectionIndex = index;
-
-			if (multiSelect) {
-				if (!selectedItems.contains(selectedItem)) {
-					selectedItems.add(selectedItem);
-				}
-			}
-
-			((ListItem) selectedItem).setSelected(true);
-			selectedItem.update();
-
-			handleRegisteredEventMethod(SELECT_EVENT, selectedItem);
-		}
+	public void remove(Control c) {
+		deselect(c);
+		content.remove(c);
+		update();
 	}
-
-	protected void select(Control item) {
-		select(getIndex(item));
-	}
-
-	/*
-	 * Officially deselects an item
-	 */
-
-	protected void deselect(int index) {
-		if (index >= 0 && index < content.size()) {
-			((ListItem) content.get(index)).setSelected(false);
-			content.get(index).update();
-		}
-	}
-
-	protected void deselect(Control item) {
-		deselect(getIndex(item));
-	}
-
-
-
-
-
-
-
 
 
 
@@ -243,7 +331,7 @@ public class ListView extends VScrollContainer {
 	 */
 
 	/**
-	 * Settimg this colo will affect all items added afterwards through the
+	 * Settimg this color will affect all items added afterwards through the
 	 * {@link #add(String)} method.
 	 * 
 	 * @param itemBackgroundColor background color for new items
@@ -293,48 +381,15 @@ public class ListView extends VScrollContainer {
 	public void setMultiSelect(boolean multiSelect) {
 		this.multiSelect = multiSelect;
 
-		if (multiSelect) {
-			// if set multiselect while one item is already selected -> add it to list
-			if (selectedItem != null) {
-				selectedItems.add(selectedItem);
-			}
-
-		} else {
+		if (!multiSelect) {
 			// if set multiselect to false while multiple items are selected:
-			// deselect all but the most recent and clear selectedItems list.
-
-			for (Control control : selectedItems) {
-				deselect(control);
-			}
-			selectedItems.clear();
-			if (selectedItem != null) {
-				selectedItems.add(selectedItem);
-			}
+			// deselect all and re-select the most recent
+			Control temp = selectedItem;
+			deselectAll();
+			selectImpl(temp);
 		}
 	}
 
-	/**
-	 * Set one item to be selected programatically. Also deselecting all previously
-	 * selected items.
-	 * 
-	 * @param index
-	 */
-	public void setSelectedItem(int index) {
-
-		if (multiSelect) {
-			for (Control control : selectedItems) {
-				deselect(control);
-			}
-			selectedItems.clear();
-		} else {
-			deselect(selectionIndex);
-		}
-
-		select(index);
-		scrollToItem(selectionIndex);
-
-		update();
-	}
 
 	/*
 	 * GETTER
@@ -357,7 +412,7 @@ public class ListView extends VScrollContainer {
 	}
 
 	public int getSelectionIndex() {
-		return selectionIndex;
+		return content.indexOf(selectedItem);
 	}
 
 	public ArrayList<Control> getSelectedItems() {
@@ -395,7 +450,7 @@ public class ListView extends VScrollContainer {
 	 * @param target     target
 	 */
 	public void addItemSelectedListener(String methodName, Object target) {
-		registerEventRMethod(SELECT_EVENT, methodName, target, null);
+		registerEventRMethod(SELECT_EVENT, methodName, target, Control.class);
 	}
 
 	public void removeItemSelectedListener() {
@@ -413,14 +468,16 @@ public class ListView extends VScrollContainer {
 		if (enabled) {
 			switch (e.getKeyCode()) {
 			case PApplet.DOWN:
+				int selectionIndex = getSelectionIndex();
 				if (selectionIndex < content.size() - 1) {
-					itemSelected(content.get(selectionIndex + 1));
+					itemPressed(content.get(selectionIndex + 1));
 					scrollToItem(selectionIndex);
 				}
 				break;
 			case PApplet.UP:
+				selectionIndex = getSelectionIndex();
 				if (selectionIndex > 0) {
-					itemSelected(content.get(selectionIndex - 1));
+					itemPressed(content.get(selectionIndex - 1));
 					scrollToItem(selectionIndex);
 				}
 				break;

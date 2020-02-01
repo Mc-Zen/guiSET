@@ -31,7 +31,7 @@ public class VScrollContainer extends VFlowContainer {
 	protected int scrollPosition;
 
 	// speed at which container will be scrolled, can be set externally
-	protected int scrollSpeed = 10;
+	protected int scrollSpeed = 50;
 
 	// enable a thin version of scroll handle for small containers (i.e. smaller
 	// textboxes)
@@ -99,13 +99,8 @@ public class VScrollContainer extends VFlowContainer {
 
 	@Override
 	protected void render() {
-		// if AutoSize is on, first get minimal dimensions
-		if (autoSize) {
-			setAutoSize();
-		}
 
 		drawDefaultBackground();
-
 
 		scrollPosition = PApplet.constrain(scrollPosition, 0, PApplet.max(0, fullScrollHeight - height));
 
@@ -140,12 +135,12 @@ public class VScrollContainer extends VFlowContainer {
 			pg.noStroke();
 
 			if (slim_scrollhandle) {
-				pg.rect(width - 4, scrollhandle_posY(), scrollHandleStrength, scrollhandle_height(), 15);
+				pg.rect(width - 1 - scrollHandleStrength, scrollhandle_posY(), scrollHandleStrength, scrollhandle_height(), 15);
 
 			} else {
-				pg.rect(width - 3 - scrollHandleStrength, 0, scrollHandleStrength + 3, scrollbar_height());
+				pg.rect(width - 2 - scrollHandleStrength, 0, scrollHandleStrength + 3, scrollbar_height());
 				pg.fill(190);
-				pg.rect(width - 2 - scrollHandleStrength, scrollhandle_posY(), scrollHandleStrength, scrollhandle_height(), 3);
+				pg.rect(width - 1 - scrollHandleStrength, scrollhandle_posY(), scrollHandleStrength, scrollhandle_height(), 3);
 			}
 		}
 	}
@@ -284,6 +279,10 @@ public class VScrollContainer extends VFlowContainer {
 		return slim_scrollhandle;
 	}
 
+	@Override
+	public int getAvailableWidth() {
+		return width - paddingLeft - paddingRight - scrollHandleStrength - 1;
+	}
 
 
 

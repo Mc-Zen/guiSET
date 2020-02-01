@@ -32,7 +32,8 @@ public class Slider extends Control {
 
 
 	// zoom size
-	protected int size = 15;
+	// protected int size = 15;
+	protected int thickness = 4;
 	protected int ballSize = 15;
 
 	public static final int HORIZONTAL = 0;
@@ -53,7 +54,7 @@ public class Slider extends Control {
 		backgroundColor = -2302756; // some gray
 		foregroundColor = -1926085; // orange
 
-		height = (int) (size * 1.3);
+		height = (int) (ballSize * 1.3);
 
 		setupListeners(1);
 
@@ -81,7 +82,7 @@ public class Slider extends Control {
 		if (orientation == HORIZONTAL) {
 			int sliderWidth = width - ballSize - 1; // width - 2 * 0.5 * ballSize - buffer (1)
 
-			int lineHeight = size / 4;
+			int lineHeight = thickness;
 
 
 			// slider background
@@ -100,7 +101,7 @@ public class Slider extends Control {
 		} else {
 			int sliderHeight = height - ballSize - 1; // height - 2 * 0.5 * ballSize - buffer (1)
 
-			int lineWidth = size / 4;
+			int lineWidth = thickness;
 
 
 			// slider background
@@ -162,17 +163,21 @@ public class Slider extends Control {
 		}
 	}
 
-	public void setSize(int size) {
-		this.size = size;
-		this.ballSize = size;
-
-		// adjust height
+	public void setThickness(int thickness) {
+		this.thickness = thickness;
 		if (orientation == HORIZONTAL)
-			height = (int) (size * 1.3);
+			height = (int) (Math.max(thickness, ballSize) * 1.3);
 		else
-			width = (int) (size * 1.3);
+			width = (int) (Math.max(thickness, ballSize) * 1.3);
 		update();
 	}
+
+	/*
+	 * public void setSize(int size) { this.size = size; this.ballSize = size;
+	 * 
+	 * // adjust height if (orientation == HORIZONTAL) height = (int) (size * 1.3);
+	 * else width = (int) (size * 1.3); update(); }
+	 */
 
 	/**
 	 * Set diameter of the slider value "ball".
@@ -184,9 +189,9 @@ public class Slider extends Control {
 
 		// adjust height to larger of Size and BallSize
 		if (orientation == HORIZONTAL)
-			height = (int) (Math.max(size, ballSize) * 1.3);
+			height = (int) (Math.max(thickness, ballSize) * 1.3);
 		else
-			width = (int) (Math.max(size, ballSize) * 1.3);
+			width = (int) (Math.max(thickness, ballSize) * 1.3);
 		update();
 	}
 
@@ -199,14 +204,14 @@ public class Slider extends Control {
 		if (orientation == HORIZONTAL) {
 			if (this.orientation == VERTICAL) {
 				width = height;
-				height = (int) (Math.max(size, ballSize) * 1.3);
+				height = (int) (Math.max(thickness, ballSize) * 1.3);
 			}
 			this.orientation = orientation;
 		}
 		if (orientation == VERTICAL) {
 			if (this.orientation == HORIZONTAL) {
 				height = width;
-				width = (int) (Math.max(size, ballSize) * 1.3);
+				width = (int) (Math.max(thickness, ballSize) * 1.3);
 			}
 			this.orientation = orientation;
 		}
@@ -250,8 +255,16 @@ public class Slider extends Control {
 		return maxValue;
 	}
 
-	public int getSize() {
-		return size;
+	/*
+	 * public int getSize() { return size; }
+	 */
+
+	public int getThickness() {
+		return thickness;
+	}
+
+	public int getBallSize() {
+		return ballSize;
 	}
 
 	public int getOrientation() {
