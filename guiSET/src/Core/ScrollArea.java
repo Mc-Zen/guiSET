@@ -20,7 +20,7 @@ import processing.event.*;
  * A Container that allows both horizontal and vertical scrolling if the content
  * exceeds the ScrollAreas size. It does not layout its content as
  * {@link VScrollContainer} or {@link VScrollContainer} but keeps the relative x
- * and y positions of the items. 
+ * and y positions of the items.
  * 
  * @author Mc-Zen
  *
@@ -129,9 +129,9 @@ public class ScrollArea extends Container {
 				pg.rect(width - 4, scrollhandle_posY(), scrollHandleStrength, scrollhandle_height(), 15);
 
 			} else {
-				pg.rect(width - 3 - scrollHandleStrength, 0, scrollHandleStrength + 3, scrollbar_height());
+				pg.rect(width - 2 - scrollHandleStrength, 0, scrollHandleStrength + 2, scrollbar_height());
 				pg.fill(190);
-				pg.rect(width - 2 - scrollHandleStrength, scrollhandle_posY(), scrollHandleStrength, scrollhandle_height(), 3);
+				pg.rect(width - 1 - scrollHandleStrength, scrollhandle_posY(), scrollHandleStrength, scrollhandle_height(), 3);
 			}
 		}
 	}
@@ -147,10 +147,10 @@ public class ScrollArea extends Container {
 			if (slim_scrollhandle) {
 				pg.rect(scrollhandle_posX(), height - 4, scrollhandle_width(), 3, 15);
 			} else {
-				pg.rect(0, height - 3 - scrollHandleStrength, scrollbar_width(), scrollHandleStrength + 3); // height is one more than necessary (just
+				pg.rect(0, height - 2 - scrollHandleStrength, scrollbar_width(), scrollHandleStrength + 3); // height is one more than necessary (just
 																											 // a buffer)
 				pg.fill(190);
-				pg.rect(scrollhandle_posX(), height - 2 - scrollHandleStrength, scrollhandle_width(), scrollHandleStrength, 3);
+				pg.rect(scrollhandle_posX(), height - 1 - scrollHandleStrength, scrollhandle_width(), scrollHandleStrength, 3);
 			}
 		}
 	}
@@ -358,12 +358,16 @@ public class ScrollArea extends Container {
 			if (whichScrollBar == H_SCROLLBAR) {
 
 				float newScrollHandle_Pos = e.getX() - bounds.X0 - startHandleDragPos;
+				if (useNewMouseEvent)
+					newScrollHandle_Pos = e.getX() - getOffsetXWindow() - startHandleDragPos;
 				float newScrollPosition = newScrollHandle_Pos * (float) (fullScrollWidth - width) / (scrollbar_width() - scrollhandle_width());
 				setScrollPositionX((int) newScrollPosition);
 
 			} else if (whichScrollBar == V_SCROLLBAR) {
 
 				float newScrollHandle_Pos = e.getY() - bounds.Y0 - startHandleDragPos;
+				if (useNewMouseEvent)
+					newScrollHandle_Pos = e.getY() - getOffsetYWindow() - startHandleDragPos;
 				float newScrollPosition = newScrollHandle_Pos * (float) (fullScrollHeight - height) / (scrollbar_height() - scrollhandle_height());
 				setScrollPositionY((int) newScrollPosition);
 
@@ -424,5 +428,101 @@ public class ScrollArea extends Container {
 		}
 	}
 
+	/*
+	 * Need to check if mouse is over one of the scroll bars. If so, then content
+	 * items should not receive this mouse event (thus return false here in this
+	 * case).
+	 * 
+	 * 
+	 * (non-Javadoc)
+	 * 
+	 * @see guiSET.core.Container#containerPreItemsMouseEvent(int, int)
+	 */
+	@Override
+	protected boolean containerPreItemsMouseEvent(int x, int y) {
+		boolean mouseIsOverScrollBarV = x > width - scrollHandleStrength - 3 && x < width && y > 0
+				&& y < height - (needsScrollbarV() ? scrollHandleStrength + 3 : 0);
+		boolean mouseIsOverScrollBarH = y > height - scrollHandleStrength - 3 && y < height && x > 0
+				&& x < width - (needsScrollbarH() ? scrollHandleStrength + 3 : 0);
+
+
+		if (currentMouseEvent.getAction() == MouseEvent.PRESS) {
+
+			if (mouseIsOverScrollBarH) {
+				whichScrollBar = H_SCROLLBAR;
+				float scrollhandle_posX = scrollhandle_posX();
+
+				// if clicked on scrollhandle itself (instead of entire scroll area) the
+				// dragging is started
+				if (x > scrollhandle_posX && x < scrollhandle_posX + scrollhandle_width()) {
+					startHandleDragPos = x - scrollhandle_posX;
+				}
+
+			} else if (mouseIsOverScrollBarV) {
+				whichScrollBar = V_SCROLLBAR;
+
+				float scrollhandle_posY = scrollhandle_posY();
+
+				// if clicked on scrollhandle itself (instead of entire scroll area) the
+				// dragging is started
+				if (y > scrollhandle_posY && y < scrollhandle_posY + scrollhandle_height()) {
+					startHandleDragPos = y - scrollhandle_posY;
+				}
+
+			}
+
+		} else if (currentMouseEvent.getAction() == MouseEvent.RELEASE)
+			startHandleDragPos = -1;
+
+		// return false if mouse is over either scroll bar.
+		// This way the items will not receive this mouse event.
+		return !(mouseIsOverScrollBarV || mouseIsOverScrollBarH);
+	}
+
+
+
+	/*
+	 * @Override protected void mouseEvent(int x, int y) { if (visible) { x -= x0; y
+	 * -= y0;
+	 * 
+	 * // // handle the scrollbar dragging //
+	 * 
+	 * boolean mouseIsOverScrollAreaV = x > width - scrollHandleStrength - 3 && x <
+	 * width && y > 0 && y < height - (needsScrollbarV() ? scrollHandleStrength + 3
+	 * : 0); boolean mouseIsOverScrollAreaH = y > height - scrollHandleStrength - 3
+	 * && y < height && x > 0 && x < width - (needsScrollbarH() ?
+	 * scrollHandleStrength + 3 : 0);
+	 * 
+	 * if (mouseIsOverScrollAreaH) { whichScrollBar = H_SCROLLBAR; float
+	 * scrollhandle_posX = scrollhandle_posX();
+	 * 
+	 * // if clicked on scrollhandle itself (instead of entire scroll area) the //
+	 * dragging is started if (x > scrollhandle_posX && x < scrollhandle_posX +
+	 * scrollhandle_width()) { if (e.getAction() == MouseEvent.PRESS)
+	 * startHandleDragPos = x - scrollhandle_posX;
+	 * 
+	 * // dont handle events for stuff below Control.first = this; //
+	 * Frame.stopPropagation(); } } else if (mouseIsOverScrollAreaV) {
+	 * whichScrollBar = V_SCROLLBAR;
+	 * 
+	 * float scrollhandle_posY = scrollhandle_posY();
+	 * 
+	 * // if clicked on scrollhandle itself (instead of entire scroll area) the //
+	 * dragging is started if (y > scrollhandle_posY && y < scrollhandle_posY +
+	 * scrollhandle_height()) { if (e.getAction() == MouseEvent.PRESS)
+	 * startHandleDragPos = y - scrollhandle_posY;
+	 * 
+	 * Control.first = this; // dont handle events for stuff below //
+	 * Frame.stopPropagation(); } }
+	 * 
+	 * switch (e.getAction()) { case MouseEvent.PRESS:
+	 * 
+	 * 
+	 * break; case MouseEvent.RELEASE:
+	 * 
+	 * // stop dragging scrollbar startHandleDragPos = -1; break; }
+	 * 
+	 * super.mouseEvent(x + x0, y + y0); } }
+	 */
 
 }

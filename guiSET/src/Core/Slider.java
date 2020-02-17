@@ -21,7 +21,7 @@ public class Slider extends Control {
 
 	protected float value;
 	protected float minValue = 0;
-	protected float maxValue = 200;
+	protected float maxValue = 100;
 
 
 
@@ -31,8 +31,7 @@ public class Slider extends Control {
 
 
 
-	// zoom size
-	protected int size = 15;
+	protected int thickness = 4;
 	protected int ballSize = 15;
 
 	public static final int HORIZONTAL = 0;
@@ -53,11 +52,9 @@ public class Slider extends Control {
 		backgroundColor = -2302756; // some gray
 		foregroundColor = -1926085; // orange
 
-		height = (int) (size * 1.3);
+		height = (int) (ballSize * 1.3);
 
-		setupListeners(1);
-
-		activateInternalMouseListener();
+		setupListeners(1); // one additional listener (valueChanged)
 	}
 
 
@@ -81,7 +78,7 @@ public class Slider extends Control {
 		if (orientation == HORIZONTAL) {
 			int sliderWidth = width - ballSize - 1; // width - 2 * 0.5 * ballSize - buffer (1)
 
-			int lineHeight = size / 4;
+			int lineHeight = thickness;
 
 
 			// slider background
@@ -100,7 +97,7 @@ public class Slider extends Control {
 		} else {
 			int sliderHeight = height - ballSize - 1; // height - 2 * 0.5 * ballSize - buffer (1)
 
-			int lineWidth = size / 4;
+			int lineWidth = thickness;
 
 
 			// slider background
@@ -127,9 +124,10 @@ public class Slider extends Control {
 	 */
 
 	/**
-	 * Set the value of the slider. This triggers the valueChanged event.
+	 * Set the value of the slider. This triggers the valueChanged event if value
+	 * has actually changed.
 	 * 
-	 * @param value
+	 * @param value value
 	 */
 	public void setValue(float value) {
 		float tempValue = this.value;
@@ -139,13 +137,19 @@ public class Slider extends Control {
 		// only invoke registered method if value really changed (might not because of
 		// constraining)
 		if (tempValue != this.value) {
-			handleRegisteredEventMethod(CHANGE_EVENT, null);
+			handleRegisteredEventMethod(CHANGE_EVENT, this);
 		}
 		update();
 	}
 
-	public void setMinValue(float value) {
-		if (value < maxValue) {
+	/**
+	 * Set minimum value of the slider. If given value is greater the set maxmium
+	 * value, an error message is printed.
+	 * 
+	 * @param minValue minValue
+	 */
+	public void setMinValue(float minValue) {
+		if (value <= maxValue) {
 			minValue = value;
 			update();
 		} else {
@@ -153,8 +157,14 @@ public class Slider extends Control {
 		}
 	}
 
-	public void setMaxValue(float value) {
-		if (value > minValue) {
+	/**
+	 * Set maximum value of the slider. If given value is greater the set minimum
+	 * value, an error message is printed.
+	 * 
+	 * @param maxValue maxValue
+	 */
+	public void setMaxValue(float maxValue) {
+		if (value >= minValue) {
 			maxValue = value;
 			update();
 		} else {
@@ -162,31 +172,34 @@ public class Slider extends Control {
 		}
 	}
 
-	public void setSize(int size) {
-		this.size = size;
-		this.ballSize = size;
-
-		// adjust height
+	/**
+	 * Set the thickness of the slider bar in pixel.
+	 * 
+	 * @param thickness thickness
+	 */
+	public void setThickness(int thickness) {
+		this.thickness = thickness;
 		if (orientation == HORIZONTAL)
-			height = (int) (size * 1.3);
+			height = (int) (Math.max(thickness, ballSize) * 1.3);
 		else
-			width = (int) (size * 1.3);
+			width = (int) (Math.max(thickness, ballSize) * 1.3);
 		update();
 	}
+
 
 	/**
 	 * Set diameter of the slider value "ball".
 	 * 
-	 * @param ballSize
+	 * @param ballSize ballSize
 	 */
 	public void setBallSize(int ballSize) {
 		this.ballSize = ballSize;
 
 		// adjust height to larger of Size and BallSize
 		if (orientation == HORIZONTAL)
-			height = (int) (Math.max(size, ballSize) * 1.3);
+			height = (int) (Math.max(thickness, ballSize) * 1.3);
 		else
-			width = (int) (Math.max(size, ballSize) * 1.3);
+			width = (int) (Math.max(thickness, ballSize) * 1.3);
 		update();
 	}
 
@@ -199,14 +212,14 @@ public class Slider extends Control {
 		if (orientation == HORIZONTAL) {
 			if (this.orientation == VERTICAL) {
 				width = height;
-				height = (int) (Math.max(size, ballSize) * 1.3);
+				height = (int) (Math.max(thickness, ballSize) * 1.3);
 			}
 			this.orientation = orientation;
 		}
 		if (orientation == VERTICAL) {
 			if (this.orientation == HORIZONTAL) {
 				height = width;
-				width = (int) (Math.max(size, ballSize) * 1.3);
+				width = (int) (Math.max(thickness, ballSize) * 1.3);
 			}
 			this.orientation = orientation;
 		}
@@ -218,7 +231,7 @@ public class Slider extends Control {
 	 * Specify if scrolling while mouse is over the slider changes the value.
 	 * Default is false.
 	 * 
-	 * @param wheelEnabled
+	 * @param wheelEnabled wheelEnabled
 	 */
 	public void setWheelEnabled(boolean wheelEnabled) {
 		this.wheelEnabled = wheelEnabled;
@@ -228,7 +241,7 @@ public class Slider extends Control {
 	 * Set the scroll speed a.k.a the amount to scroll if wheelEnabled is set to
 	 * true.
 	 * 
-	 * @param scrollSpeed
+	 * @param scrollSpeed scrollSpeed
 	 */
 	public void setScrollSpeed(int scrollSpeed) {
 		this.scrollSpeed = scrollSpeed;
@@ -250,8 +263,12 @@ public class Slider extends Control {
 		return maxValue;
 	}
 
-	public int getSize() {
-		return size;
+	public int getThickness() {
+		return thickness;
+	}
+
+	public int getBallSize() {
+		return ballSize;
 	}
 
 	public int getOrientation() {
@@ -287,7 +304,7 @@ public class Slider extends Control {
 	 * @param target
 	 */
 	public void addValueChangedListener(String methodName, Object target) {
-		registerEventRMethod(CHANGE_EVENT, methodName, target, null);
+		registerEventRMethod(CHANGE_EVENT, methodName, target, Control.class);
 	}
 
 	public void addValueChangedListener(String methodName) {
@@ -331,3 +348,6 @@ public class Slider extends Control {
 			setValue(value + e.getCount() * scrollSpeed);
 	}
 }
+
+
+

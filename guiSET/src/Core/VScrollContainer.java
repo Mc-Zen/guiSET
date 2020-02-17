@@ -31,7 +31,7 @@ public class VScrollContainer extends VFlowContainer {
 	protected int scrollPosition;
 
 	// speed at which container will be scrolled, can be set externally
-	protected int scrollSpeed = 10;
+	protected int scrollSpeed = 50;
 
 	// enable a thin version of scroll handle for small containers (i.e. smaller
 	// textboxes)
@@ -99,17 +99,15 @@ public class VScrollContainer extends VFlowContainer {
 
 	@Override
 	protected void render() {
-		// if AutoSize is on, first get minimal dimensions
-		if (autoSize) {
-			setAutoSize();
-		}
 
 		drawDefaultBackground();
-
 
 		scrollPosition = PApplet.constrain(scrollPosition, 0, PApplet.max(0, fullScrollHeight - height));
 
 		int usedSpace = paddingTop;
+		fullScrollHeight = paddingTop;
+
+
 
 		for (Control c : content) {
 
@@ -119,9 +117,23 @@ public class VScrollContainer extends VFlowContainer {
 				// don't draw and render if control is not visible (out of the containers bounds
 				// due to scrolling)
 
-				if (!(c.bounds.Y0 > bounds.Y || c.bounds.Y < bounds.Y0)) {
-					containerRenderItem(c, c.marginLeft + paddingLeft, usedSpace + c.marginTop - scrollPosition);
+				if (useNewMouseEvent) {
+					int cx0 = c.marginLeft + paddingLeft;
+					int cy0 = usedSpace + c.marginTop - scrollPosition;
+
+					if (!(cy0 > height || cy0 + c.height < 0)) {
+						containerRenderItem(c, cx0, cy0);
+					} else {
+						c.relativeX = width;
+						c.relativeY = height;
+					}
+				} else {
+					if (!(c.bounds.Y0 > bounds.Y || c.bounds.Y < bounds.Y0)) {
+						containerRenderItem(c, c.marginLeft + paddingLeft, usedSpace + c.marginTop - scrollPosition);
+					}
+
 				}
+				fullScrollHeight += c.marginTop + c.height + c.marginBottom;
 
 				usedSpace += (c.height + c.marginTop + c.marginBottom);
 			}
@@ -140,12 +152,12 @@ public class VScrollContainer extends VFlowContainer {
 			pg.noStroke();
 
 			if (slim_scrollhandle) {
-				pg.rect(width - 4, scrollhandle_posY(), scrollHandleStrength, scrollhandle_height(), 15);
+				pg.rect(width - 1 - scrollHandleStrength, scrollhandle_posY(), scrollHandleStrength, scrollhandle_height(), 15);
 
 			} else {
-				pg.rect(width - 3 - scrollHandleStrength, 0, scrollHandleStrength + 3, scrollbar_height());
+				pg.rect(width - 2 - scrollHandleStrength, 0, scrollHandleStrength + 3, scrollbar_height());
 				pg.fill(190);
-				pg.rect(width - 2 - scrollHandleStrength, scrollhandle_posY(), scrollHandleStrength, scrollhandle_height(), 3);
+				pg.rect(width - 1 - scrollHandleStrength, scrollhandle_posY(), scrollHandleStrength, scrollhandle_height(), 3);
 			}
 		}
 	}
@@ -284,6 +296,10 @@ public class VScrollContainer extends VFlowContainer {
 		return slim_scrollhandle;
 	}
 
+	@Override
+	public int getAvailableWidth() {
+		return width - paddingLeft - paddingRight - scrollHandleStrength - 1;
+	}
 
 
 
@@ -329,6 +345,8 @@ public class VScrollContainer extends VFlowContainer {
 	protected void drag(MouseEvent e) {
 		if (startHandleDragPos > -1) {
 			float newScrollHandle_Pos = e.getY() - bounds.Y0 - startHandleDragPos;
+			if (useNewMouseEvent)
+				newScrollHandle_Pos = e.getY() - getOffsetYWindow() - startHandleDragPos;
 			float newScrollPosition = newScrollHandle_Pos * (float) (fullScrollHeight - height) / (scrollbar_height() - scrollhandle_height());
 			setScrollPosition((int) newScrollPosition);
 		}
@@ -378,6 +396,66 @@ public class VScrollContainer extends VFlowContainer {
 	}
 
 
+	/*
+	 * Need to check if mouse is over the scroll bar. If so, then content items
+	 * should not receive this mouse event (thus return false here in this case).
+	 * 
+	 * 
+	 * (non-Javadoc)
+	 * 
+	 * @see guiSET.core.Container#containerPreItemsMouseEvent(int, int)
+	 */
+	@Override
+	protected boolean containerPreItemsMouseEvent(int x, int y) {
+
+		boolean mouseIsOverScrollBar = x > width - scrollHandleStrength - 3 && x < width && y > 0 && y < height;
+print(mouseIsOverScrollBar);
+
+		switch (currentMouseEvent.getAction()) {
+		case MouseEvent.PRESS:
+			if (mouseIsOverScrollBar) {
+
+				float scrollhandle_posY = scrollhandle_posY();
+
+				// if clicked on scrollhandle itself (instead of entire scroll area) the
+				// dragging is started
+				if (y > scrollhandle_posY && y < scrollhandle_posY + scrollhandle_height()) {
+					startHandleDragPos = y - scrollhandle_posY;
+				}
+			}
+			break;
+		case MouseEvent.RELEASE:
+			// stop dragging scrollbar
+			startHandleDragPos = -1;
+			break;
+		}
+
+		return !mouseIsOverScrollBar;
+	}
+	/*
+	 * @Override protected void mouseEvent(int x, int y) { if (visible) { x -= x0; y
+	 * -= y0;
+	 * 
+	 * // // handle the scrollbar dragging //
+	 * 
+	 * boolean mouseIsOverScrollArea = x > width - scrollHandleStrength - 3 && x <
+	 * width && y > 0 && y < height;
+	 * 
+	 * switch (e.getAction()) { case MouseEvent.PRESS: if (mouseIsOverScrollArea) {
+	 * 
+	 * float scrollhandle_posY = scrollhandle_posY();
+	 * 
+	 * // if clicked on scrollhandle itself (instead of entire scroll area) the //
+	 * dragging is started if (y > scrollhandle_posY && y < scrollhandle_posY +
+	 * scrollhandle_height()) { startHandleDragPos = y - scrollhandle_posY; } }
+	 * break;
+	 * 
+	 * case MouseEvent.RELEASE:
+	 * 
+	 * // stop dragging scrollbar startHandleDragPos = -1; break; }
+	 * 
+	 * super.mouseEvent(x + x0, y + y0); } }
+	 */
 
 }
 

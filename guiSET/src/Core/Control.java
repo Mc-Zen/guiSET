@@ -7,6 +7,7 @@ import java.lang.reflect.Method;
 import guiSET.classes.*;
 
 import java.lang.reflect.InvocationTargetException;
+import java.awt.Font;
 
 /**
  * (Abstract) Base class for all other visual components.
@@ -17,7 +18,6 @@ import java.lang.reflect.InvocationTargetException;
  */
 
 
-
 public abstract class Control {
 
 	/**
@@ -25,7 +25,6 @@ public abstract class Control {
 	 * 
 	 * This property has no effect on the looks.
 	 */
-
 	public String name = "";
 
 
@@ -50,8 +49,8 @@ public abstract class Control {
 
 
 	/*
-	 * changedVisuals will be set to true when graphics of this control changed, so
-	 * parents know if they need to re-render this object.
+	 * dirty will be set to true when graphics of this control changed, so parents
+	 * know if they need to re-render this object.
 	 * 
 	 * This will happen when update() has been called for this Control (update()
 	 * also calls update() for all parent containers)
@@ -59,12 +58,12 @@ public abstract class Control {
 	 * Don't set this property, only call update() in your classes !
 	 */
 
-	protected boolean changedVisuals = true;
+	protected boolean dirty = true;
 
 
 	/*
 	 * type of control class, i.e. all containers are marked as such (needed for
-	 * quick render decisions)
+	 * quick render decisions without casting)
 	 */
 
 	protected int cType = DEFAULT;
@@ -117,6 +116,8 @@ public abstract class Control {
 
 
 	/*
+	 * EDIT: new mouse event listening does not use bounds anymore
+	 * 
 	 * Bounds are the key to the mouse event listening process. They describe the
 	 * objects position and size relative to the window origin.
 	 * 
@@ -131,13 +132,9 @@ public abstract class Control {
 	 * Visuals
 	 */
 	protected String text = ""; 			// multi-purpose text to display, e.g. button text, label text, textbox content
-	protected int fontSize = 13;
+	protected float fontSize = 13;
 	protected int textAlign = 3; 			// LEFT, CENTER, RIGHT (= 37, 3, 39) from PConstants
 	protected int textAlignY = 3; 			// vertical text align (TOP, CENTER, BOTTOM) (= 101, 3, 102)
-
-	protected int backgroundType = COLOR; 	// mode to fill background, default Color
-	public static final int COLOR = 0; 		// use color to draw background
-	public static final int IMAGE = 1; 		// use image to draw background
 
 	protected PImage image;
 	protected int imageMode = FILL;
@@ -204,7 +201,7 @@ public abstract class Control {
 	 * is focused. I.e. useful for textboxes (ctrl-c, x etc.)
 	 */
 
-	protected boolean overridesParentsShortcuts = false;
+	protected boolean overridesFrameShortcuts = false;
 
 
 
@@ -216,12 +213,12 @@ public abstract class Control {
 		height = 50;
 		width = 50;
 
-		backgroundColor = 255;
+		backgroundColor = -1;			// color(255)
 		visualBackgroundColor = 255;
-		foregroundColor = 0;
+		foregroundColor = -16777216; 	// color(0)
 		borderColor = 20;
-		hoverColor = 200;
-		pressedColor = 150;
+		hoverColor = -1;				// color(255)
+		pressedColor = -1;				// color(255)
 
 		setupListeners(0);
 	}
@@ -276,7 +273,52 @@ public abstract class Control {
 
 	protected abstract void render();
 
+	protected final void containerRenderItem(Control item, int x, int y) {
+		// check visiblity in render(), because some containers need to check it in
+		// render() anyway
 
+
+		// set new mousevent style bounds
+		/*
+		 * if (!(item.y0 > 0 || item.y0 + item.height < bounds.Y0)) { item.x0 = x;
+		 * item.y0 = y; }else
+		 */ {
+		}
+		if (item.opacity == 0) {
+
+			// make this thing inaccessible to mouse events
+			item.relativeX = width;
+			item.relativeY = height;
+			return;
+		}
+
+		item.relativeX = x;
+		item.relativeY = y;
+
+
+		if (item.dirty) {
+			item.dirty = false; // do this before render, so it can use animations by calling update again
+
+			item.preRender();
+			item.render();
+			item.pg.endDraw();
+
+//			Frame.renderCount++;
+//			Frame.renderedObjects += item.getClass();
+		}
+
+
+
+		// apply opacity (tinting carries out quite a lot of calculations in PGraphics,
+		// while noTint() doesn't)
+		if (item.opacity < 1) {
+			pg.tint(255, (int) (item.opacity * 256));
+		} else {
+			pg.tint = false;
+		}
+
+		pg.image(item.getGraphics(), x, y);
+	}
 
 	/*
 	 * Dimensions (width, height) from previous frame. Used to check if size
@@ -321,16 +363,33 @@ public abstract class Control {
 	 */
 	protected void update() {
 		if (parent != null) {
-			changedVisuals = true;
+			dirty = true;
 			parent.update();
 		}
+	}
+
+
+
+	/*
+	 * Called by containers when they add this object to themselves
+	 */
+	protected void addedToParent() {
+
+	}
+
+	/*
+	 * Called by animations after a change Some components might need to adjust
+	 * stuff then as no setter is called.
+	 */
+	protected void animated() {
+		update();
 	}
 
 	/**
 	 * Force a re-render of this Component. This shouldn't be needed, but just in
 	 * case
 	 */
-	public void forceRenderAlthoughItShouldntBeNeeded() {
+	public void forceRender() {
 		update();
 	}
 
@@ -371,7 +430,6 @@ public abstract class Control {
 
 
 
-
 	/**
 	 * Standard text drawing method accounting padding, align, color etc. This
 	 * method can be used by any control for drawing its text.
@@ -397,16 +455,16 @@ public abstract class Control {
 		}
 		switch (textAlignY) {
 		case 101:
-			y = paddingTop;
+			y = (int) (paddingTop - 0.2 * fontSize);
 			break;
 		case 3:
-			y = height / 2;
+			y = (int) (height / 2 - 0.07 * fontSize); // somehow alignY center by processing is not quite exact in middle of fontSize
 			break;
 		case 102:
 			y = height - paddingBottom;
 			break;
 		}
-		pg.text(text, x, y);
+		pg.text(text.toCharArray(), 0, text.length(), x, y);
 	}
 
 
@@ -417,7 +475,7 @@ public abstract class Control {
 	 * transparency.
 	 */
 	protected void drawDefaultBackground() {
-		if (backgroundType == COLOR) {
+		if (image == null) {
 
 			if (visualBackgroundColor != 0) {
 				pg.fill(visualBackgroundColor);
@@ -432,7 +490,50 @@ public abstract class Control {
 			}
 			pg.rect(borderWidth / 2, borderWidth / 2, width - borderWidth, height - borderWidth, borderRadius);
 
-		} else if (backgroundType == IMAGE) {
+		} else {
+
+			// All this stuff does not work :( now using mask() instead
+			/*
+			 * PShape pg, globe; pg = pg.createShape(PApplet.RECT, 0, 0, width, height,
+			 * borderRadius); pg.setTexture(image);
+			 * 
+			 * globe = pg.createShape(PApplet.ELLIPSE, width/2, height/2, width, height); //
+			 * Automatically texture the shape with the image globe.setTexture(image);
+			 */
+			/*
+			 * s = pg.createShape(PApplet.RECT, 0, 0, width, height);
+			 * s.beginShape(PApplet.TRIANGLE_STRIP); s.vertex(30, 75); s.vertex(40, 20);
+			 * s.vertex(50, 75); s.vertex(60, 20); s.vertex(70, 75); s.vertex(80, 20);
+			 * s.vertex(90, 75); s.endShape();
+			 */
+			// a.setTexture(image);
+			// pg.setTexture(image);
+			/*
+			 * pg.beginShape(); // vertex(x1+tl, y1); //pg.fill(30); //pg.texture(image);
+			 * //pg.fill(34); if (borderRadius != 0) { pg.vertex(width-borderRadius, 0);
+			 * pg.quadraticVertex(width, 0, width, 0+borderRadius); pg.vertex(width,
+			 * height-borderRadius); pg.quadraticVertex(width, height, width-borderRadius,
+			 * height); pg.vertex(0+borderRadius, height); pg.quadraticVertex(0, height, 0,
+			 * height-borderRadius); pg.vertex(0, 0+borderRadius); pg.quadraticVertex(0,0,
+			 * 0+borderRadius, 0); } else { pg.vertex(width, 0); pg.vertex(width, height);
+			 * pg.vertex(0, height); pg.vertex(0,0); }
+			 */
+
+			/*
+			 * if (borderRadius != 0) { pg.vertex(width-borderRadius, 0);
+			 * pg.quadraticVertex(width, 0, width, 0+borderRadius); } else {
+			 * pg.vertex(width, 0); } if (borderRadius != 0) { pg.vertex(width,
+			 * height-borderRadius); pg.quadraticVertex(width, height, width-borderRadius,
+			 * height); } else { } if (borderRadius != 0) { pg.vertex(0+borderRadius,
+			 * height); pg.quadraticVertex(0, height, 0, height-borderRadius); } else { } if
+			 * (borderRadius != 0) { pg.vertex(0, 0+borderRadius); pg.quadraticVertex(0,0,
+			 * 0+borderRadius, 0); } else { }
+			 */
+//		    endShape();
+			// pg.endShape(PApplet.CLOSE);
+			// pg.shape(pg);
+
+
 
 			if (imageMode == FILL) {
 				pg.image(image, 0, 0, width, height);
@@ -464,12 +565,23 @@ public abstract class Control {
 
 			}
 
+			// is there is a border radius we need to mask the image
+			if (borderRadius > 0) {
+				PGraphics maskImage = Frame.frame0.papplet.createGraphics(width, height);
+				maskImage.beginDraw();
+				maskImage.noStroke();
+				maskImage.rect(borderWidth / 2, borderWidth / 2, width - borderWidth, height - borderWidth, borderRadius);
+				maskImage.endDraw();
+				pg.mask(maskImage);
+			}
 			// still draw border
+
 			if (borderWidth > 0) {
 				pg.noFill();
 				pg.strokeWeight(borderWidth);
 				pg.stroke(borderColor);
 				pg.rect(borderWidth / 2, borderWidth / 2, width - borderWidth, height - borderWidth, borderRadius);
+
 			}
 		}
 	}
@@ -492,38 +604,118 @@ public abstract class Control {
 	/**
 	 * A 1x1 dummy graphics is used for getting textwidth etc. without needing to
 	 * create the pgraphics before for each control method for getting width of text
-	 * making autoSize calculations easier and more independant
+	 * making autoFit calculations easier and more independant.
+	 * 
+	 * It is intialized when a Frame is created first time and only then ready.
 	 */
 	private static PGraphics textInfo_graphics;
+	private static PFont pfont;
 
+	// called by Frame at constructor
 	protected static void init_textinfo_graphics() {
+
 		textInfo_graphics = Frame.frame0.papplet.createGraphics(1, 1);
 		textInfo_graphics.beginDraw();
 		textInfo_graphics.textSize(12);
+		// System.out.println(textInfo_graphics.textFont);
+		// textInfo_graphics.textFont = createDefaultFont(12f);
+		// textInfo_graphics.endDraw();
+
+		pfont = createDefaultFont(13);
 	}
+
+	// copied from PGraphics - need this here but cant access
+	private static PFont createDefaultFont(float size) {
+		Font baseFont = new Font("Lucida Sans", Font.PLAIN, 1);
+		return createFont(baseFont, size, true, null, false);
+	}
+
+	// copied from PGraphics - need this here but cant access
+	private static PFont createFont(Font baseFont, float size, boolean smooth, char[] charset, boolean stream) {
+		return new PFont(baseFont.deriveFont(size * Frame.frame0.papplet.pixelDensity), smooth, charset, stream, Frame.frame0.papplet.pixelDensity);
+	}
+
+
 
 	/**
 	 * Descent of text below baseline for the set fontsize in pixel.
 	 */
 	protected float textDescent() {
-		return textInfo_graphics.textFont.descent() * fontSize;
+		if (pfont == null)
+			throw new RuntimeException("Frame needs to be intialized before any other guiSET Component");
+		return pfont.descent() * fontSize;
 	}
 
 	/**
 	 * Ascent of text for the set fontsize in pixel.
 	 */
 	protected float textAscent() {
-		return textInfo_graphics.textFont.ascent() * fontSize;
+		if (pfont == null)
+			throw new RuntimeException("Frame needs to be intialized before any other guiSET Component");
+		return pfont.ascent() * fontSize;
+	}
+
+	protected float textLeading() {
+		return (textAscent() + textDescent()) * 1.5f;
 	}
 
 	/**
 	 * Width of text in pixel.
 	 */
 	protected float textWidth(String text) {
-		char[] buffer = text.toCharArray();
+		if (pfont == null)
+			throw new RuntimeException("Frame needs to be intialized before any other guiSET Component");
+
+
+//		char[] buffer = text.toCharArray();
+//		float wide = 0.0f;
+//		for (int i = 0; i < buffer.length; i++) {
+//			wide += pfont.width(buffer[i]) * fontSize;
+//		}
+//
+//
+//		System.out.println(wide + " " + (textInfo_graphics.textWidth(text) - wide) + " " + textWidthStr(text) + " " + text);
+//		return wide;
+
+		return textWidthStr(text);
+	}
+
+
+
+
+	static char[] textWidthBuffer = new char[3];
+
+	// copied from PGraphics
+	private float textWidthStr(String str) {
+		int length = str.length();
+		if (length > textWidthBuffer.length) {
+			textWidthBuffer = new char[length + 10];
+		}
+		str.getChars(0, length, textWidthBuffer, 0);
+
 		float wide = 0;
-		for (int i = 0; i < buffer.length; i++) {
-			wide += textInfo_graphics.textFont.width(buffer[i]) * fontSize;
+		int index = 0;
+		int start = 0;
+
+		while (index < length) {
+			if (textWidthBuffer[index] == '\n') {
+				wide = Math.max(wide, textWidthImpl(textWidthBuffer, start, index));
+				start = index + 1;
+			}
+			index++;
+		}
+		if (start < length) {
+			wide = Math.max(wide, textWidthImpl(textWidthBuffer, start, index));
+		}
+		return wide;
+	}
+
+	// copied from PGraphics
+	private float textWidthImpl(char buffer[], int start, int stop) {
+		float wide = 0;
+		for (int i = start; i < stop; i++) {
+			// could add kerning here, but it just ain't implemented
+			wide += pfont.width(buffer[i]) * fontSize;
 		}
 		return wide;
 	}
@@ -531,8 +723,14 @@ public abstract class Control {
 
 
 
+
+
+
 	/*
-	 * ANCHORS / AUTOMATIC RESIZING
+	 * _______________________________________________________________________________________________________________
+	 * ANCHORS / AUTOMATIC RESIZING
+	 * _______________________________________________________________________________________________________________
+	 * 
 	 *
 	 *
 	 * 
@@ -580,6 +778,10 @@ public abstract class Control {
 	 *                   types (order doesn't matter)
 	 */
 	public void addAutoAnchor(int... newAnchors) {
+		if (parent == null) {
+			System.err.println("addAutoAnchor() ignored: element " + this + " has no parent");
+		}
+
 		for (int anchor : newAnchors) {
 			switch (anchor) {
 			case PApplet.TOP:
@@ -610,14 +812,57 @@ public abstract class Control {
 	 * 
 	 * resize() needs to be called, so the changes that should be applied so the
 	 * anchor is executed correctly need to be updated. On the other hand this needs
-	 * the parent to be set.
+	 * the parent to be set. Unlike
 	 */
-	protected void setAnchor(int anchorType, int value) {
-		if (anchorType >= 0 && anchorType < 4) {
-			anchors[anchorType] = value;
+
+	/**
+	 * Set an Anchor of type TOP BOTTOM, LEFT or RIGHT to a certain value. This also
+	 * immediately sets the position or size of this element if necessary according
+	 * to the anchors. Unlike with {@link #addAutoAnchor(int...)} only one anchor
+	 * can be set with one call of this function so you might want to call it
+	 * several times.
+	 * 
+	 * @param anchorType anchor type
+	 * @param value      value
+	 */
+	public void setAnchor(int anchorType, int value) {
+		if (parent == null) {
+			System.err.println("addAutoAnchor() ignored: element has no parent");
 		}
-		usingAnchors = true;
-		resize();
+
+		switch (anchorType) {
+		case PApplet.TOP:
+			anchors[TOP_ANCHOR] = value;
+			usingAnchors = true;
+
+			// set y now, because resize only changes y if BOTTOM is set. (elements are
+			// always "anchored" to TOP). This way everything is alright. Still call resize
+			// because maybe BOTTOM_ANCHOR is set too.
+			this.y = value;
+			resize();
+			break;
+		case PApplet.RIGHT:
+			anchors[RIGHT_ANCHOR] = value;
+			usingAnchors = true;
+			resize();
+			break;
+		case PApplet.BOTTOM:
+			anchors[BOTTOM_ANCHOR] = value;
+			usingAnchors = true;
+			resize();
+			break;
+		case PApplet.LEFT:
+			anchors[LEFT_ANCHOR] = value;
+			usingAnchors = true;
+
+			// set x now, because resize only changes x if RIGHT is set. This way everything
+			// is alright
+			this.x = value;
+			resize();
+			break;
+		default:
+			return;
+		}
 
 	}
 
@@ -697,7 +942,7 @@ public abstract class Control {
 				}
 			}
 			update();
-			handleRegisteredEventMethod(RESIZE_EVENT, null);
+			handleRegisteredEventMethod(RESIZE_EVENT, this);
 		}
 	}
 
@@ -717,7 +962,10 @@ public abstract class Control {
 
 
 	/*
-	 * Style Setter
+	 * _______________________________________________________________________________________________________________
+	 * STYLE SETTER
+	 * _______________________________________________________________________________________________________________
+	 * 
 	 */
 
 	/**
@@ -728,8 +976,7 @@ public abstract class Control {
 	 */
 	public void setX(int x) {
 		this.x = x;
-		if (usingAnchors)
-			updateAnchors();
+		updateAnchors();
 		update();
 	}
 
@@ -741,8 +988,7 @@ public abstract class Control {
 	 */
 	public void setY(int y) {
 		this.y = y;
-		if (usingAnchors)
-			updateAnchors();
+		updateAnchors();
 		update();
 	}
 
@@ -758,7 +1004,7 @@ public abstract class Control {
 			try {
 				// no use to sort containers with autolayout (its bad actually because it could
 				// chang order
-				if (!((Container) parent).autoLayout)
+				if (!((Container) parent).containerMakesAutoLayout)
 					((Container) parent).sortContent();
 			} catch (ClassCastException cce) {
 
@@ -775,6 +1021,7 @@ public abstract class Control {
 	public void setPosition(int x, int y) {
 		this.x = x;
 		this.y = y;
+		updateAnchors();
 		update();
 	}
 
@@ -787,6 +1034,7 @@ public abstract class Control {
 		// constrain width immediately
 		this.width = Math.max(Math.min(width, maxWidth), minWidth);
 		// call the resize event.
+		updateAnchors();
 		resize();
 		update();
 	}
@@ -826,6 +1074,7 @@ public abstract class Control {
 	public void setHeight(int height) {
 		// constrain height immeditaly
 		this.height = Math.max(Math.min(height, maxHeight), minHeight);
+		updateAnchors();
 		resize();
 		update();
 	}
@@ -860,6 +1109,7 @@ public abstract class Control {
 		// no setter used here so not to call resize twice
 		this.width = Math.max(Math.min(width, maxWidth), minWidth);
 		this.height = Math.max(Math.min(height, maxHeight), minHeight);
+		updateAnchors();
 		resize();
 		update();
 	}
@@ -871,9 +1121,13 @@ public abstract class Control {
 	 * @param clr integer rgb color
 	 */
 	public void setBackgroundColor(int clr) {
-		backgroundColor = clr;
+		if (hoverColor == backgroundColor)
+			hoverColor = clr;
+		if (pressedColor == backgroundColor)
+			pressedColor = clr;
 		visualBackgroundColor = clr;
-		backgroundType = Control.COLOR;
+		image = null;
+		backgroundColor = clr;
 		update();
 	}
 
@@ -899,7 +1153,7 @@ public abstract class Control {
 			hoverColor = Color.create(r + 20, g + 20, b + 20);
 			pressedColor = Color.create(r + 40, g + 40, b + 40);
 		}
-		backgroundType = Control.COLOR;
+		image = null; // just in case
 		update();
 	}
 
@@ -960,6 +1214,7 @@ public abstract class Control {
 	 */
 	public void setBorderRadius(int borderRadius) {
 		this.borderRadius = borderRadius;
+		update();
 	}
 
 
@@ -975,8 +1230,8 @@ public abstract class Control {
 		update();
 	}
 
-	public void setFontSize(int fontSize) {
-		this.fontSize = fontSize;
+	public void setFontSize(float fontSize) {
+		this.fontSize = Math.max(0, fontSize);
 		autosize();
 		update();
 	}
@@ -989,6 +1244,7 @@ public abstract class Control {
 	public void setTextAlign(int align) {
 		if (align == 3 || align == 37 || align == 39)
 			this.textAlign = align;
+		update();
 	}
 
 	/**
@@ -997,8 +1253,9 @@ public abstract class Control {
 	 * @param align TOP, MIDDLE, BOTTOM
 	 */
 	public void setTextAlignY(int align) {
-		if (align == 3 || align == 101 || align == 102)
+		if (align == PApplet.CENTER || align == PApplet.TOP || align == PApplet.BOTTOM)
 			this.textAlignY = align;
+		update();
 	}
 
 	/**
@@ -1022,7 +1279,7 @@ public abstract class Control {
 	public void setImage(PImage image) {
 		try {
 			this.image = (PImage) image.clone();
-			backgroundType = Control.IMAGE;
+			update();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -1035,6 +1292,7 @@ public abstract class Control {
 	 */
 	public void setImageMode(int imageMode) {
 		this.imageMode = imageMode;
+		update();
 	}
 
 	/**
@@ -1120,10 +1378,10 @@ public abstract class Control {
 	/**
 	 * Set individual top, right, bottom and left margins.
 	 * 
-	 * @param top top margin in pixel
-	 * @param right right margin in pixel
+	 * @param top    top margin in pixel
+	 * @param right  right margin in pixel
 	 * @param bottom bottom margin in pixel
-	 * @param left left margin in pixel
+	 * @param left   left margin in pixel
 	 */
 	public void setMargin(int top, int right, int bottom, int left) {
 		marginTop = top;
@@ -1181,10 +1439,10 @@ public abstract class Control {
 	 * Apply individual padding to all sides of the Component. Padding will create
 	 * space inside the Component between borders and content.
 	 * 
-	 * @param top top padding in pixel
-	 * @param right right padding in pixel
+	 * @param top    top padding in pixel
+	 * @param right  right padding in pixel
 	 * @param bottom bottom padding in pixel
-	 * @param left left padding in pixel
+	 * @param left   left padding in pixel
 	 */
 	public void setPadding(int top, int right, int bottom, int left) {
 		paddingTop = top;
@@ -1229,8 +1487,12 @@ public abstract class Control {
 
 
 
+
 	/*
+	 * _______________________________________________________________________________________________________________
 	 * STYLE GETTER
+	 * _______________________________________________________________________________________________________________
+	 * 
 	 */
 
 	public int getX() {
@@ -1297,7 +1559,7 @@ public abstract class Control {
 		return text;
 	}
 
-	public int getFontSize() {
+	public float getFontSize() {
 		return fontSize;
 	}
 
@@ -1392,7 +1654,10 @@ public abstract class Control {
 
 
 	/*
+	 * _______________________________________________________________________________________________________________
 	 * EVENT METHODS
+	 * _______________________________________________________________________________________________________________
+	 * 
 	 */
 
 	class RMethod {
@@ -1423,13 +1688,15 @@ public abstract class Control {
 
 	protected int totalNumberListeners = numberMouseListeners;
 
+
+
 	protected void setupListeners(int number) {
 		totalNumberListeners = totalNumberListeners + number;
 		registeredRMethods = new RMethod[totalNumberListeners];
 	}
 
 	/*
-	 * WORKING WITH EVENTS IN  ProcessingGUI :
+	 * WORKING WITH EVENTS IN ProcessingGUI :
 	 * 
 	 *
 	 *
@@ -1472,7 +1739,7 @@ public abstract class Control {
 	 *
 	 *
 	 *
-	 * CREATING OWN CONTROLS WITH CUSTOM LISTENERS
+	 * CREATING OWN CONTROLS WITH CUSTOM LISTENERS
 	 *
 	 * If you create a custom control with custom listeners you have to provide
 	 * methods to add them to the object.
@@ -1482,7 +1749,7 @@ public abstract class Control {
 	 * You have to honor some essential rules: - all registered methods are stored
 	 * in the "registeredRMethods" array. The first 7 (from 0 to 6) methods are
 	 * reserved for the mouselisteners: press/release/enter/exit/move/drag/wheel,
-	 * DON'T TOUCH THEM!
+	 * DON'T TOUCH THEM!
 	 *
 	 * - by default this array is 9 (for mouse/resize/focus listeners) in size - a
 	 * custom control needs to recreate this array in the constructor with needed
@@ -1503,20 +1770,34 @@ public abstract class Control {
 	 *
 	 */
 
-	protected boolean activatedInternalMouseListener = false;
+	/*
+	 * protected boolean activatedInternalMouseListener = false;
+	 * 
+	 * protected void activateInternalMouseListener() {
+	 * activatedInternalMouseListener = true;
+	 * 
+	 * }
+	 * 
+	 * protected void deactivateInternalMouseListener() {
+	 * activatedInternalMouseListener = false; }
+	 */
 
-	protected void activateInternalMouseListener() {
-		if (!activatedInternalMouseListener) {
-			activatedInternalMouseListener = true;
-		}
+
+
+	// if zero do not process move events.
+	private static int moveListenersCount = 0;
+
+	protected static void incrementMoveListenersCount() {
+		moveListenersCount++;
 	}
 
-	protected void deactivateInternalMouseListener() {
-		if (activatedInternalMouseListener) {
-			activatedInternalMouseListener = false;
-		}
+	protected static void decrementMoveListenersCount() {
+		moveListenersCount = Math.max(0, --moveListenersCount);
 	}
 
+	protected int moveListenersCount() {
+		return moveListenersCount;
+	}
 
 	/**
 	 * Adds a mouse listener. The type can be "press", "release", "enter", "exit,
@@ -1547,9 +1828,6 @@ public abstract class Control {
 	 *         already been registered for this type. Returns true if successful.
 	 */
 	public boolean addMouseListener(String type, String methodName, Object target) {
-		if (!activatedInternalMouseListener)
-			activateInternalMouseListener(); // needed for controls that don't register a listener by default (all
-											 // containers do);
 		switch (type) {
 		case "press":
 			return registerEventRMethod(PRESS_EVENT, methodName, target, MouseEvent.class);
@@ -1560,6 +1838,7 @@ public abstract class Control {
 		case "exit":
 			return registerEventRMethod(EXIT_EVENT, methodName, target, MouseEvent.class);
 		case "move":
+			incrementMoveListenersCount();
 			return registerEventRMethod(MOVE_EVENT, methodName, target, MouseEvent.class);
 		case "drag":
 			return registerEventRMethod(DRAG_EVENT, methodName, target, MouseEvent.class);
@@ -1573,7 +1852,7 @@ public abstract class Control {
 	/**
 	 * Remove a mouse listener for given type if one has already been set up.
 	 * 
-	 * @param type event type. 
+	 * @param type event type.
 	 */
 	public void removeMouseListener(String type) {
 		switch (type) {
@@ -1590,6 +1869,8 @@ public abstract class Control {
 			deregisterEventRMethod(EXIT_EVENT);
 			break;
 		case "move":
+			if (registeredRMethods[MOVE_EVENT] != null) // tell Frame there is one move listener less
+				decrementMoveListenersCount();
 			deregisterEventRMethod(MOVE_EVENT);
 			break;
 		case "drag":
@@ -1612,7 +1893,7 @@ public abstract class Control {
 	 * @param target     Object where the callback method is declared.
 	 */
 	public void addResizeListener(String methodName, Object target) {
-		registerEventRMethod(RESIZE_EVENT, methodName, target, KeyEvent.class);
+		registerEventRMethod(RESIZE_EVENT, methodName, target, Control.class);
 	}
 
 	/**
@@ -1623,13 +1904,13 @@ public abstract class Control {
 	 * @param target     Object where the callback method is declared.
 	 */
 	public void addFocusListener(String methodName, Object target) {
-		registerEventRMethod(FOCUS_EVENT, methodName, target, KeyEvent.class);
+		registerEventRMethod(FOCUS_EVENT, methodName, target, Control.class);
 	}
 
 	/**
 	 * @see #addResizeListener(String) , target is the PApplet sketch
 	 * 
-	 * @param methodName method to call. 
+	 * @param methodName method to call.
 	 */
 	public void addResizeListener(String methodName) {
 		addResizeListener(methodName, Frame.frame0.papplet);
@@ -1637,7 +1918,7 @@ public abstract class Control {
 
 	/**
 	 * @see #addFocusListener(String) , target is the PApplet sketch
-	 * @param methodName method to call. 
+	 * @param methodName method to call.
 	 */
 	public void addFocusListener(String methodName) {
 		addFocusListener(methodName, Frame.frame0.papplet);
@@ -1702,20 +1983,86 @@ public abstract class Control {
 		}
 	}
 
-	// has to be public
+
+
+
+
+	// new mouse event stuff
+	/*
+	 * replace bounds with x0, y0 Right and bottom bounds are not needed for an item
+	 * gets the mouse event only if mouse is over parent. This way no constraining
+	 * like in calcbounds is needed. instead of passing the mouseevent, this is
+	 * stored globally (in Control.e) and relative x,y coords are passed. Each
+	 * container subtracts its own x0,y0 from them so the items only need to know
+	 * their relative position to parent and not absolute position in window to
+	 * determine if mouse is over the item.
+	 * 
+	 * x0,y0 store computed position origin of item relative container it is
+	 * evaluated and set in containerRenderItem(). Problem: Flowcontainers decide
+	 * not to draw items that are out of the visible area and needs to set x0,y0 to
+	 * somewhere outside this area.
+	 * 
+	 * hovering is now dealt with in a different way: the first item to find out
+	 * that the mouse is over it sets the Control.first to itself. At then end of
+	 * mouseEvent processing Frame checks Control.first and if this items pHovered
+	 * is false then Frame calls enter(), handleRegEvent(..) and first.pHovered =
+	 * true; Also the cursor is set to the cursor of this item. Similarily exit() is
+	 * called if Control.first has changed through the event propagation.
+	 * 
+	 * 
+	 * 
+	 * Issues:
+	 * 
+	 * - MenuItem cannot hide when clicked aynwhere else, because menuitem does not
+	 * get these events anymore also menuitem seems to rely on calcbounds in some
+	 * point.
+	 * 
+	 * - only one element can be hovered on (not really an issue)
+	 * 
+	 * - scrollcontainers still set their fullscrollsize in calcBounds and use
+	 * bounds in their event listening (solved?)
+	 * 
+	 * - scrollarea, scrollcontainers: content in scrollarea is accessible if mouse
+	 * over scrollbar
+	 * 
+	 * 
+	 */
+
+	// origin coordinates relative to parent. Set by parent in
+	// containerRenderItem(Control, int, int)
+	protected int relativeX, relativeY;
+
+	// current mouse event is stored here by Frame, no need to carry it around
+	protected static MouseEvent currentMouseEvent;
+
+	// first control that notices that the mouse is over it sets this to itself.
+	// This is used for ENTER/EXIT as well as setting the cursor
+	protected static Control hoveredElement;
+
+	// currently dragged element
+	protected static Control draggedElement;
+
+	// use new mouse event handling or old?
+	protected static boolean useNewMouseEvent = true;
+
+
 	protected void mouseEvent(MouseEvent e) {
 		int x = e.getX();
 		int y = e.getY();
+		PApplet.println("Old Mouse Event", this);
 
 		if (visible && enabled) {
 
-			if (x > bounds.X0 && x < bounds.X && y > bounds.Y0 && y < bounds.Y) { // if over element
+			if (bounds.isWithin(x, y)) { // if over element
+				/*
+				 * if(Frame.topmost == null) { System.out.println(this); Frame.topmost = this; }
+				 */
 
 				switch (e.getAction()) {
 				case MouseEvent.PRESS:
 					focus();
 					press(e);
-					Frame.frame0.draggedElement = this;
+					draggedElement = this;
 					Frame.stopPropagation();
 					handleRegisteredEventMethod(PRESS_EVENT, e);
 					break;
@@ -1745,10 +2092,11 @@ public abstract class Control {
 					enter(e);
 					handleRegisteredEventMethod(ENTER_EVENT, e);
 					pHovered = true;
+					Frame.stopPropagation();
 				}
 			} else {
 				if (pHovered) { // EXIT
-					Frame.frame0.papplet.cursor(0);
+					Frame.frame0.papplet.cursor(0); // default cursor
 					exit(e);
 					handleRegisteredEventMethod(EXIT_EVENT, e);
 					pHovered = false;
@@ -1757,17 +2105,103 @@ public abstract class Control {
 		}
 	}
 
-	protected void press(MouseEvent e) {
+	// check if given coordinates (need to be relative to parent) are within this
+	// elements bounds
+	protected boolean relCoordsAreWithin(int x, int y) {
+		return x > relativeX && y > relativeY && x < relativeX + width && y < relativeY + height;
 	}
 
-	protected void release(MouseEvent e) {
+	/**
+	 * Get x coordinate of left side relative to parent.
+	 * 
+	 * @return relative x
+	 */
+	public int getOffsetXParent() {
+		return relativeX;
 	}
 
-	protected void enter(MouseEvent e) {
+	/**
+	 * Get y coordinate of left side relative to parent.
+	 * 
+	 * @return relative y
+	 */
+	public int getOffsetYParent() {
+		return relativeY;
 	}
 
-	protected void exit(MouseEvent e) {
+	/**
+	 * Get x coordinate of left side relative to window.
+	 * 
+	 * @return absolute x
+	 */
+	public int getOffsetXWindow() {
+		return relativeX + parent.getOffsetXWindow();
 	}
+
+	/**
+	 * Get x coordinate of left side relative to window.
+	 * 
+	 * @return absolute y
+	 */
+	public int getOffsetYWindow() {
+		return relativeY + parent.getOffsetYWindow();
+	}
+
+
+	protected void mouseEvent(int x, int y) {
+		if (!visible || !enabled)
+			return;
+
+		if (relCoordsAreWithin(x, y)) {
+			if (hoveredElement == null)
+				hoveredElement = this;
+			switch (currentMouseEvent.getAction()) {
+			case MouseEvent.PRESS:
+				focus();
+
+				draggedElement = this;
+				Frame.stopPropagation();
+				press(currentMouseEvent);
+				handleRegisteredEventMethod(PRESS_EVENT, currentMouseEvent);
+				break;
+
+			case MouseEvent.RELEASE:
+				Frame.stopPropagation();
+				release(currentMouseEvent);
+				handleRegisteredEventMethod(RELEASE_EVENT, currentMouseEvent);
+				break;
+
+			case MouseEvent.MOVE:
+				move(currentMouseEvent);
+				handleRegisteredEventMethod(MOVE_EVENT, currentMouseEvent);
+				break;
+
+			case MouseEvent.WHEEL:
+				mouseWheel(currentMouseEvent);
+				handleRegisteredEventMethod(WHEEL_EVENT, currentMouseEvent);
+				break;
+
+			case MouseEvent.DRAG:
+				// this code wont be reached anymore for every drag event will be caught by
+				// frame
+				// drag(e);
+				// handleRegisteredEventMethod(DRAG_EVENT, e);
+				// Frame.stopPropagation();
+				break;
+			}
+		}
+
+	}
+
+	/*
+	 * protected void press(MouseEvent e) { }
+	 * 
+	 * protected void release(MouseEvent e) { }
+	 * 
+	 * protected void enter(MouseEvent e) { }
+	 * 
+	 * protected void exit(MouseEvent e) { }
+	 */
 
 	protected void move(MouseEvent e) {
 	}
@@ -1778,30 +2212,55 @@ public abstract class Control {
 	protected void mouseWheel(MouseEvent e) {
 	}
 
+	protected void enter(MouseEvent e) {
+		visualBackgroundColor = hoverColor;
+		update();
+	}
+
+	protected void exit(MouseEvent e) {
+		visualBackgroundColor = backgroundColor;
+		update();
+	}
+
+	protected void press(MouseEvent e) {
+		visualBackgroundColor = pressedColor;
+		update();
+	}
+
+	protected void release(MouseEvent e) {
+		visualBackgroundColor = hoverColor;
+		update();
+	}
+
 	// methods that will be called when key events occured and this Control is the
 	// currently focused element.
 
 	/**
 	 * Called by {@link Frame} through KeyListener
 	 * 
-	 * @param e
+	 * @param e KeyEvent
 	 */
-	protected void onKeyPress(KeyEvent e) {
+	protected void keyPress(KeyEvent e) {
 	}
 
 	/**
 	 * Called by {@link Frame} through KeyListener
 	 * 
-	 * @param e
+	 * @param e KeyEvent
 	 */
-	protected void onKeyRelease(KeyEvent e) {
+	protected void keyRelease(KeyEvent e) {
 	}
 
 	/**
 	 * Called by {@link Frame} through KeyListener
 	 * 
-	 * @param e
+	 * @param e KeyEvent
 	 */
-	protected void onKeyTyped(KeyEvent e) {
+	protected void keyTyped(KeyEvent e) {
+	}
+
+
+	protected static void print(Object... v) {
+		PApplet.println(v);
 	}
 }

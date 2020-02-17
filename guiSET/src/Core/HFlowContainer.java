@@ -16,7 +16,7 @@ public class HFlowContainer extends Container {
 
 	public HFlowContainer(int width, int height) {
 		super(width, height);
-		autoLayout = true;
+		containerMakesAutoLayout = true; // this container overrides items x/y property and gives them new location
 	}
 
 	@Override
@@ -49,10 +49,7 @@ public class HFlowContainer extends Container {
 
 	@Override
 	protected void render() {
-		// if AutoSize is on, first get minimal dimensions
-		if (autoSize) {
-			setAutoSize();
-		}
+
 		drawDefaultBackground();
 
 		int usedSpace = paddingLeft;

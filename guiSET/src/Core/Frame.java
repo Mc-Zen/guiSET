@@ -2,7 +2,7 @@ package guiSET.core;
 
 
 /*
- * MASTER OF THE GUI
+ * MASTER OF THE GUI
  * 
  * Frame is the main container for all controls in one sketch and there must always be one frame per project. 
  * It handles all rendering of the elements, updating looks and feels and finally displaying the GUI. 
@@ -81,6 +81,7 @@ public class Frame extends Container {
 	public PApplet getPApplet() {
 		return papplet;
 	}
+
 	public static PApplet papplet() {
 		return frame0.papplet;
 	}
@@ -103,7 +104,7 @@ public class Frame extends Container {
 	 */
 	public static final int DRAW_POST = 2; 		// draw GUI after draw() takes place
 
-	protected float scale = 1; 					// note implemented yet
+	protected float scale = 1; 					// not implemented yet
 
 	/**
 	 * The element that has got focus currently (always gets the KeyEvents).
@@ -152,35 +153,72 @@ public class Frame extends Container {
 
 		this.papplet = pa;
 
-		if (timeToDraw == DRAW_PRE) {
-			papplet.registerMethod("pre", this);
-		} else if (timeToDraw == DRAW_POST) {
-			papplet.registerMethod("draw", this);
-		} else {
-			System.out.println("error can't initialize frame with these arguments: " + timeToDraw);
-		}
+		/*
+		 * if (timeToDraw == DRAW_PRE) { papplet.registerMethod("pre", this); } else if
+		 * (timeToDraw == DRAW_POST) { papplet.registerMethod("draw", this); } else {
+		 * System.out.println("error can't initialize frame with these arguments: " +
+		 * timeToDraw); }
+		 */
 
 		// default size fills out entire sketch window
 		width = papplet.width;
 		height = papplet.height;
 		bounds.X = papplet.width;
 		bounds.Y = papplet.height;
+		relativeX = 0;
+		relativeY = 0;
 		currentWidth = width;
 		currentHeight = height;
 
 		setupListeners(5); // add 5 additional listeners: key, enter, exit, resize, init
 
-		papplet.registerMethod("keyEvent", this);
+		// papplet.registerMethod("keyEvent", this);
 		keyListener = new KeyListener(this);
 
-		papplet.registerMethod("mouseEvent", this);
+		// papplet.registerMethod("mouseEvent", this);
 
 		animations = new ArrayList<Animation>();
 
 
 		Control.init_textinfo_graphics();		// initialize a 1x1 dummy graphics used for getting textwidth
+
+		@SuppressWarnings("unused")
+		Protected_Frame f = new Protected_Frame(timeToDraw);
 	}
 
+
+	// a protected inner frame that users cannot access so keyEvent, mouseEvent, pre
+	// and draw are hidden from user
+	// only works protected
+	protected class Protected_Frame {
+		Protected_Frame(int timeToDraw) {
+			papplet.registerMethod("keyEvent", this);
+			papplet.registerMethod("mouseEvent", this);
+			if (timeToDraw == DRAW_PRE) {
+				papplet.registerMethod("pre", this);
+			} else if (timeToDraw == DRAW_POST) {
+				papplet.registerMethod("draw", this);
+			} else {
+				System.out.println("Error can't initialize frame with these arguments: " + timeToDraw + ". Use Frame.DRAW_POST or Frame.DRAW_PRE");
+			}
+		}
+
+		public void pre() {
+			Frame.this.display();
+		}
+
+		public void draw() {
+			Frame.this.display();
+		}
+
+		public void mouseEvent(MouseEvent e) {
+			Frame.this.mouseEvent(e);
+		}
+
+		public void keyEvent(KeyEvent e) {
+			Frame.this.keyEvent(e);
+		}
+	}
 
 
 
@@ -201,8 +239,8 @@ public class Frame extends Container {
 	 * when changes occured. This can save ressources
 	 *
 	 * - In continous mode the gui is drawn each frame new. This can be helpful when
-	 * the guiSET is combined with normal drawing functions in the draw()-method. This
-	 * way the gui itself will always be visible and not overdrawn in strange
+	 * the guiSET is combined with normal drawing functions in the draw()-method.
+	 * This way the gui itself will always be visible and not overdrawn in strange
 	 * manners. It is the most inefficient mode but not by far.
 	 *
 	 * - super_eco is an experiment that shuts off the looping altogether. The
@@ -273,9 +311,9 @@ public class Frame extends Container {
 	 * DO NOT CALL THIS METHOD. It is automatically called by the sketch and needs
 	 * to be public for that reason.
 	 */
-	public void pre() {
-		this.display();
-	}
+	/*
+	 * public void pre() { this.display(); }
+	 */
 
 	// Post version. (not really post() because then we would not see the changes).
 	// after draw() happened draw GUI, so the gui overwrites everything that has
@@ -285,9 +323,9 @@ public class Frame extends Container {
 	 * DO NOT CALL THIS METHOD. It is automatically called by the sketch and needs
 	 * to be public for that reason.
 	 */
-	public void draw() {
-		this.display();
-	}
+	/*
+	 * public void draw() { this.display(); }
+	 */
 
 
 
@@ -298,13 +336,7 @@ public class Frame extends Container {
 
 		// int t1 = papplet.millis();
 
-		if (!initialized) {
 
-			handleRegisteredEventMethod(GUI_INITIALIZED_EVENT, null);
-			// initialize(); // no yet really implemented
-
-			initialized = true;
-		}
 
 		/*
 		 * check if window has been resized
@@ -346,13 +378,13 @@ public class Frame extends Container {
 		/*
 		 * re-render if graphics have been changed
 		 */
-		if (changedVisuals && visible) {
+		if (dirty && visible) {
 
-			calcBoundsCount = 0;
-			renderCount = 0;
-			renderedObjects = "";
+//			calcBoundsCount = 0;
+//			renderCount = 0;
+//			renderedObjects = "";
 
-			changedVisuals = false;
+			dirty = false;
 			// long t0 = System.nanoTime();
 
 			calcBounds();
@@ -375,9 +407,25 @@ public class Frame extends Container {
 			 */
 
 
-			if (drawMode == EFFICIENT)
+			if (drawMode == EFFICIENT) {
 				papplet.image(pg, 0, 0);
+			}
 		}
+
+		if (!initialized) {
+
+			initialize();	// recursive procedure going through all elements connected to Frame
+			handleRegisteredEventMethod(GUI_INITIALIZED_EVENT, null);
+			
+			if (resizable)
+				// somehow an update is important a second time if resizable is active
+				// in fact thats because a PFont() is created which calls some stuff. Has to do
+				// with something in Graphics awt java class
+				update();
+
+			initialized = true;
+		}
+
 
 		// project graphics onto papplet
 		if (visible && (drawMode == CONTINOUS || drawMode == SUPER_EFF)) {
@@ -392,7 +440,7 @@ public class Frame extends Container {
 
 	@Override // - Frame doesn't need to call its parent to update
 	protected void update() {
-		changedVisuals = true;
+		dirty = true;
 
 		/*
 		 * call redraw upon sketch when changed occured
@@ -432,24 +480,24 @@ public class Frame extends Container {
 		Method method;
 		Object object;
 
-		// if shortcut is global then it will be executed even if the focused element
+		// if shortcut is strong then it will be executed even if the focused element
 		// ovverrides shortcuts
-		boolean global;
+		boolean strong;
 
-		ShortcutDetails(Method method, Object object, boolean global) {
+		ShortcutDetails(Method method, Object object, boolean strong) {
 			this.method = method;
 			this.object = object;
-			this.global = global;
+			this.strong = strong;
 		}
 	}
 
 	/**
-	 * Register a global shortcut to the sketch and fire the given method when the
+	 * Register a strong shortcut to the sketch and fire the given method when the
 	 * combination is hit on the keyboard.
 	 * 
-	 * @param shortcut shortcut to register
-	 * @param methodName method to execute when shortcut is pressed. 
-	 * @return true if registering has been successful.  
+	 * @param shortcut   shortcut to register
+	 * @param methodName method to execute when shortcut is pressed.
+	 * @return true if registering has been successful.
 	 */
 	public boolean registerShortcut(Shortcut shortcut, String methodName) {
 		return registerShortcut(shortcut, methodName, papplet, false);
@@ -458,10 +506,10 @@ public class Frame extends Container {
 	/**
 	 * @see #registerShortcut(Shortcut, String) version with custom target object.
 	 * 
-	 * @param shortcut shortcut to register
-	 * @param methodName method to execute when shortcut is pressed. 
-	 * @param target object that declares the callback method. 
-	 * @return true if registering has been successful.  
+	 * @param shortcut   shortcut to register
+	 * @param methodName method to execute when shortcut is pressed.
+	 * @param target     object that declares the callback method.
+	 * @return true if registering has been successful.
 	 */
 	public boolean registerShortcut(Shortcut shortcut, String methodName, Object target) {
 		return registerShortcut(shortcut, methodName, target, false);
@@ -474,7 +522,7 @@ public class Frame extends Container {
 	 * attributes.
 	 * 
 	 * @param shortcut
-	 * @return true if deregistering has been successful.  
+	 * @return true if deregistering has been successful.
 	 */
 	public boolean deregisterShortcut(Shortcut shortcut) {
 		int size = shortcutMethods.size();
@@ -486,22 +534,22 @@ public class Frame extends Container {
 	/**
 	 * @see #registerShortcut(Shortcut, String, Object)
 	 * 
-	 *      If global is set to true then this shortcut will even work when a
+	 *      If strong is set to true then this shortcut will even work when a
 	 *      textbox has focus! Default is false.
 	 * 
 	 * 
-	 * @param shortcut shortcut to register
-	 * @param methodName method to execute when shortcut is pressed. 
-	 * @param target object that declares the callback method. 
-	 * @param global Should this shortcut even work when a textbox has focus? 
-	 * @return true if registering has been successful.  
+	 * @param shortcut   shortcut to register
+	 * @param methodName method to execute when shortcut is pressed.
+	 * @param target     object that declares the callback method.
+	 * @param strong     Should this shortcut even work when a textbox has focus?
+	 * @return true if registering has been successful.
 	 */
-	public boolean registerShortcut(Shortcut shortcut, String methodName, Object target, boolean global) {
+	public boolean registerShortcut(Shortcut shortcut, String methodName, Object target, boolean strong) {
 		Class<?> c = target.getClass();
 		try {
 
 			Method method = c.getMethod(methodName);
-			shortcutMethods.put(shortcut, new ShortcutDetails(method, target, global));
+			shortcutMethods.put(shortcut, new ShortcutDetails(method, target, strong));
 		} catch (NoSuchMethodException nsme) {
 			papplet.die("There is no public " + methodName + "() method in the class " + target.getClass().getName());
 		} catch (Exception e) {
@@ -514,9 +562,9 @@ public class Frame extends Container {
 
 		ShortcutDetails sd = shortcutMethods.get(shortcut);
 		if (sd != null) {
-			if (!focusedElement.overridesParentsShortcuts || sd.global) { // don't handle shortcut if focused element
-																			 // overrides shortcuts, but only if shortcut
-																			 // isn't global
+			if (!focusedElement.overridesFrameShortcuts || sd.strong) { // don't handle shortcut if focused element
+																		 // overrides shortcuts, but only if shortcut
+																		 // isn't strong
 				handleShortcut(sd);
 			}
 			return true;
@@ -578,7 +626,7 @@ public class Frame extends Container {
 			focusedElement.focused = true;
 			focusedElement.update();
 
-			focusedElement.handleRegisteredEventMethod(FOCUS_EVENT, null);
+			focusedElement.handleRegisteredEventMethod(FOCUS_EVENT, focusedElement);
 		}
 	}
 
@@ -602,7 +650,7 @@ public class Frame extends Container {
 
 	protected ArrayList<Animation> animations;
 
-	protected void animateImpl(String attribute, Object target, float aimedValue, double milliseconds) {
+	protected void animateImpl(String attribute, Control target, float aimedValue, double milliseconds) {
 
 		Animation newAnimation = new Animation(attribute, target, aimedValue, milliseconds);
 
@@ -623,7 +671,7 @@ public class Frame extends Container {
 
 
 	/*
-	 * WINDOW STYLE SETTER (using the papplets PSurface)
+	 * WINDOW STYLE SETTER (using the papplets PSurface)
 	 */
 
 	/**
@@ -682,7 +730,7 @@ public class Frame extends Container {
 	/**
 	 * Set the size of the application window.
 	 * 
-	 * @param width width in pixel
+	 * @param width  width in pixel
 	 * @param height height in pixel
 	 */
 	public void setWindowSize(int width, int height) {
@@ -727,7 +775,7 @@ public class Frame extends Container {
 
 	/**
 	 * @see #addListener(int, String) . Version with custom target.
-	 * @param type 
+	 * @param type
 	 * @param methodName callback method name
 	 * @param target
 	 * @return true if adding has been successful
@@ -806,48 +854,128 @@ public class Frame extends Container {
 	}
 
 
-	protected Control draggedElement;
 
 	/**
 	 * DO NOT CALL THIS METHOD. Handled by the sketch and needs to be public.
 	 */
 	@Override
-	public void mouseEvent(MouseEvent e) {
+	protected void mouseEvent(MouseEvent e) {
 		/*
 		 * dragging is handled separately and only for the draggedElement (which is
 		 * always set when clicking on a control).
 		 */
-		if (e.getAction() == MouseEvent.DRAG) {
-			if (draggedElement != null) {
-				draggedElement.drag(e);
-			}
-		} else {
-			super.mouseEvent(e);
 
-		}
-		if (e.getAction() == MouseEvent.RELEASE) {
-			draggedElement = null;
-		}
+		topmost = null;
 
+		Control.currentMouseEvent = e;				// store mouse event statically here. No need to carry it around all the time
+		Control prevHoveredElement = hoveredElement;	// control that has been hovered over during the previous frame
+		Control.hoveredElement = null;		// reset to find out the control that is being hovered over this frame
+
+		int mousex = e.getX();
+		int mousey = e.getY();
 
 		// handle window mouse enter/exit events
+		// not beautiful to call super.mouseEvents() in each case but anyway
 		switch (e.getAction()) {
+		case MouseEvent.RELEASE:
+			if (draggedElement != null) {
+
+				// release after drag: Only draggedElement should receive this event, so
+				// propagation needs to be stopped. But then "hoveredElement" will be null so
+				// set hoveredElement
+				// to draggedElement because otherwise we get an immediate exit event.
+				Frame.stopPropagation();
+				hoveredElement = draggedElement;
+
+				draggedElement.release(e);
+				draggedElement.handleRegisteredEventMethod(RELEASE_EVENT, e);
+				draggedElement = null;
+			}
+			if (useNewMouseEvent)
+				super.mouseEvent(mousex, mousey);
+			else
+				super.mouseEvent(e);
+			break;
+		case MouseEvent.DRAG:
+			if (draggedElement != null) {
+				Frame.stopPropagation();
+				draggedElement.drag(e);
+				draggedElement.handleRegisteredEventMethod(DRAG_EVENT, e);
+			}
+			break;
 		case MouseEvent.ENTER:
 			handleRegisteredEventMethod(MOUSE_ENTER_WINDOW_EVENT, e);
+			if (useNewMouseEvent)
+				super.mouseEvent(mousex, mousey);
+			else
+				super.mouseEvent(e);
 			break;
 		case MouseEvent.EXIT:
 			handleRegisteredEventMethod(MOUSE_EXIT_WINDOW_EVENT, e);
+			if (useNewMouseEvent)
+				super.mouseEvent(mousex, mousey);
+			else
+				super.mouseEvent(e);
 			break;
+
+//			case MouseEvent.MOVE:
+//			// move happens quite often which can be expensive. Only call move if there is
+//			// at least one element using a move listener
+//			// EDIT: this idea does not work because then enter/exit cant work
+//			if (moveListenersCount() != 0 ) 
+//			break;
+//
+		default:
+			if (useNewMouseEvent)
+				super.mouseEvent(mousex, mousey);
+			else
+				super.mouseEvent(e);
 		}
 
-		// reset stopPropagation for next frame (after handling mouseEvent, in case
-		// mode is ECONOMIC)
+
+
+		if (useNewMouseEvent) {
+			if (prevHoveredElement != hoveredElement && prevHoveredElement != null) {
+				prevHoveredElement.pHovered = false;
+				prevHoveredElement.exit(e);
+				prevHoveredElement.handleRegisteredEventMethod(EXIT_EVENT, e);
+			}
+			if (hoveredElement != null) {
+				papplet.cursor(hoveredElement.cursor);
+				// PApplet.println(hoveredElement);
+
+				if (!hoveredElement.pHovered) {
+					hoveredElement.pHovered = true;
+					hoveredElement.enter(e);
+					hoveredElement.handleRegisteredEventMethod(ENTER_EVENT, e);
+				}
+			}
+		} else {
+			if (topmost != null)
+				papplet.cursor(topmost.cursor);
+		}
+
+
+		// reset stopPropagation for next frame (after handling mouseEvent and not
+		// before, in case mode is ECONOMIC)
 		stopPropagation = false;
+	}
+
+	@Override
+	public int getOffsetXWindow() {
+		return relativeX;
+	}
+
+	@Override
+	public int getOffsetYWindow() {
+		return relativeY;
 	}
 
 
 
 
+
+	protected static Control topmost;
 
 
 	/*
@@ -867,7 +995,7 @@ public class Frame extends Container {
 	/**
 	 * DO NOT CALL THIS METHOD. Handled by the sketch and needs to be public.
 	 */
-	public void keyEvent(KeyEvent e) {
+	protected void keyEvent(KeyEvent e) {
 		keyListener.handleKeyEvent(e, focusedElement);
 		handleRegisteredEventMethod(KEY_EVENT, e);
 	}

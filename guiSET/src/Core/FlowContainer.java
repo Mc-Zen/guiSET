@@ -15,7 +15,7 @@ public class FlowContainer extends Container {
 
 	public FlowContainer(int width, int height) {
 		super(width, height);
-		autoLayout = true;
+		containerMakesAutoLayout = true; // this container overrides items x/y property and gives them new location
 	}
 
 

@@ -40,7 +40,7 @@ public class MultilineTextbox extends VScrollContainer {
 
 
 	protected StringList lines; 		// text in lines
-	protected IntList lineBreaks; 		// stores all automatic and entered line-breaks
+	protected IntList breakPositions; 		// stores all automatic and entered line-breaks
 
 
 
@@ -69,7 +69,7 @@ public class MultilineTextbox extends VScrollContainer {
 	}
 
 	public MultilineTextbox(int width, int height) {
-		this(width, height, 15);
+		this(width, height, 12);
 	}
 
 	public MultilineTextbox(int width, int height, int fontSize) {
@@ -80,7 +80,7 @@ public class MultilineTextbox extends VScrollContainer {
 		this.fontSize = fontSize;
 
 		lines = new StringList();
-		lineBreaks = new IntList();
+		breakPositions = new IntList();
 
 		foregroundColor = 0;
 		setBackgroundColor(230);
@@ -88,9 +88,9 @@ public class MultilineTextbox extends VScrollContainer {
 		borderWidth = 0;
 		textAlign = PApplet.LEFT;
 
-		lineHeight = fontSize * 3 / 2;
+		lineHeight = (int) (fontSize * 0.2f);
 
-		// overridesParentsShortcuts = true;
+		// overridesFrameShortcuts = true;
 		cursor = PApplet.TEXT;
 
 		setSlimScrollHandle(true);
@@ -119,6 +119,8 @@ public class MultilineTextbox extends VScrollContainer {
 		if (!initialized) {
 			cursorTime = Frame.frame0.papplet.millis();
 			initialized = true;
+			boxedText(text);
+			boxedText(text);
 		}
 
 		pg.textSize(fontSize);
@@ -134,14 +136,16 @@ public class MultilineTextbox extends VScrollContainer {
 		}
 
 		/*
-		 * turn 'Text'-String to lines-list. Also compute line breaks
+		 * turn 'Text'-String to lines-list. Also compute line breaks.
+		 * 
+		 * looks like its enough to call this in textChanged() (got all cases covered?)
 		 */
-		boxedText(text); // actually takes the most time with long text
+		// boxedText(text); // actually takes the most time with long text
 
 		/*
 		 * do this before drawing cursor
 		 */
-		fullScrollHeight = lines.size() * lineHeight + paddingTop + paddingBottom;
+		fullScrollHeight = (int) (lines.size() * (fontSize + lineHeight) + paddingTop + paddingBottom);
 		scrollPosition = PApplet.constrain(scrollPosition, 0, PApplet.max(0, fullScrollHeight - height));
 
 		/*
@@ -164,13 +168,14 @@ public class MultilineTextbox extends VScrollContainer {
 				pg.noStroke();
 
 				for (int i = getLineToCursor(selectionStart); i <= getLineToCursor(selectionEnd); i++) {
-					int start = Math.max(selectionStart, lineBreaks.get(i));
-					int end = Math.min(selectionEnd, lineBreaks.get(i + 1));
+					int start = Math.max(selectionStart, breakPositions.get(i));
+					int end = Math.min(selectionEnd, breakPositions.get(i + 1));
 
-					int selectionX = (int) (pg.textWidth(lines.get(i).substring(0, start - lineBreaks.get(i))) + fontSize / 40f);
+					int selectionX = (int) (pg.textWidth(lines.get(i).substring(0, start - breakPositions.get(i))) + fontSize / 40f);
 
-					int selectionWidth = (int) pg.textWidth(lines.get(i).substring(start - lineBreaks.get(i), end - lineBreaks.get(i)));
-					pg.rect(paddingLeft + selectionX, i * lineHeight + paddingTop - scrollPosition, selectionWidth, fontSize + pg.textDescent());
+					int selectionWidth = (int) pg.textWidth(lines.get(i).substring(start - breakPositions.get(i), end - breakPositions.get(i)));
+					pg.rect(paddingLeft + selectionX, i * (lineHeight + fontSize) + paddingTop - scrollPosition, selectionWidth,
+							fontSize + pg.textDescent());
 				}
 			}
 		}
@@ -180,7 +185,7 @@ public class MultilineTextbox extends VScrollContainer {
 		 */
 		pg.fill(foregroundColor);
 		if (!text.equals("")) {
-			pg.textAlign(textAlign, PApplet.TOP);
+			// pg.textAlign(textAlign, PApplet.TOP);
 
 			// int posX = textAlign == PApplet.LEFT ? paddingLeft
 			// : (textAlign == PApplet.RIGHT ? width - paddingRight : (width - paddingLeft -
@@ -188,11 +193,19 @@ public class MultilineTextbox extends VScrollContainer {
 			float posX = paddingLeft;
 
 			for (int i = 0; i < lines.size(); i++) {
-				pg.text(lines.get(i), posX, i * lineHeight + paddingTop - scrollPosition);
+				pg.text(lines.get(i), posX, i * (lineHeight + fontSize) + paddingTop - scrollPosition);
 			}
 		} else { // draw hint
+			// as a side effect we can just apply boxedText() to the hint and get "lines"
+			// for the hint, perfect to draw (seems this does not interfere with anything
+			// else
 			pg.fill(120);
-			pg.text(hint, paddingLeft, paddingTop);
+			/* pg.text(hint, paddingLeft, paddingTop); */
+			boxedText(hint);
+			float posX = paddingLeft;
+			for (int i = 0; i < lines.size(); i++) {
+				pg.text(lines.get(i), posX, i * (lineHeight + fontSize) + paddingTop - scrollPosition);
+			}
 		}
 
 		/*
@@ -206,22 +219,107 @@ public class MultilineTextbox extends VScrollContainer {
 
 
 
+	protected void boxedText(String str) {
+		boxedText1(str);
+	}
 
 
 
 	/*
 	 * Turn text to string list and compute all line break indices
+	 * 
+	 * Afterwards the list lines contains all computed lines while the list 
+	 * breakPositions will contain all indices of chars that START a new line (including 0)
+	 * At last (length of str + 1) is appended to breakPositions. 
+	 * 
 	 */
+	protected void boxedText1(String str) {
 
-	protected void boxedText(String str) {
+		// first clear the lists
+		lines.clear();
+		breakPositions.clear();
+
+
+		String lineBuffer = "";		// we're building a line with this buffer
+		float lineBufferWidth = 0;  // this float keeps track of the textwidth of the lineBuffer
+
+		int spaceIndex = -1;		// absolute index set everytime a space is detected so we can see where the last
+									// word was
+
+		int availableWidth = getAvailableWidth();
+		breakPositions.append(0);		// start off with a zero
+
+
+		// iterate through all chars
+		for (int i = 0; i < str.length(); i++) {
+			char c = str.charAt(i);
+
+			// if char is newline then apply current lineBuffer and reset all vars that keep
+			// track of the line
+			if (c == '\n') {
+				breakPositions.append(i + 1);
+				lines.append(lineBuffer + " \n");
+				lineBuffer = "";
+				lineBufferWidth = 0;
+				spaceIndex = -1;
+				continue;
+			}
+
+			// get width of this char
+			float cWidth = textWidth("" + c);
+
+			// check if this char is a word-breaking char
+			// do this before next step, so we can break when a space is at the end of the
+			// text
+			if (c == ' ') {
+				spaceIndex = i;
+			}
+
+			// If lineBuffer would exceed available width if this new char were included, we
+			// need to break the line.
+			if (lineBufferWidth + cWidth > availableWidth) {
+
+				// look if there is a space in the line, then we can break there
+				if (spaceIndex != -1) {
+
+					// append current line until spaceIndex (include space)
+					lines.append(str.substring(breakPositions.get(breakPositions.size() - 1), spaceIndex + 1));
+					breakPositions.append(spaceIndex + 1);
+
+					// set lineBuffer to reset
+					lineBuffer = str.substring(spaceIndex + 1, i + 1); // can still get error here
+					lineBufferWidth = textWidth(lineBuffer);
+					spaceIndex = -1;
+					continue;
+				} else {
+					// no space to break at - just break here
+					lines.append(lineBuffer);
+					breakPositions.append(i);
+					lineBuffer = "";
+					lineBufferWidth = 0;
+					// spaceIndex = -1, // unnecessary
+				}
+			}
+
+			// in any case continue building the buffer
+			lineBufferWidth += cWidth;
+			lineBuffer += c;
+
+		}
+		breakPositions.append(str.length() + 1);
+		lines.append(lineBuffer + " \n");
+	}
+
+	protected void boxedText2(String str) {
+		if (!initialized)
+			return;
 
 		// reset both lists
-		lines = new StringList();
-		lineBreaks = new IntList();
+		lines.clear();
+		breakPositions.clear();
 
 
 		// width of space in pixels
-		float spaceWidth = pg.textWidth(" ");
 
 		// count of used space in the currently processed line
 		float usedLineSpace = 0;
@@ -233,11 +331,12 @@ public class MultilineTextbox extends VScrollContainer {
 		int countChars = 0;
 
 		// append the "zero break" which is needed for some counting in other methods
-		lineBreaks.append(0);
+		breakPositions.append(0);
 
 		// width that can be occupied by text
-		int availableSpace = width - paddingLeft - paddingRight - scrollHandleStrength - 1;
+		int availableSpace = getAvailableWidth();
 
+		float spaceWidth = textWidth(" ");
 
 		// array containing all paragraphs (paragraphs are generated when the user adds
 		// a newline character).
@@ -250,14 +349,13 @@ public class MultilineTextbox extends VScrollContainer {
 			// create array of all words in this paragraph (breaks should be preferred
 			// between words and without splitting any words)
 			String[] words = PApplet.split(paragraphs[j], ' ');
-
 			/*
 			 * iterate over all words
 			 */
 			for (int i = 0; i < words.length; i++) {
 
 				// width of the current word in pixels
-				float wordWidth = pg.textWidth(words[i]);
+				float wordWidth = textWidth(words[i]);
 
 				/*
 				 * If this word alone is longer than the available space then it needs
@@ -265,7 +363,6 @@ public class MultilineTextbox extends VScrollContainer {
 				 * is exceeding available space and if not then append it to the currentline and
 				 * else store the currentline and add the word to the new line.
 				 */
-
 				if (wordWidth < availableSpace) {
 					if (usedLineSpace + wordWidth < availableSpace) { // no new line
 
@@ -275,7 +372,7 @@ public class MultilineTextbox extends VScrollContainer {
 						countChars += 1 + words[i].length();
 					} else { // break line
 
-						lineBreaks.append(countChars); // store position of break
+						breakPositions.append(countChars); // store position of break
 						lines.append(currentLine); // store current line
 
 						// create new line and add current word (which didn't fit into last line)
@@ -287,7 +384,7 @@ public class MultilineTextbox extends VScrollContainer {
 
 					// first store currentLine if it isn't empty
 					if (!currentLine.equals("")) {
-						lineBreaks.append(countChars); // store position of break
+						breakPositions.append(countChars); // store position of break
 						lines.append(currentLine); // store previous line
 
 						currentLine = ""; // new word is first word of currentLine
@@ -297,16 +394,17 @@ public class MultilineTextbox extends VScrollContainer {
 
 					// now determine at which point the word needs splitting by going back step by
 					// step
-
+					//PApplet.println(words[i].length());
 					for (int k = words[i].length(); k > 0; k--) {
 
 						wordWidth -= pg.textWidth(words[i].substring(k - 1, k));
+						//PApplet.println(k, wordWidth, words[i].substring(k - 1, k));
 
 						if (wordWidth < availableSpace) { // found substring that fits line
 							currentLine += words[i].substring(0, k - 1);
 							countChars += words[i].substring(0, k - 1).length();
 
-							lineBreaks.append(countChars); // store position of break
+							breakPositions.append(countChars); // store position of break
 							lines.append(currentLine); // store previous line
 
 							words[i] = words[i].substring(k - 1); // set current word to remainder of it
@@ -329,7 +427,7 @@ public class MultilineTextbox extends VScrollContainer {
 			currentLine += "\n";
 
 			// append position of (non-automatic) linebreak
-			lineBreaks.append(countChars);
+			breakPositions.append(countChars);
 			// append the recent line as it hasn't been stored yet
 			lines.append(currentLine);
 
@@ -339,7 +437,8 @@ public class MultilineTextbox extends VScrollContainer {
 		}
 
 		// append last linebreak again (needed for some scrolling issues)
-		lineBreaks.append(countChars);
+		breakPositions.append(countChars);
+		//PApplet.println(breakPositions);
 	}
 
 
@@ -347,6 +446,7 @@ public class MultilineTextbox extends VScrollContainer {
 
 
 
+	// int pressed = 0;
 
 	/*
 	 * CURSOR
@@ -366,22 +466,28 @@ public class MultilineTextbox extends VScrollContainer {
 				update();
 			}
 		}
+		/*
+		 * if(pressed >=1) { System.out.println(pressed); if(pressed == 2)
+		 * setScrollPosition(scrollPosition-2); if(pressed == 3)
+		 * setScrollPosition(scrollPosition+2); }
+		 */
 	}
 
 	protected void drawCursor() {
 		int index = getLineToCursor(cursorPosition);
-		int cursorHeight = fontSize;
+		float cursorHeight = fontSize;
 		if (index >= 0 && cursorPosition > 0) {
-			int start = lineBreaks.get(index);
+			int start = breakPositions.get(index);
 			int stop = cursorPosition;
 
 			String a = text.substring(start, stop);
 
+			//PApplet.println("drawCursor:", index, lines);
 			a = lines.get(index).substring(0, cursorPosition - start);
 			float wordWidth = pg.textWidth(a);
 
 			// position of upper left corner of cursor relative to first character of text
-			int cursorY = (index) * lineHeight;
+			int cursorY = (int) ((index) * (lineHeight + fontSize));
 
 
 			// perform autoscroll (i.e. when created new line)
@@ -389,7 +495,7 @@ public class MultilineTextbox extends VScrollContainer {
 				if (cursorY - scrollPosition + cursorHeight > height - paddingBottom - paddingTop) { // cursor left
 																									 // visible box
 																									 // at the bottom
-					setScrollPosition(cursorY - height + fontSize + paddingTop + paddingBottom);
+					setScrollPosition((int) (cursorY - height + fontSize + paddingTop + paddingBottom));
 				} else if (cursorY < scrollPosition + paddingTop) { // cursor left visible box at the top
 					setScrollPosition(cursorY);
 				}
@@ -420,8 +526,8 @@ public class MultilineTextbox extends VScrollContainer {
 	protected int getLineToCursor(int cursor) {
 		int cursorLine = 1;
 
-		for (int i = 1; i < lineBreaks.size(); i++) {
-			if (cursor < lineBreaks.get(i)) {
+		for (int i = 1; i < breakPositions.size(); i++) {
+			if (cursor < breakPositions.get(i)) {
 				cursorLine = i - 1;
 				break;
 			}
@@ -489,8 +595,8 @@ public class MultilineTextbox extends VScrollContainer {
 			start = end;
 			end = temp;
 		}
-		textChanged();
 		text = text.substring(0, start) + text.substring(end);
+		textChanged();
 	}
 
 
@@ -498,7 +604,7 @@ public class MultilineTextbox extends VScrollContainer {
 	// called whenether the text has been altered through user interaction
 	protected void textChanged() {
 		handleRegisteredEventMethod(TEXTCHANGED_EVENT, null);
-		// boxedText(text, width);
+		boxedText(text);
 		cursorChanged();
 	}
 
@@ -528,7 +634,7 @@ public class MultilineTextbox extends VScrollContainer {
 
 		if (oldCursorLine - direction >= 0 && oldCursorLine - direction < lines.size()) {
 			// get line up to cursor where cursor has been so far
-			String oldSubstring = text.substring(lineBreaks.get(oldCursorLine), cursorPosition);
+			String oldSubstring = text.substring(breakPositions.get(oldCursorLine), cursorPosition);
 			float widthPreviousLineToCursor = pg.textWidth(oldSubstring); // and the width in pixels
 
 			String newLineText = lines.get(oldCursorLine - direction); // text of the aimed line
@@ -546,7 +652,7 @@ public class MultilineTextbox extends VScrollContainer {
 
 				// set decision point to the center of the letter
 				if (wide - letterWidth / 2 >= widthPreviousLineToCursor) {
-					moveCursorTo(lineBreaks.get(oldCursorLine - direction) + i);
+					moveCursorTo(breakPositions.get(oldCursorLine - direction) + i);
 					break;
 				}
 			}
@@ -555,9 +661,9 @@ public class MultilineTextbox extends VScrollContainer {
 			// in case previous line has been longer than aimed line
 			if (wide - letterWidth / 2 < widthPreviousLineToCursor) {
 				if (direction > 0) {
-					moveCursorTo(lineBreaks.get(oldCursorLine) - 1); // for up moving
+					moveCursorTo(breakPositions.get(oldCursorLine) - 1); // for up moving
 				} else {
-					moveCursorTo(lineBreaks.get(oldCursorLine - 2 * direction) - 1); // for down moving
+					moveCursorTo(breakPositions.get(oldCursorLine - 2 * direction) - 1); // for down moving
 				}
 			}
 		}
@@ -573,7 +679,7 @@ public class MultilineTextbox extends VScrollContainer {
 		// in first phase search for next space, in second search for first letter
 		int phase = 0;
 
-		String delimiters = " \n+-()[] {}().,:;_*\"\'§$%&/=?!";
+		String delimiters = " \n+-()[] {}().,:;_*\"\'$%&/=?!";
 
 		for (int i = cursorPosition + 1; i < text.length(); i++) {
 			if (phase == 0) {
@@ -602,7 +708,7 @@ public class MultilineTextbox extends VScrollContainer {
 
 	protected int findPreviousStop() {
 
-		String delimiters = " \n+-()[] {}().,:;_*\"\'§$%&/=?!";
+		String delimiters = " \n+-()[] {}().,:;_*\"\'$%&/=?!";
 
 		for (int i = cursorPosition - 2; i > 0; i--) {
 
@@ -623,6 +729,8 @@ public class MultilineTextbox extends VScrollContainer {
 	/*
 	 * GETTER AND SETTER
 	 */
+
+
 	/**
 	 * Set the color of the cursor.
 	 * 
@@ -636,7 +744,7 @@ public class MultilineTextbox extends VScrollContainer {
 	/**
 	 * Set the cursor to a specific index position in the text.
 	 * 
-	 * @param cursorPosition
+	 * @param cursorPosition cursor positon
 	 */
 	public void setCursorPosition(int cursorPosition) {
 		moveCursorTo(cursorPosition);
@@ -650,6 +758,7 @@ public class MultilineTextbox extends VScrollContainer {
 	 */
 	public void setSelectionStart(int selectionStart) {
 		this.selectionStart = Math.max(0, Math.min(text.length(), selectionStart));
+		update();
 	}
 
 	/**
@@ -660,7 +769,7 @@ public class MultilineTextbox extends VScrollContainer {
 	 */
 	public void setSelectionEnd(int selectionEnd) {
 		this.selectionEnd = Math.max(0, Math.min(text.length(), selectionEnd));
-
+		update();
 	}
 
 	/**
@@ -670,6 +779,7 @@ public class MultilineTextbox extends VScrollContainer {
 	 */
 	public void setSelectionColor(int selectionColor) {
 		this.selectionColor = selectionColor;
+		update();
 	}
 
 	/**
@@ -679,6 +789,7 @@ public class MultilineTextbox extends VScrollContainer {
 	 */
 	public void setHint(String hint) {
 		this.hint = hint;
+		update();
 	}
 
 	/**
@@ -700,6 +811,87 @@ public class MultilineTextbox extends VScrollContainer {
 		this.lineHeight = lineHeight;
 		update();
 	}
+
+
+
+	/*
+	 * !!! Setting width or padding (or scrollhandlewidth) affects how the text
+	 * breaks need to be set. So call boxedText() here.
+	 * 
+	 * There will be <no> trouble with animations.
+	 */
+	@Override
+	protected void animated() {
+		super.animated();
+
+		// might look wasteful but isn't as it would be called a lot more often if
+		// called in render()
+		boxedText(text);
+	}
+
+
+	@Override
+	public void setSize(int width, int height) {
+		super.setSize(width, height);
+		boxedText(text);
+	}
+
+	@Override
+	public void setWidth(int width) {
+		super.setWidth(width);
+		boxedText(text);
+	}
+
+	@Override
+	public void setPadding(int all) {
+		super.setPadding(all);
+		boxedText(text);
+	}
+
+	@Override
+	public void setPadding(int top_bottom, int left_right) {
+		super.setPadding(top_bottom, left_right);
+		boxedText(text);
+	}
+
+	@Override
+	public void setPadding(int top, int right, int bottom, int left) {
+		super.setPadding(top, right, bottom, left);
+		boxedText(text);
+	}
+
+	@Override
+	public void setPaddingRight(int right) {
+		super.setPaddingRight(right);
+		boxedText(text);
+	}
+
+	@Override
+	public void setPaddingLeft(int left) {
+		super.setPaddingLeft(left);
+		boxedText(text);
+	}
+
+	public void setSlimScrollHandle(boolean light_scrollhandle) {
+		super.setSlimScrollHandle(light_scrollhandle);
+		boxedText(text);
+	}
+
+	@Override
+	public void setText(String text) {
+		this.text = text;
+		cursorPosition = PApplet.constrain(cursorPosition, 0, text.length());
+		boxedText(this.text);
+		update();
+	}
+
+	@Override
+	public void setFontSize(float fontSize) {
+		super.setFontSize(fontSize);
+		boxedText(text);
+	}
+
+
 
 
 	public int getCursorColor() {
@@ -726,12 +918,7 @@ public class MultilineTextbox extends VScrollContainer {
 		return this.lineHeight;
 	}
 
-	@Override
-	public void setText(String text) {
-		this.text = text;
-		cursorPosition = PApplet.constrain(cursorPosition, 0, text.length());
-		update();
-	}
+
 
 
 
@@ -798,6 +985,8 @@ public class MultilineTextbox extends VScrollContainer {
 
 	@Override
 	protected void press(MouseEvent e) {
+		super.press(e);
+		// pressed = 1;
 		if (e.getCount() < 2) {
 
 			// set cursor by clicking
@@ -834,11 +1023,25 @@ public class MultilineTextbox extends VScrollContainer {
 				selectionEnd = selectionInitial;
 			}
 		}
+		/*
+		 * if ( e.getY() < bounds.Y0 ) { // if not over element
+		 * 
+		 * pressed = 2; }else if (e.getY() > bounds.Y) {
+		 * 
+		 * pressed = 3; }
+		 */
+	}
+
+	@Override
+	protected void release(MouseEvent e) {
+		super.release(e);
+		// pressed = 0;
 	}
 
 	protected void setCursorByClick(int mX, int mY) {
 		int clickedPosY = Math.max(mY, bounds.Y0) - bounds.Y0 - paddingTop + scrollPosition;
-		int newCursorLine = clickedPosY / lineHeight;
+		int newCursorLine = (int) ((clickedPosY + lineHeight / 2) / (lineHeight + fontSize)); // clickedPosY+lineHeight/2, to switch between two lines
+																								 // just in the middle between them
 		String line = "";
 
 		if (lines.size() > newCursorLine) {
@@ -848,16 +1051,22 @@ public class MultilineTextbox extends VScrollContainer {
 
 			float wide = 0;
 			for (int i = 0; i < line.length(); i++) {
-				float letterWidth = pg.textWidth(line.substring(i, i + 1));
+				float letterWidth = pg.textWidth(line.charAt(i));
 				wide += letterWidth;
 				if (wide - letterWidth / 2 > clickedPosX) { // set decision point to the center of the letter
-					moveCursorTo(i + lineBreaks.get(newCursorLine));
+					moveCursorTo(i + breakPositions.get(newCursorLine));
 					break;
 				}
 			}
 
 			if (wide < clickedPosX) { // in case clicked beyond last letter - set cursor to end
-				moveCursorTo(line.length() + lineBreaks.get(newCursorLine) - 1);
+				// discern between lines that have a forced break vs ones that havn't.
+				// On lines with real break we want to set the cursor to the end (before '\n')
+				// but that would be on short of what the other types of lines need
+				if (line.charAt(line.length() - 1) == '\n')
+					moveCursorTo(line.length() + breakPositions.get(newCursorLine) - 2);
+				else
+					moveCursorTo(line.length() + breakPositions.get(newCursorLine) - 1);
 			}
 
 		} else { // if line number is exceeded, set cursor to end
@@ -875,7 +1084,7 @@ public class MultilineTextbox extends VScrollContainer {
 
 
 	@Override
-	protected void onKeyPress(KeyEvent e) {
+	protected void keyPress(KeyEvent e) {
 		if (enabled) {
 			char key = e.getKey();
 			int code = e.getKeyCode();
@@ -892,61 +1101,22 @@ public class MultilineTextbox extends VScrollContainer {
 			if (ctrl && !shft && !alt) {
 				switch ((char) code) {
 
-				// copy
 				case 'C':
-					if (selectionStart < selectionEnd) {
-						StringSelection selection = new StringSelection(text.substring(selectionStart, selectionEnd));
-						Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
-						clipboard.setContents(selection, selection);
-					}
+					copy();
 					break;
 
-				// paste
 				case 'V':
-					Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
-					Transferable contents = clipboard.getContents(null);
-					if (contents != null && contents.isDataFlavorSupported(DataFlavor.stringFlavor)) {
-						try {
-							String content = (String) contents.getTransferData(DataFlavor.stringFlavor);
-							if (selectionStart < selectionEnd) { // if there is a selection then replace
-								int selStart = selectionStart; // store this because delete will call cursorChanged
-																 // which resets selectionStart
-								deleteRange(selectionStart, selectionEnd);
-								moveCursorTo(selStart);
-							}
-							this.append(content);
-						} catch (UnsupportedFlavorException ex) {
-							System.out.println(ex);
-							ex.printStackTrace();
-						} catch (IOException ex) {
-							ex.printStackTrace();
-						}
-					}
-
+					paste();
 					break;
 
-				// select everything
+				case 'X':
+					cut();
+					break;
+
 				case 'A':
 					selectionStart = 0;
 					selectionEnd = text.length();
 					update();
-					break;
-
-				// cut selection
-				case 'X':
-					if (selectionStart < selectionEnd) {
-						StringSelection selection = new StringSelection(text.substring(selectionStart, selectionEnd));
-						Clipboard clipBoard = Toolkit.getDefaultToolkit().getSystemClipboard();
-						clipBoard.setContents(selection, selection);
-
-						int selStart = selectionStart; // store this because delete will call cursorChanged which resets
-														 // selectionStart
-						deleteRange(selectionStart, selectionEnd);
-						moveCursorTo(selStart);
-						selectionStart = 0;
-						selectionEnd = 0;
-					}
-
 					break;
 				}
 			}
@@ -958,12 +1128,12 @@ public class MultilineTextbox extends VScrollContainer {
 					int selEnd = selectionEnd;
 
 					if (ctrl) {
-						moveCursorTo(findPreviousStop());
+						moveCursorTo(findPreviousStop()); // jump to previous word
 					} else {
 						moveCursorBy(-1);
 					}
 					if (shft) {
-						selectionEnd = selEnd;
+						selectionEnd = selEnd; // select if shift is pressed
 					}
 					break;
 
@@ -971,12 +1141,12 @@ public class MultilineTextbox extends VScrollContainer {
 					int selStart = selectionStart;
 
 					if (ctrl) {
-						moveCursorTo(findNextStop());
+						moveCursorTo(findNextStop()); // jump to next word
 					} else {
 						moveCursorBy(1);
 					}
 					if (shft) {
-						selectionStart = selStart;
+						selectionStart = selStart; // select if shift is pressed
 					}
 					break;
 
@@ -1039,5 +1209,55 @@ public class MultilineTextbox extends VScrollContainer {
 			}
 		}
 		handleRegisteredEventMethod(KEY_EVENT, e);
+	}
+
+	/**
+	 * Copy selection to clipboard
+	 */
+	protected void copy() {
+		if (selectionStart < selectionEnd) {
+			StringSelection selection = new StringSelection(text.substring(selectionStart, selectionEnd));
+			Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+			clipboard.setContents(selection, selection);
+		}
+	}
+
+	/**
+	 * Paste from clipboard (and delete selection)
+	 */
+	protected void paste() {
+		Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+		Transferable contents = clipboard.getContents(null);
+		if (contents != null && contents.isDataFlavorSupported(DataFlavor.stringFlavor)) {
+			try {
+				String content = (String) contents.getTransferData(DataFlavor.stringFlavor);
+				if (selectionStart < selectionEnd) { // if there is a selection then replace
+					int selStart = selectionStart; // store this because delete will call cursorChanged
+													 // which resets selectionStart
+					deleteRange(selectionStart, selectionEnd);
+					moveCursorTo(selStart);
+				}
+				this.append(content);
+			} catch (UnsupportedFlavorException ex) {
+				System.out.println(ex);
+				ex.printStackTrace();
+			} catch (IOException ex) {
+				ex.printStackTrace();
+			}
+		}
+	}
+
+	/**
+	 * Cut selection and copy to clipboard
+	 */
+	protected void cut() {
+		copy();
+
+		// store this because delete will call cursorChanged which resets selectionStart
+		int selStart = selectionStart;
+		deleteRange(selectionStart, selectionEnd);
+		moveCursorTo(selStart);
+		selectionStart = 0;
+		selectionEnd = 0;
 	}
 }

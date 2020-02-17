@@ -29,7 +29,7 @@ public class Checkbox extends Control {
 	protected int uncheckedBackgroundColor;
 	protected int checkedBackgroundColor;
 	protected int checkmarkColor;
-	protected int size; // size of switch, equals height of the checkbox
+	protected int checkboxSize; // size of switch, equals height of the checkbox
 
 	// determines if a mouse click anywhere on this control changes the checked
 	// state or only a click on the checkbox itself
@@ -39,16 +39,24 @@ public class Checkbox extends Control {
 
 	public Checkbox() {
 		this("", false);
-
 	}
 
 	/**
-	 * Initalize checkbox with text
+	 * Initalize checkbox with text.
 	 * 
-	 * @param text
+	 * @param text text to display
 	 */
 	public Checkbox(String text) {
 		this(text, false);
+	}
+
+	/**
+	 * Initialize checkbox with checked state.
+	 * 
+	 * @param checked checked state
+	 */
+	public Checkbox(boolean checked) {
+		this("", checked);
 	}
 
 	/**
@@ -59,8 +67,8 @@ public class Checkbox extends Control {
 	 */
 	public Checkbox(String text, boolean checked) {
 		super();
-		size = 20;
-		height = size;
+		checkboxSize = 20;
+		height = checkboxSize;
 
 		setBackgroundColor(0);
 		uncheckedBackgroundColor = -6250336; // grey
@@ -69,10 +77,11 @@ public class Checkbox extends Control {
 
 		setupListeners(1); // add one additional listener
 
-		activateInternalMouseListener();
 		setText(text);
 		setChecked(checked);
 	}
+
+
 
 	@Override
 	protected void render() {
@@ -84,17 +93,17 @@ public class Checkbox extends Control {
 		// draw checkbox
 
 		pg.fill(checked ? checkedBackgroundColor : uncheckedBackgroundColor);
-		pg.strokeWeight(size / 20f);
+		pg.strokeWeight(checkboxSize / 20f);
 		pg.stroke(borderColor);
-		pg.rect(1, 1 + paddingTop, size - 2, size - 2, 2);
+		pg.rect(1, 1 + paddingTop, checkboxSize - 2, checkboxSize - 2, 2);
 
 		// draw check mark
 
 		if (checked) {
-			pg.strokeWeight(size / 10.0f);
+			pg.strokeWeight(checkboxSize / 10.0f);
 			pg.stroke(checkmarkColor);
-			pg.line(size / 4, size / 2 + paddingTop, size / 2.5f, 3 * size / 4 + paddingTop);
-			pg.line(size / 2.5f, 3 * size / 4 + paddingTop, 3 * size / 4, size / 4 + paddingTop);
+			pg.line(checkboxSize / 4, checkboxSize / 2 + paddingTop, checkboxSize / 2.5f, 3 * checkboxSize / 4 + paddingTop);
+			pg.line(checkboxSize / 2.5f, 3 * checkboxSize / 4 + paddingTop, 3 * checkboxSize / 4, checkboxSize / 4 + paddingTop);
 		}
 		pg.noStroke();
 
@@ -103,20 +112,21 @@ public class Checkbox extends Control {
 		pg.textSize(fontSize);
 		pg.fill(foregroundColor);
 		pg.textAlign(37, 3);
-		pg.text(text, size + paddingLeft + size / 4, height / 2);
+		pg.text(text, checkboxSize + paddingLeft + checkboxSize / 4, height / 2 - 0.05f * fontSize);
 
 		// grey out disabled checkbox
 
 		if (!enabled) {
 			pg.fill(150, 150);
-			pg.rect(1, 1 + paddingTop, size - 2, size - 2, 2);
+			pg.rect(1, 1 + paddingTop, checkboxSize - 2, checkboxSize - 2, 2);
 		}
 
 	}
 
-	//
-	//
-	//
+
+
+
+
 
 	/*
 	 * SETTER
@@ -125,56 +135,53 @@ public class Checkbox extends Control {
 	/**
 	 * Set back color of checkbox when not checked.
 	 * 
-	 * @param clr
+	 * @param clr unchecked background color
 	 */
 	public void setUncheckedBackgroundColor(int clr) {
 		uncheckedBackgroundColor = clr;
+		update();
 	}
 
 	/**
 	 * Set back color of checkbox when checked.
 	 * 
-	 * @param clr
+	 * @param clr checked background color
 	 */
 	public void setCheckedBackgroundColor(int clr) {
 		checkedBackgroundColor = clr;
+		update();
 	}
 
 	/**
-	 * Set color of the check sign.
+	 * Set color of the check mark.
 	 * 
-	 * @param clr
+	 * @param clr check mark color
 	 */
 	public void setCheckmarkColor(int clr) {
 		checkmarkColor = clr;
+		update();
 	}
 
 	/**
-	 * Set zoom factor for the checkbox.
+	 * Set scale factor for the checkbox.
 	 * 
-	 * @param size
+	 * @param checkboxSize checkbox scale factor
 	 */
-	public void setSize(int size) {
-		this.size = size;
+	public void setCheckboxSize(int checkboxSize) {
+		this.checkboxSize = checkboxSize;
 		autosize();
 	}
 
 	@Override
 	protected void autosize() {
-		pg = Frame.frame0.papplet.createGraphics(1, 1);
-		pg.beginDraw();
-		pg.textSize(fontSize);
-
-		width = (int) (size + size / 4 + pg.textWidth(text) + paddingLeft + paddingRight) + 2;
-		// Height: (greater of checkbox height or text height) + padding
-		height = (int) PApplet.max(size, fontSize + pg.textDescent(), 1) + paddingTop + paddingBottom;
-
+		width = (int) PApplet.constrain(checkboxSize + checkboxSize / 4 + 2 + textWidth(text) + paddingLeft + paddingRight, minWidth, maxWidth);
+		height = (int) PApplet.constrain(PApplet.max(checkboxSize, fontSize + textDescent(), 1) + paddingTop + paddingBottom, minHeight, maxHeight);
 	}
 
 	/**
 	 * Set checked state.
 	 * 
-	 * @param checked
+	 * @param checked checked state
 	 */
 	public void setChecked(boolean checked) {
 		if (enabled) {
@@ -191,7 +198,7 @@ public class Checkbox extends Control {
 	 * If set to true pressing anywhere on the Component toggles the checkbox, else
 	 * only the box itself is active.
 	 * 
-	 * @param reactToEntireField
+	 * @param reactToEntireField reactToEntireField
 	 */
 	public void setReactToEntireField(boolean reactToEntireField) {
 		this.reactToEntireField = reactToEntireField;
@@ -213,8 +220,8 @@ public class Checkbox extends Control {
 		return checkmarkColor;
 	}
 
-	public int getSize() {
-		return size;
+	public int getCheckboxSize() {
+		return checkboxSize;
 	}
 
 	public boolean isChecked() {
@@ -240,11 +247,11 @@ public class Checkbox extends Control {
 	 * Add a listener for when the the checkbox has been checked/unchecked. Only
 	 * triggered when the user presses the Checkbox and not if set programatically.
 	 * 
-	 * @param methodName
-	 * @param target
+	 * @param methodName method name
+	 * @param target     object
 	 */
 	public void addCheckedChangedListener(String methodName, Object target) {
-		registerEventRMethod(CHECK_EVENT, methodName, target, null);
+		registerEventRMethod(CHECK_EVENT, methodName, target, Control.class);
 	}
 
 	public void addCheckedChangedListener(String methodName) {
@@ -259,12 +266,12 @@ public class Checkbox extends Control {
 	protected void press(MouseEvent e) {
 		if (enabled) {
 			if (!reactToEntireField) {
-				if (!(e.getX() > bounds.X0 && e.getX() < bounds.X0 + size && e.getY() > bounds.Y0 + paddingTop
-						&& e.getY() < bounds.Y0 + size + paddingTop))
+				if (!(e.getX() > bounds.X0 && e.getX() < bounds.X0 + checkboxSize && e.getY() > bounds.Y0 + paddingTop
+						&& e.getY() < bounds.Y0 + checkboxSize + paddingTop))
 					return;
 			}
 			checked = !checked;
-			handleRegisteredEventMethod(CHECK_EVENT, null);
+			handleRegisteredEventMethod(CHECK_EVENT, this);
 			update();
 		}
 	}

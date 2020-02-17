@@ -71,7 +71,7 @@ public class Textbox extends HScrollContainer {
 	}
 
 	public Textbox(int width, int height) {
-		this(width, height, 13);
+		this(width, height, 12);
 	}
 
 	public Textbox(int width, int height, int fontSize) {
@@ -88,7 +88,7 @@ public class Textbox extends HScrollContainer {
 		autosize();
 		setSlimScrollHandle(true);
 
-		overridesParentsShortcuts = true;
+		overridesFrameShortcuts = true;
 
 		setupListeners(3); // 3 additional listeners (textchanged, key, submit(enter))
 
@@ -199,7 +199,7 @@ public class Textbox extends HScrollContainer {
 		// get width of text before cursor in pixels; add little extra space
 		float wordWidth = pg.textWidth(text.substring(0, cursorPosition)) + fontSize / 40f;
 
-		int cursorHeight = fontSize;
+		float cursorHeight = fontSize;
 
 		// do this before drawing the cursor - scrollPositionX has to be set first!!
 		if (autoScroll) {
@@ -343,6 +343,7 @@ public class Textbox extends HScrollContainer {
 	 */
 	public void setSelectionStart(int selectionStart) {
 		this.selectionStart = Math.max(0, Math.min(text.length(), selectionStart));
+		update();
 	}
 
 	/**
@@ -353,7 +354,7 @@ public class Textbox extends HScrollContainer {
 	 */
 	public void setSelectionEnd(int selectionEnd) {
 		this.selectionEnd = Math.max(0, Math.min(text.length(), selectionEnd));
-
+		update();
 	}
 
 	/**
@@ -363,6 +364,7 @@ public class Textbox extends HScrollContainer {
 	 */
 	public void setSelectionColor(int selectionColor) {
 		this.selectionColor = selectionColor;
+		update();
 	}
 
 	/**
@@ -372,6 +374,7 @@ public class Textbox extends HScrollContainer {
 	 */
 	public void setHint(String hint) {
 		this.hint = hint;
+		update();
 	}
 
 	@Override
@@ -408,7 +411,7 @@ public class Textbox extends HScrollContainer {
 
 	@Override
 	protected void autosize() {
-		height = fontSize + paddingTop + paddingBottom;
+		height = (int) (fontSize + paddingTop + paddingBottom);
 	}
 
 
@@ -421,7 +424,7 @@ public class Textbox extends HScrollContainer {
 		// in first phase search for next space, in second search for first letter
 		int phase = 0;
 
-		String delimiters = " \n+-()[] {}().,:;_*\"\'§$%&/=?!";
+		String delimiters = " \n+-()[] {}().,:;_*\"\'$%&/=?!";
 
 		for (int i = cursorPosition + 1; i < text.length(); i++) {
 			if (phase == 0) {
@@ -450,7 +453,7 @@ public class Textbox extends HScrollContainer {
 
 	protected int findPreviousStop() {
 
-		String delimiters = " \n+-()[] {}().,:;_*\"\'§$%&/=?!";
+		String delimiters = " \n+-()[] {}().,:;_*\"\'$%&/=?!";
 
 		for (int i = cursorPosition - 2; i > 0; i--) {
 
@@ -643,7 +646,7 @@ public class Textbox extends HScrollContainer {
 
 
 	@Override
-	protected void onKeyPress(KeyEvent e) {
+	protected void keyPress(KeyEvent e) {
 		if (enabled) {
 			char key = e.getKey();
 			int code = e.getKeyCode();
@@ -668,15 +671,15 @@ public class Textbox extends HScrollContainer {
 					paste();
 					break;
 
-				// select everything
+
+				case 'X':
+					cut();
+					break;
+
 				case 'A':
 					selectionStart = 0;
 					selectionEnd = text.length();
 					update();
-					break;
-
-				case 'X':
-					cut();
 					break;
 				}
 			}
@@ -694,9 +697,9 @@ public class Textbox extends HScrollContainer {
 					int selEnd = selectionEnd;
 
 					if (ctrl) {
-						moveCursorTo(findPreviousStop());
+						moveCursorTo(findPreviousStop()); // jump to previous word
 					} else {
-						moveCursorBy(-1);
+						moveCursorBy(-1); // select if shift is pressed
 					}
 					if (shft) {
 						selectionEnd = selEnd;
@@ -707,9 +710,9 @@ public class Textbox extends HScrollContainer {
 					int selStart = selectionStart;
 
 					if (ctrl) {
-						moveCursorTo(findNextStop());
+						moveCursorTo(findNextStop()); // jump to next word
 					} else {
-						moveCursorBy(1);
+						moveCursorBy(1); // select if shift is pressed
 					}
 					if (shft) {
 						selectionStart = selStart;
@@ -787,7 +790,9 @@ public class Textbox extends HScrollContainer {
 		handleRegisteredEventMethod(KEY_EVENT, e);
 	}
 
-
+	/**
+	 * Copy selection to clipboard
+	 */
 	protected void copy() {
 		if (selectionStart < selectionEnd) {
 			StringSelection selection = new StringSelection(text.substring(selectionStart, selectionEnd));
@@ -797,6 +802,9 @@ public class Textbox extends HScrollContainer {
 
 	}
 
+	/**
+	 * Paste from clipboard (and delete selection)
+	 */
 	protected void paste() {
 		Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
 		Transferable contents = clipboard.getContents(null);
@@ -820,9 +828,14 @@ public class Textbox extends HScrollContainer {
 		}
 	}
 
+	/**
+	 * Cut selection and copy to clipboard
+	 */
 	protected void cut() {
 		copy();
+		int selStart = selectionStart;
 		deleteRange(selectionStart, selectionEnd);
+		moveCursorTo(selStart);
 		selectionStart = 0;
 		selectionEnd = 0;
 

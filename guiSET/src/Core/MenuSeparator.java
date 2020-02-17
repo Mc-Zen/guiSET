@@ -2,6 +2,12 @@ package guiSET.core;
 
 import processing.event.MouseEvent;
 
+
+/**
+ * Separator line in menus between MenuItems {@link MenuItem}. 
+ * @author E-Bow
+ *
+ */
 public class MenuSeparator extends MenuItem {
 	public MenuSeparator() {
 		super();

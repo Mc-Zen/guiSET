@@ -42,7 +42,7 @@ import java.util.Comparator;
  * Other classes inheriting from Container should use this method if they implement a new render() method. 
  * 
  * Panel containers (containers that pay respect to the position aspired by their children without setting them to new locations (autolayout)) also need sorting the content by z coordinate!
- * This is already done and distinguished under the hood but it is necessary for each inheriting class that uses an automatic layout to change the autoLayout property to true!
+ * This is already done and distinguished under the hood but it is necessary for each inheriting class that uses an automatic layout to change the containerMakesAutoLayout property to true!
  * 
  * 
  * 
@@ -62,14 +62,14 @@ public class Container extends Control {
 	 * list of items
 	 */
 	protected ArrayList<Control> content;
-	protected boolean autoSize = false;
 
 
 	/*
-	 * If a child of this class applies auto layout (overrides coordinates of items)
-	 * then set this to true.
+	 * If a subclass of this class applies auto layout (overrides coordinates of
+	 * items) then set this to true in constructor. Auto-layouting containers do not
+	 * sort their content by z-index.
 	 */
-	protected boolean autoLayout = false;
+	protected boolean containerMakesAutoLayout = false;
 
 
 	/**
@@ -83,11 +83,13 @@ public class Container extends Control {
 	public Container(int width, int height) {
 		this.width = width;
 		this.height = height;
-		cType = CONTAINER;
+		cType = CONTAINER; 		// for Container and all subclasses
 
-		activateInternalMouseListener();
 
-		content = new ArrayList<Control>();
+		// is this better? It seems that ArrayList has a default capacity of 10 at
+		// first.
+		// This might be wasteful if a lot of containers are used. Lets start with 1
+		content = new ArrayList<Control>(1);
 	}
 
 
@@ -96,10 +98,8 @@ public class Container extends Control {
 	@Override
 	protected void initialize() {
 		super.initialize();
-
-		for (Control c : content) {
+		for (Control c : content)
 			c.initialize();
-		}
 	}
 
 
@@ -155,44 +155,16 @@ public class Container extends Control {
 
 	@Override
 	protected void render() {
-		// if AutoSize is on, first get minimal dimensions
-		if (autoSize) {
-			setAutoSize();
-		}
 		drawDefaultBackground();
 
 		for (int i = 0; i < content.size(); i++) {
 			Control c = content.get(i);
-			if (c.visible) {
+			if (c.visible)
 				containerRenderItem(c, c.x, c.y);
-
-			}
 		}
 	}
 
-	protected final void containerRenderItem(Control item, int x, int y) {
-		if (item.changedVisuals) {
-			item.changedVisuals = false; // do this before render, so it can use animations by calling update again
 
-			item.preRender();
-			item.render();
-			item.pg.endDraw();
-
-			Frame.renderCount++;
-			Frame.renderedObjects += item.getClass();
-		}
-
-		// apply opacity (tinting carries out quite a lot of calculations in PGraphics,
-		// while noTint() doesn't)
-		if (item.opacity < 1) {
-			pg.tint(255, (int) (item.opacity * 256));
-		} else {
-			pg.tint = false;
-		}
-
-		if (item.opacity > 0)
-			pg.image(item.getGraphics(), x, y);
-	}
 
 
 
@@ -209,7 +181,8 @@ public class Container extends Control {
 	protected void addItem(int position, Control c) {
 		content.add(position, c);
 		c.parent = this;
-		update();
+		c.addedToParent(); // notify control it has been added to this parent
+		// update(); // called once by public add/insert
 	}
 
 	/**
@@ -223,9 +196,10 @@ public class Container extends Control {
 		for (Control c : controls) {
 			addItem(content.size(), c);
 		}
-		if (!autoLayout) { // don't sort auto-layout containers!
+		if (!containerMakesAutoLayout) { // don't sort auto-layout containers!
 			sortContent();
 		}
+		update();
 	}
 
 	/**
@@ -238,9 +212,10 @@ public class Container extends Control {
 		for (int i = 0; i < controls.length; i++) {
 			addItem(position + i, controls[i]);
 		}
-		if (!autoLayout) { // don't sort auto-layout containers!
+		if (!containerMakesAutoLayout) { // don't sort auto-layout containers!
 			sortContent();
 		}
+		update();
 	}
 
 	/**
@@ -252,7 +227,7 @@ public class Container extends Control {
 	}
 
 	/**
-	 * Remove item at position in item list.
+	 * Remove item at position in item list. Throws error if index is bad.
 	 * 
 	 * @param index position
 	 */
@@ -262,13 +237,23 @@ public class Container extends Control {
 	}
 
 	/**
-	 * Remove a specific Component from item list.
+	 * Remove a specific item from item list.
 	 * 
-	 * @param c Component to remove. 
+	 * @param c item to remove.
 	 */
 	public void remove(Control c) {
 		content.remove(c);
 		update();
+	}
+
+	/**
+	 * Get list index given item. Returns -1 if item is no child of this container.
+	 * 
+	 * @param c item to get index for
+	 * @return index
+	 */
+	public int indexOf(Control c) {
+		return content.indexOf(c);
 	}
 
 	/**
@@ -284,7 +269,17 @@ public class Container extends Control {
 		return c;
 	}
 
-	// sort Content by z-Index
+	/**
+	 * Get item in content list at given index. Returns null if index exceeds list.
+	 * 
+	 * @param index index of requested item
+	 * @return item
+	 */
+	public Control get(int index) {
+		return content.get(index);
+	}
+
+	// sort items by z-Index
 	protected void sortContent() {
 		Collections.sort(content, new Comparator<Control>() {
 			@Override
@@ -294,10 +289,12 @@ public class Container extends Control {
 		});
 	}
 
+
+
 	/**
-	 * Resize container once so it fits its content
+	 * Resize container once so it fits its content.
 	 */
-	public void setAutoSize() {
+	public void fitContent() {
 		int mWidth = 1;
 		int mHeight = 1;
 		for (int i = 0; i < content.size(); i++) {
@@ -358,9 +355,8 @@ public class Container extends Control {
 				if (Frame.isPropagationStopped())
 					return;
 
-				if (content.get(i).activatedInternalMouseListener) {
-					content.get(i).mouseEvent(e);
-				}
+				content.get(i).mouseEvent(e);
+
 
 				// it's possible that contents have changed meanwhile
 				i = Math.min(i, content.size());
@@ -370,4 +366,92 @@ public class Container extends Control {
 			}
 		}
 	}
+
+	@Override
+	protected void mouseEvent(int x, int y) {
+		if (!visible || !enabled)
+			return;
+
+		if (relCoordsAreWithin(x, y)) {
+			int x_ = x - relativeX;
+			int y_ = y - relativeY;
+			if (containerPreItemsMouseEvent(x_, y_)) {
+
+				// reverse iteration direction (as to drawing) so topmost elements will
+				// get the chance to stop the event propagation for objects below
+				for (int i = content.size() - 1; i >= 0; i--) {
+
+					// don't allow further listening when event propagation has been stopped
+					if (Frame.isPropagationStopped())
+						return;
+
+					content.get(i).mouseEvent(x_, y_);
+
+
+					// it's possible that contents have changed meanwhile
+					i = Math.min(i, content.size());
+				}
+			}
+
+
+			if (!Frame.isPropagationStopped()) {
+				containerPostItemsMouseEvent(x_, y_); // execute mouseEvent for this object afterwards
+			}
+		}
+	}
+
+
+	protected boolean containerPreItemsMouseEvent(int x, int y) {
+		return true;
+	}
+
+
+	/**
+	 * Almost a copy of {@link Control#mouseEvent(int x, int y) } but not again
+	 * checking for visible, enabled and relCoordsAreWithin.
+	 * 
+	 * Also this method can be overriden and accessed even by more deeply nested
+	 * classes.
+	 * 
+	 * 
+	 * @param x x
+	 * @param y y
+	 */
+	protected void containerPostItemsMouseEvent(int x, int y) {
+		if (hoveredElement == null)
+			hoveredElement = this;
+		switch (currentMouseEvent.getAction()) {
+		case MouseEvent.PRESS:
+			focus();
+			draggedElement = this;
+			Frame.stopPropagation();
+
+			press(currentMouseEvent);
+			handleRegisteredEventMethod(PRESS_EVENT, currentMouseEvent);
+			break;
+		case MouseEvent.RELEASE:
+			Frame.stopPropagation();
+			release(currentMouseEvent);
+			handleRegisteredEventMethod(RELEASE_EVENT, currentMouseEvent);
+			break;
+		case MouseEvent.MOVE:
+			move(currentMouseEvent);
+			handleRegisteredEventMethod(MOVE_EVENT, currentMouseEvent);
+			break;
+		case MouseEvent.WHEEL:
+			mouseWheel(currentMouseEvent);
+			handleRegisteredEventMethod(WHEEL_EVENT, currentMouseEvent);
+			break;
+		case MouseEvent.DRAG:
+			// this code wont be reached anymore for every drag event will be caught by
+			// frame
+			// drag(e);
+			// handleRegisteredEventMethod(DRAG_EVENT, e);
+			// Frame.stopPropagation();
+			break;
+		}
+	}
+
+
+
 }
