@@ -414,9 +414,14 @@ public class Frame extends Container {
 
 		if (!initialized) {
 
+<<<<<<< HEAD
 			initialize();	// recursive procedure going through all elements connected to Frame
 			handleRegisteredEventMethod(GUI_INITIALIZED_EVENT, null);
 			
+=======
+			handleRegisteredEventMethod(GUI_INITIALIZED_EVENT, null);
+			// initialize(); // no yet really implemented
+>>>>>>> branch 'master' of https://github.com/Mc-Zen/guiSET.git
 			if (resizable)
 				// somehow an update is important a second time if resizable is active
 				// in fact thats because a PFont() is created which calls some stuff. Has to do
@@ -563,8 +568,13 @@ public class Frame extends Container {
 		ShortcutDetails sd = shortcutMethods.get(shortcut);
 		if (sd != null) {
 			if (!focusedElement.overridesFrameShortcuts || sd.strong) { // don't handle shortcut if focused element
+<<<<<<< HEAD
 																		 // overrides shortcuts, but only if shortcut
 																		 // isn't strong
+=======
+																			 // overrides shortcuts, but only if shortcut
+																			 // isn't strong
+>>>>>>> branch 'master' of https://github.com/Mc-Zen/guiSET.git
 				handleShortcut(sd);
 			}
 			return true;
@@ -864,6 +874,7 @@ public class Frame extends Container {
 		 * dragging is handled separately and only for the draggedElement (which is
 		 * always set when clicking on a control).
 		 */
+<<<<<<< HEAD
 
 		topmost = null;
 
@@ -902,22 +913,53 @@ public class Frame extends Container {
 				draggedElement.drag(e);
 				draggedElement.handleRegisteredEventMethod(DRAG_EVENT, e);
 			}
+=======
+		/*
+		 * if (e.getAction() == MouseEvent.DRAG) { if (draggedElement != null) {
+		 * draggedElement.drag(e); } } else { super.mouseEvent(e);
+		 * 
+		 * } if (e.getAction() == MouseEvent.RELEASE) { draggedElement = null; }
+		 */
+		topmost = null;
+
+		// handle window mouse enter/exit events
+		// not beautiful to call super.mouseEvents() in each case but anyway
+		switch (e.getAction()) {
+		case MouseEvent.RELEASE:
+			draggedElement = null;
+			super.mouseEvent(e);
+			break;
+		case MouseEvent.DRAG:
+			if (draggedElement != null) {
+				draggedElement.drag(e);
+			}
+			super.mouseEvent(e);
+>>>>>>> branch 'master' of https://github.com/Mc-Zen/guiSET.git
 			break;
 		case MouseEvent.ENTER:
 			handleRegisteredEventMethod(MOUSE_ENTER_WINDOW_EVENT, e);
+<<<<<<< HEAD
 			if (useNewMouseEvent)
 				super.mouseEvent(mousex, mousey);
 			else
 				super.mouseEvent(e);
+=======
+			super.mouseEvent(e);
+>>>>>>> branch 'master' of https://github.com/Mc-Zen/guiSET.git
 			break;
 		case MouseEvent.EXIT:
 			handleRegisteredEventMethod(MOUSE_EXIT_WINDOW_EVENT, e);
+<<<<<<< HEAD
 			if (useNewMouseEvent)
 				super.mouseEvent(mousex, mousey);
 			else
 				super.mouseEvent(e);
+=======
+			super.mouseEvent(e);
+>>>>>>> branch 'master' of https://github.com/Mc-Zen/guiSET.git
 			break;
 
+<<<<<<< HEAD
 //			case MouseEvent.MOVE:
 //			// move happens quite often which can be expensive. Only call move if there is
 //			// at least one element using a move listener
@@ -930,7 +972,19 @@ public class Frame extends Container {
 				super.mouseEvent(mousex, mousey);
 			else
 				super.mouseEvent(e);
+=======
+		// move happens quite often which can be expensive. Only call move if there is
+		// at least one element using a move listener
+		/*
+		 * case MouseEvent.MOVE: if (moveListenersCount != 0 || true) {
+		 * super.mouseEvent(e); } break;
+		 */
+		default:
+			super.mouseEvent(e);
+>>>>>>> branch 'master' of https://github.com/Mc-Zen/guiSET.git
 		}
+		if (topmost != null)
+			papplet.cursor(topmost.cursor);
 
 
 
@@ -972,8 +1026,17 @@ public class Frame extends Container {
 	}
 
 
+	private static int moveListenersCount = 0; // if zero do not process move events.
 
+	protected static void incrementMoveListenersCount() {
+		moveListenersCount++;
+	}
 
+	protected static void decrementMoveListenersCount() {
+		moveListenersCount = Math.max(0, --moveListenersCount);
+	}
+
+	protected static Control topmost;
 
 	protected static Control topmost;
 

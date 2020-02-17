@@ -56,7 +56,11 @@ public class ListView extends VScrollContainer {
 		setBackgroundColor(-3618616); // light grey
 		setSelectionColor(-12171706);
 
+<<<<<<< HEAD
 		itemBackgroundColor = -1; // color(255)
+=======
+		itemBackgroundColor = -1; // white
+>>>>>>> branch 'master' of https://github.com/Mc-Zen/guiSET.git
 	}
 
 

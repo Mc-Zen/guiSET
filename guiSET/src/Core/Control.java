@@ -491,6 +491,7 @@ public abstract class Control {
 			pg.rect(borderWidth / 2, borderWidth / 2, width - borderWidth, height - borderWidth, borderRadius);
 
 		} else {
+<<<<<<< HEAD
 
 			// All this stuff does not work :( now using mask() instead
 			/*
@@ -535,6 +536,8 @@ public abstract class Control {
 
 
 
+=======
+>>>>>>> branch 'master' of https://github.com/Mc-Zen/guiSET.git
 			if (imageMode == FILL) {
 				pg.image(image, 0, 0, width, height);
 			}
@@ -608,11 +611,16 @@ public abstract class Control {
 	 * 
 	 * It is intialized when a Frame is created first time and only then ready.
 	 */
+<<<<<<< HEAD
 	private static PGraphics textInfo_graphics;
+=======
+	// private static PGraphics textInfo_graphics;
+>>>>>>> branch 'master' of https://github.com/Mc-Zen/guiSET.git
 	private static PFont pfont;
 
 	// called by Frame at constructor
 	protected static void init_textinfo_graphics() {
+<<<<<<< HEAD
 
 		textInfo_graphics = Frame.frame0.papplet.createGraphics(1, 1);
 		textInfo_graphics.beginDraw();
@@ -621,6 +629,14 @@ public abstract class Control {
 		// textInfo_graphics.textFont = createDefaultFont(12f);
 		// textInfo_graphics.endDraw();
 
+=======
+		/*
+		 * textInfo_graphics = Frame.frame0.papplet.createGraphics(1, 1);
+		 * textInfo_graphics.beginDraw(); textInfo_graphics.textSize(13);
+		 * System.out.println(textInfo_graphics.textFont); // textInfo_graphics.textFont
+		 * = createDefaultFont(12f); textInfo_graphics.endDraw();
+		 */
+>>>>>>> branch 'master' of https://github.com/Mc-Zen/guiSET.git
 		pfont = createDefaultFont(13);
 	}
 
@@ -665,6 +681,7 @@ public abstract class Control {
 	protected float textWidth(String text) {
 		if (pfont == null)
 			throw new RuntimeException("Frame needs to be intialized before any other guiSET Component");
+<<<<<<< HEAD
 
 
 //		char[] buffer = text.toCharArray();
@@ -678,6 +695,18 @@ public abstract class Control {
 //		return wide;
 
 		return textWidthStr(text);
+=======
+		/*
+		 * char[] buffer = text.toCharArray(); float wide = 0.0f;
+		 * System.out.print("_\n."); for (int i = 0; i < buffer.length; i++) { wide +=
+		 * pfont.width(buffer[i]) * fontSize; } System.out.print(".\n");
+		 * 
+		 * System.out.println(wide + " " + (textInfo_graphics.textWidth(text) - wide) +
+		 * " " + textWidthStr(text) + " " + text);
+		 */
+		return textWidthStr(text);
+		// return wide;
+>>>>>>> branch 'master' of https://github.com/Mc-Zen/guiSET.git
 	}
 
 
@@ -1127,7 +1156,10 @@ public abstract class Control {
 			pressedColor = clr;
 		visualBackgroundColor = clr;
 		image = null;
+<<<<<<< HEAD
 		backgroundColor = clr;
+=======
+>>>>>>> branch 'master' of https://github.com/Mc-Zen/guiSET.git
 		update();
 	}
 
@@ -1782,6 +1814,7 @@ public abstract class Control {
 	 * activatedInternalMouseListener = false; }
 	 */
 
+<<<<<<< HEAD
 
 
 	// if zero do not process move events.
@@ -1789,10 +1822,20 @@ public abstract class Control {
 
 	protected static void incrementMoveListenersCount() {
 		moveListenersCount++;
+=======
+	protected void activateInternalMouseListener() {
+		activatedInternalMouseListener = true;
+
+>>>>>>> branch 'master' of https://github.com/Mc-Zen/guiSET.git
 	}
 
+<<<<<<< HEAD
 	protected static void decrementMoveListenersCount() {
 		moveListenersCount = Math.max(0, --moveListenersCount);
+=======
+	protected void deactivateInternalMouseListener() {
+		activatedInternalMouseListener = false;
+>>>>>>> branch 'master' of https://github.com/Mc-Zen/guiSET.git
 	}
 
 	protected int moveListenersCount() {
@@ -1838,7 +1881,11 @@ public abstract class Control {
 		case "exit":
 			return registerEventRMethod(EXIT_EVENT, methodName, target, MouseEvent.class);
 		case "move":
+<<<<<<< HEAD
 			incrementMoveListenersCount();
+=======
+			Frame.incrementMoveListenersCount();
+>>>>>>> branch 'master' of https://github.com/Mc-Zen/guiSET.git
 			return registerEventRMethod(MOVE_EVENT, methodName, target, MouseEvent.class);
 		case "drag":
 			return registerEventRMethod(DRAG_EVENT, methodName, target, MouseEvent.class);
@@ -1870,7 +1917,11 @@ public abstract class Control {
 			break;
 		case "move":
 			if (registeredRMethods[MOVE_EVENT] != null) // tell Frame there is one move listener less
+<<<<<<< HEAD
 				decrementMoveListenersCount();
+=======
+				Frame.decrementMoveListenersCount();
+>>>>>>> branch 'master' of https://github.com/Mc-Zen/guiSET.git
 			deregisterEventRMethod(MOVE_EVENT);
 			break;
 		case "drag":
@@ -1983,6 +2034,7 @@ public abstract class Control {
 		}
 	}
 
+<<<<<<< HEAD
 
 
 
@@ -2046,14 +2098,21 @@ public abstract class Control {
 	protected static boolean useNewMouseEvent = true;
 
 
+=======
+>>>>>>> branch 'master' of https://github.com/Mc-Zen/guiSET.git
 	protected void mouseEvent(MouseEvent e) {
 		int x = e.getX();
 		int y = e.getY();
 		PApplet.println("Old Mouse Event", this);
 
+
 		if (visible && enabled) {
 
 			if (bounds.isWithin(x, y)) { // if over element
+<<<<<<< HEAD
+=======
+
+>>>>>>> branch 'master' of https://github.com/Mc-Zen/guiSET.git
 				/*
 				 * if(Frame.topmost == null) { System.out.println(this); Frame.topmost = this; }
 				 */
@@ -2073,6 +2132,7 @@ public abstract class Control {
 					break;
 				case MouseEvent.MOVE:
 					move(e);
+					// System.out.println("asd");
 					handleRegisteredEventMethod(MOVE_EVENT, e);
 					break;
 				case MouseEvent.DRAG:

@@ -31,6 +31,11 @@ public class Slider extends Control {
 
 
 
+<<<<<<< HEAD
+=======
+	// zoom size
+	// protected int size = 15;
+>>>>>>> branch 'master' of https://github.com/Mc-Zen/guiSET.git
 	protected int thickness = 4;
 	protected int ballSize = 15;
 
@@ -172,11 +177,14 @@ public class Slider extends Control {
 		}
 	}
 
+<<<<<<< HEAD
 	/**
 	 * Set the thickness of the slider bar in pixel.
 	 * 
 	 * @param thickness thickness
 	 */
+=======
+>>>>>>> branch 'master' of https://github.com/Mc-Zen/guiSET.git
 	public void setThickness(int thickness) {
 		this.thickness = thickness;
 		if (orientation == HORIZONTAL)
@@ -186,6 +194,15 @@ public class Slider extends Control {
 		update();
 	}
 
+<<<<<<< HEAD
+=======
+	/*
+	 * public void setSize(int size) { this.size = size; this.ballSize = size;
+	 * 
+	 * // adjust height if (orientation == HORIZONTAL) height = (int) (size * 1.3);
+	 * else width = (int) (size * 1.3); update(); }
+	 */
+>>>>>>> branch 'master' of https://github.com/Mc-Zen/guiSET.git
 
 	/**
 	 * Set diameter of the slider value "ball".
@@ -263,6 +280,13 @@ public class Slider extends Control {
 		return maxValue;
 	}
 
+<<<<<<< HEAD
+=======
+	/*
+	 * public int getSize() { return size; }
+	 */
+
+>>>>>>> branch 'master' of https://github.com/Mc-Zen/guiSET.git
 	public int getThickness() {
 		return thickness;
 	}

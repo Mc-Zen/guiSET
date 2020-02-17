@@ -45,6 +45,7 @@ public class Label extends Control {
 
 	/**
 	 * Create an image label. Width and height of label will be set to dimensions of
+<<<<<<< HEAD
 	 * image.
 	 * 
 	 * @param image background image for label
@@ -66,6 +67,29 @@ public class Label extends Control {
 
 	/**
 	 * Create an image label. Width and height of label are set to given dimensions.
+=======
+	 * image
+	 * 
+	 * @param image background image for label
+	 */
+	public Label(PImage image) {
+		this(image, image.width, image.height);
+	}
+
+	/**
+	 * Create an image label. Width and height of label will be set to dimensions of
+	 * image multiplied by given scale factor
+	 * 
+	 * @param image image background image for label
+	 * @param scale scale factor for size
+	 */
+	public Label(PImage image, float scale) {
+		this(image, (int) (image.width * scale), (int) (image.height * scale));
+	}
+
+	/**
+	 * Create an image label. Width and height of label are set to given dimensions
+>>>>>>> branch 'master' of https://github.com/Mc-Zen/guiSET.git
 	 * 
 	 * @param image  image background image for label
 	 * @param width  width for label

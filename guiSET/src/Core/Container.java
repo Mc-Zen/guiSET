@@ -65,9 +65,14 @@ public class Container extends Control {
 
 
 	/*
+<<<<<<< HEAD
 	 * If a subclass of this class applies auto layout (overrides coordinates of
 	 * items) then set this to true in constructor. Auto-layouting containers do not
 	 * sort their content by z-index.
+=======
+	 * If a child of this class applies auto layout (overrides coordinates of items)
+	 * then set this to true in constructor.
+>>>>>>> branch 'master' of https://github.com/Mc-Zen/guiSET.git
 	 */
 	protected boolean containerMakesAutoLayout = false;
 
@@ -164,6 +169,15 @@ public class Container extends Control {
 		}
 	}
 
+<<<<<<< HEAD
+=======
+	protected final void containerRenderItem(Control item, int x, int y) {
+		// check visiblity in render(), because some containers need to check it in
+		// render() anyway
+
+		if (item.changedVisuals) {
+			item.changedVisuals = false; // do this before render, so it can use animations by calling update again
+>>>>>>> branch 'master' of https://github.com/Mc-Zen/guiSET.git
 
 
 
@@ -288,6 +302,8 @@ public class Container extends Control {
 			}
 		});
 	}
+	
+	
 
 
 

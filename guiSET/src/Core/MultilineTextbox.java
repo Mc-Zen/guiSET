@@ -120,7 +120,10 @@ public class MultilineTextbox extends VScrollContainer {
 			cursorTime = Frame.frame0.papplet.millis();
 			initialized = true;
 			boxedText(text);
+<<<<<<< HEAD
 			boxedText(text);
+=======
+>>>>>>> branch 'master' of https://github.com/Mc-Zen/guiSET.git
 		}
 
 		pg.textSize(fontSize);
@@ -173,7 +176,11 @@ public class MultilineTextbox extends VScrollContainer {
 
 					int selectionX = (int) (pg.textWidth(lines.get(i).substring(0, start - breakPositions.get(i))) + fontSize / 40f);
 
+<<<<<<< HEAD
 					int selectionWidth = (int) pg.textWidth(lines.get(i).substring(start - breakPositions.get(i), end - breakPositions.get(i)));
+=======
+					int selectionWidth = (int) pg.textWidth(lines.get(i).substring(start - lineBreaks.get(i), end - lineBreaks.get(i)));
+>>>>>>> branch 'master' of https://github.com/Mc-Zen/guiSET.git
 					pg.rect(paddingLeft + selectionX, i * (lineHeight + fontSize) + paddingTop - scrollPosition, selectionWidth,
 							fontSize + pg.textDescent());
 				}
@@ -235,6 +242,7 @@ public class MultilineTextbox extends VScrollContainer {
 	 */
 	protected void boxedText1(String str) {
 
+<<<<<<< HEAD
 		// first clear the lists
 		lines.clear();
 		breakPositions.clear();
@@ -311,6 +319,9 @@ public class MultilineTextbox extends VScrollContainer {
 	}
 
 	protected void boxedText2(String str) {
+=======
+	protected void boxedText(String str) {
+>>>>>>> branch 'master' of https://github.com/Mc-Zen/guiSET.git
 		if (!initialized)
 			return;
 
@@ -881,7 +892,11 @@ public class MultilineTextbox extends VScrollContainer {
 	public void setText(String text) {
 		this.text = text;
 		cursorPosition = PApplet.constrain(cursorPosition, 0, text.length());
+<<<<<<< HEAD
 		boxedText(this.text);
+=======
+		boxedText(text);
+>>>>>>> branch 'master' of https://github.com/Mc-Zen/guiSET.git
 		update();
 	}
 
@@ -1064,9 +1079,15 @@ public class MultilineTextbox extends VScrollContainer {
 				// On lines with real break we want to set the cursor to the end (before '\n')
 				// but that would be on short of what the other types of lines need
 				if (line.charAt(line.length() - 1) == '\n')
+<<<<<<< HEAD
 					moveCursorTo(line.length() + breakPositions.get(newCursorLine) - 2);
 				else
 					moveCursorTo(line.length() + breakPositions.get(newCursorLine) - 1);
+=======
+					moveCursorTo(line.length() + lineBreaks.get(newCursorLine) - 2);
+				else
+					moveCursorTo(line.length() + lineBreaks.get(newCursorLine) - 1);
+>>>>>>> branch 'master' of https://github.com/Mc-Zen/guiSET.git
 			}
 
 		} else { // if line number is exceeded, set cursor to end
