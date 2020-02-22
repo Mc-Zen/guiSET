@@ -51,13 +51,9 @@ public class ListItem extends Control {
 	protected void render() {
 		// Exception: Width is set in render() method for once which is okay because
 		// parent expects that
-<<<<<<< HEAD
 		width = PApplet.max(1, parent.width - parent.paddingLeft - parent.paddingRight - marginLeft - marginRight - 5); // getAvailableWidth() would
 																														 // be nice, but parent is a
 																														 // control not container
-=======
-		width = PApplet.max(1, parent.width -parent.paddingLeft - parent.paddingRight - marginLeft - marginRight - 5); // getAvailableWidth() would be nice, but parent is a control not container
->>>>>>> branch 'master' of https://github.com/Mc-Zen/guiSET.git
 
 		pg = Frame.frame0.papplet.createGraphics(width, height);
 		pg.beginDraw();
@@ -90,7 +86,6 @@ public class ListItem extends Control {
 	 * Getter and Setter
 	 */
 
-<<<<<<< HEAD
 
 
 	// automatically set HoverColor and PressedColor
@@ -102,8 +97,6 @@ public class ListItem extends Control {
 
 
 
-=======
->>>>>>> branch 'master' of https://github.com/Mc-Zen/guiSET.git
 	/**
 	 * set selection color
 	 */

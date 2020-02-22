@@ -251,11 +251,6 @@ public class HScrollContainer extends HFlowContainer {
 	public int getFullScrollWidth() {
 		return fullScrollWidth;
 	}
-	
-	@Override
-	public int getAvailableHeight() {
-		return height - paddingTop - paddingBottom - scrollHandleStrength - 1;
-	}
 
 	@Override
 	public int getAvailableHeight() {
