@@ -1,7 +1,7 @@
 package guiSET.core;
 
 /*
- * Slider to select a value between minValue and maxValue with the mouse (through dragging or clicking)
+ * Slider to select a value between minValue and maxValue with the mouse (through dragging or clicking).
  * 
  * Orientation can be set to vertical or horizontal. 
  */
@@ -27,10 +27,6 @@ public class Slider extends Control {
 
 
 
-
-
-
-
 	protected int thickness = 4;
 	protected int ballSize = 15;
 
@@ -47,29 +43,24 @@ public class Slider extends Control {
 
 	public Slider() {
 		super();
-		width = 400;
-
 		backgroundColor = -2302756; // some gray
 		foregroundColor = -1926085; // orange
-
-		height = (int) (ballSize * 1.3);
-
-		setupListeners(1); // one additional listener (valueChanged)
+		setWidthImpl(400);
+		setHeightImpl((int) (ballSize * 1.3));
 	}
 
 
 	public Slider(float minValue, float maxValue) {
-		this();
-		this.minValue = minValue;
-		this.maxValue = maxValue;
+		this(minValue, maxValue, 0);
 	}
 
 	public Slider(float minValue, float maxValue, float value) {
 		this();
-		this.minValue = minValue;
-		this.maxValue = maxValue;
+		setMinValue(minValue);
+		setMaxValue(maxValue);
 		setValue(value);
 	}
+
 
 	@Override
 	protected void render() {
@@ -114,7 +105,6 @@ public class Slider extends Control {
 					ballSize);
 
 		}
-
 	}
 
 
@@ -137,7 +127,7 @@ public class Slider extends Control {
 		// only invoke registered method if value really changed (might not because of
 		// constraining)
 		if (tempValue != this.value) {
-			handleRegisteredEventMethod(CHANGE_EVENT, this);
+			handleEvent(valueChangeListener, this);
 		}
 		update();
 	}
@@ -149,8 +139,9 @@ public class Slider extends Control {
 	 * @param minValue minValue
 	 */
 	public void setMinValue(float minValue) {
-		if (value <= maxValue) {
-			minValue = value;
+		if (minValue <= maxValue) {
+			this.minValue = minValue;
+			setValue(value); // might need constraining
 			update();
 		} else {
 			System.out.println("minValue can't be larger than maxValue");
@@ -164,11 +155,12 @@ public class Slider extends Control {
 	 * @param maxValue maxValue
 	 */
 	public void setMaxValue(float maxValue) {
-		if (value >= minValue) {
-			maxValue = value;
+		if (maxValue >= minValue) {
+			this.maxValue = maxValue;
+			setValue(value); // might need constraining
 			update();
 		} else {
-			System.out.println("minValue can't be larger than maxValue");
+			System.out.println("maxValue can't be less than minValue");
 		}
 	}
 
@@ -180,9 +172,9 @@ public class Slider extends Control {
 	public void setThickness(int thickness) {
 		this.thickness = thickness;
 		if (orientation == HORIZONTAL)
-			height = (int) (Math.max(thickness, ballSize) * 1.3);
+			setHeightImpl((int) (Math.max(thickness, ballSize) * 1.3));
 		else
-			width = (int) (Math.max(thickness, ballSize) * 1.3);
+			setWidthImpl((int) (Math.max(thickness, ballSize) * 1.3));
 		update();
 	}
 
@@ -197,9 +189,9 @@ public class Slider extends Control {
 
 		// adjust height to larger of Size and BallSize
 		if (orientation == HORIZONTAL)
-			height = (int) (Math.max(thickness, ballSize) * 1.3);
+			setHeightImpl((int) (Math.max(thickness, ballSize) * 1.3));
 		else
-			width = (int) (Math.max(thickness, ballSize) * 1.3);
+			setWidthImpl((int) (Math.max(thickness, ballSize) * 1.3));
 		update();
 	}
 
@@ -211,15 +203,15 @@ public class Slider extends Control {
 	public void setOrientation(int orientation) {
 		if (orientation == HORIZONTAL) {
 			if (this.orientation == VERTICAL) {
-				width = height;
-				height = (int) (Math.max(thickness, ballSize) * 1.3);
+				setWidthImpl(height);
+				setHeightImpl((int) (Math.max(thickness, ballSize) * 1.3));
 			}
 			this.orientation = orientation;
 		}
 		if (orientation == VERTICAL) {
 			if (this.orientation == HORIZONTAL) {
-				height = width;
-				width = (int) (Math.max(thickness, ballSize) * 1.3);
+				setHeightImpl(width);
+				setWidthImpl((int) (Math.max(thickness, ballSize) * 1.3));
 			}
 			this.orientation = orientation;
 		}
@@ -293,38 +285,40 @@ public class Slider extends Control {
 	 * Events
 	 */
 
-	protected static final int CHANGE_EVENT = numberMouseListeners;
+	protected EventListener valueChangeListener;
 
 
 	/**
 	 * Add a value changed listener. The event is also triggered when the value is
 	 * changed programatically.
 	 * 
-	 * @param methodName
-	 * @param target
+	 * @param methodName methodName
+	 * @param target     target
 	 */
-	public void addValueChangedListener(String methodName, Object target) {
-		registerEventRMethod(CHANGE_EVENT, methodName, target, Control.class);
+	public void addValueChangeListener(String methodName, Object target) {
+		valueChangeListener = createEventListener(methodName, target, Control.class);
 	}
 
-	public void addValueChangedListener(String methodName) {
-		addValueChangedListener(methodName, Frame.frame0.papplet);
+	public void addValueChangeListener(String methodName) {
+		addValueChangeListener(methodName, getPApplet());
 	}
 
-	public void removeValueChangedListener() {
-		deregisterEventRMethod(CHANGE_EVENT);
+	public void removeValueChangeListener() {
+		valueChangeListener = null;
 	}
 
-	/**
+	
+	
+	
+	
+	/*
 	 * internal method for setting the actual position of the ball
-	 * 
-	 * @param position
 	 */
 	protected void setBallPosition(float position) {
 		if (orientation == HORIZONTAL) {
-			setValue(((position - bounds.X0 - ballSize / 2) * Math.abs(maxValue - minValue) / (float) (width - ballSize)) + minValue);
+			setValue(((position - ballSize / 2) * Math.abs(maxValue - minValue) / (float) (width - ballSize)) + minValue);
 		} else {
-			setValue(((height - (position - bounds.Y0) - ballSize / 2) * Math.abs(maxValue - minValue) / (float) (height - ballSize)) + minValue);
+			setValue(((height - position - ballSize / 2) * Math.abs(maxValue - minValue) / (float) (height - ballSize)) + minValue);
 
 		}
 
@@ -334,12 +328,12 @@ public class Slider extends Control {
 
 	@Override
 	protected void drag(MouseEvent e) {
-		setBallPosition(orientation == HORIZONTAL ? e.getX() : e.getY());
+		setBallPosition(orientation == HORIZONTAL ? e.getX() - getOffsetXWindow() : e.getY() - getOffsetYWindow());
 	}
 
 	@Override
 	protected void press(MouseEvent e) {
-		setBallPosition(orientation == HORIZONTAL ? e.getX() : e.getY());
+		setBallPosition(orientation == HORIZONTAL ? e.getX() - getOffsetXWindow() : e.getY() - getOffsetYWindow());
 	}
 
 	@Override

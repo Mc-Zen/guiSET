@@ -53,50 +53,13 @@ public class ScrollArea extends Container {
 
 
 	@Override
-	protected void calcBounds() {
-		for (Control c : content) {
-
-			if (c.visible) {
-
-				c.bounds.X0 = this.bounds.X0 + c.x - scrollPositionX;
-				c.bounds.Y0 = this.bounds.Y0 + c.y - scrollPositionY;
-				// crop overflow
-				c.bounds.X = Math.min(c.bounds.X0 + c.width, this.bounds.X - (needsScrollbarV() ? scrollHandleStrength + 3 : 0));
-				c.bounds.Y = Math.min(c.bounds.Y0 + c.height, this.bounds.Y - (needsScrollbarH() ? scrollHandleStrength + 3 : 0));
-
-				// constrain after computing X,Y so no data will be lost by constraining
-				c.bounds.X0 = Math.max(c.bounds.X0, this.bounds.X0);
-				c.bounds.Y0 = Math.max(c.bounds.Y0, this.bounds.Y0);
-
-				if (c.cType == CONTAINER) {
-					c.calcBounds();
-				}
-			}
-		}
-	}
-
-
-
-	@Override
 	protected void render() {
-
 		drawDefaultBackground();
-
-		scrollPositionX = PApplet.constrain(scrollPositionX, 0, PApplet.max(0, fullScrollWidth - width));
-		scrollPositionY = PApplet.constrain(scrollPositionY, 0, PApplet.max(0, fullScrollHeight - height));
-
-		for (Control c : content) {
-			if (c.visible) {
-				containerRenderItem(c, c.x - scrollPositionX, c.y - scrollPositionY);
-			}
-		}
 
 		fullScrollWidth = 0;
 		fullScrollHeight = 0;
 
-		for (int i = 0; i < content.size(); i++) {
-			Control c = content.get(i);
-
+		for (Control c : items) {
 			if (c.visible) {
 				fullScrollWidth = Math.max(fullScrollWidth, c.x + c.width + c.marginLeft);
 				fullScrollHeight = Math.max(fullScrollHeight, c.y + c.height + c.marginBottom);
@@ -105,7 +68,18 @@ public class ScrollArea extends Container {
 		fullScrollWidth += scrollHandleStrength + 3;
 		fullScrollHeight += scrollHandleStrength + 3;
 
+		scrollPositionX = PApplet.constrain(scrollPositionX, 0, PApplet.max(0, fullScrollWidth - width));
+		scrollPositionY = PApplet.constrain(scrollPositionY, 0, PApplet.max(0, fullScrollHeight - height));
 
+
+
+		for (Control c : items) {
+			if (c.visible) {
+				renderItem(c, c.x - scrollPositionX, c.y - scrollPositionY);
+			}
+		}
+
+		// rect at right bottom corner if both scrollbars active
 		if (needsScrollbarH() && needsScrollbarV() && !slim_scrollhandle) {
 			pg.fill(130);
 			pg.noStroke();
@@ -114,6 +88,7 @@ public class ScrollArea extends Container {
 
 		drawScrollbarH();
 		drawScrollbarV();
+		drawDefaultDisabled();
 	}
 
 
@@ -130,7 +105,7 @@ public class ScrollArea extends Container {
 
 			} else {
 				pg.rect(width - 2 - scrollHandleStrength, 0, scrollHandleStrength + 2, scrollbar_height());
-				pg.fill(190);
+				pg.fill((startHandleDragPos > -1 && whichScrollBar == V_SCROLLBAR) ? 170 : 190);
 				pg.rect(width - 1 - scrollHandleStrength, scrollhandle_posY(), scrollHandleStrength, scrollhandle_height(), 3);
 			}
 		}
@@ -147,9 +122,8 @@ public class ScrollArea extends Container {
 			if (slim_scrollhandle) {
 				pg.rect(scrollhandle_posX(), height - 4, scrollhandle_width(), 3, 15);
 			} else {
-				pg.rect(0, height - 2 - scrollHandleStrength, scrollbar_width(), scrollHandleStrength + 3); // height is one more than necessary (just
-																											 // a buffer)
-				pg.fill(190);
+				pg.rect(0, height - 2 - scrollHandleStrength, scrollbar_width(), scrollHandleStrength + 3); // height is one more than necessary (just)																			 // a buffer)
+				pg.fill((startHandleDragPos > -1 && whichScrollBar == H_SCROLLBAR) ? 170 : 190);
 				pg.rect(scrollhandle_posX(), height - 1 - scrollHandleStrength, scrollhandle_width(), scrollHandleStrength, 3);
 			}
 		}
@@ -183,30 +157,30 @@ public class ScrollArea extends Container {
 	}
 
 	// get height of handle (of the vertical scrollbar)
-	protected float scrollhandle_height() {
-		return (float) height / fullScrollHeight * scrollbar_height();
+	protected int scrollhandle_height() {
+		return height * scrollbar_height() / fullScrollHeight;
 	}
 
 	// get width of handle (of the horizontal scrollbar)
-	protected float scrollhandle_width() {
-		return (float) width / fullScrollWidth * scrollbar_width();
+	protected int scrollhandle_width() {
+		return width * scrollbar_width() / fullScrollWidth;
 	}
 
 	// get position of handle (of the vertical scrollbar)
-	protected float scrollhandle_posY() {
+	protected int scrollhandle_posY() {
 		int scrollbar_height = scrollbar_height();
 		float scrollhandle_height = scrollhandle_height();
 
-		return PApplet.constrain(scrollPositionY * (scrollbar_height - scrollhandle_height) / (fullScrollHeight - height), 1,
+		return (int) PApplet.constrain(scrollPositionY * (scrollbar_height - scrollhandle_height) / (fullScrollHeight - height), 1,
 				scrollbar_height - scrollhandle_height - 2);
 	}
 
 	// get position of handle (of the horizontal scrollbar)
-	protected float scrollhandle_posX() {
+	protected int scrollhandle_posX() {
 		int scrollbar_width = scrollbar_width();
 		float scrollhandle_width = scrollhandle_width();
 
-		return PApplet.constrain(scrollPositionX * (scrollbar_width - scrollhandle_width) / (fullScrollWidth - width), 1,
+		return (int) PApplet.constrain(scrollPositionX * (scrollbar_width - scrollhandle_width) / (fullScrollWidth - width), 1,
 				scrollbar_width - scrollhandle_width - 2);
 	}
 
@@ -221,50 +195,50 @@ public class ScrollArea extends Container {
 	 * Amount of pixels to scroll for each step with the mouse wheel in horizontal
 	 * direction.
 	 * 
-	 * @param scrollSpeed
+	 * @param scrollSpeedX scrollSpeedX
 	 */
-	public void setScrollSpeedX(int s) {
-		scrollSpeedX = s;
+	public void setScrollSpeedX(int scrollSpeedX) {
+		this.scrollSpeedX = scrollSpeedX;
 	}
 
 	/**
 	 * Amount of pixels to scroll for each step with the mouse wheel in vertical
 	 * direction.
 	 * 
-	 * @param scrollSpeed
+	 * @param scrollSpeedY scrollSpeedY
 	 */
-	public void setScrollSpeedY(int s) {
-		scrollSpeedY = s;
+	public void setScrollSpeedY(int scrollSpeedY) {
+		this.scrollSpeedY = scrollSpeedY;
 	}
 
 	/**
 	 * Set horizontal scroll position in pixel from left.
 	 * 
-	 * @param scrollPosition
+	 * @param scrollPositionX scrollPositionX
 	 */
-	public void setScrollPositionX(int x) {
-		scrollPositionX = x;
+	public void setScrollPositionX(int scrollPositionX) {
+		this.scrollPositionX = scrollPositionX;
 		update();
 	}
 
 	/**
 	 * Set vertical scroll position in pixel from top.
 	 * 
-	 * @param scrollPosition
+	 * @param scrollPositionY scrollPositionY
 	 */
-	public void setScrollPositionY(int y) {
-		scrollPositionY = y;
+	public void setScrollPositionY(int scrollPositionY) {
+		this.scrollPositionY = scrollPositionY;
 		update();
 	}
 
 	/**
-	 * Enable a slim (mobile phone like) scroll handle instead of the bold one.
+	 * Enable a slim (mobile phone like) scroll handle instead of the standard one.
 	 * 
-	 * @param light_scrollhandle
+	 * @param slim_scrollhandle slim_scrollhandle
 	 */
-	public void setSlimScrollHandle(boolean light_scrollhandle) {
-		this.slim_scrollhandle = light_scrollhandle;
-		if (light_scrollhandle) {
+	public void setSlimScrollHandle(boolean slim_scrollhandle) {
+		this.slim_scrollhandle = slim_scrollhandle;
+		if (slim_scrollhandle) {
 			scrollHandleStrength = SCROLL_HANDLE_STRENGTH_SLIM;
 		} else {
 			scrollHandleStrength = SCROLL_HANDLE_STRENGTH_STD;
@@ -316,13 +290,13 @@ public class ScrollArea extends Container {
 			int temp = scrollPositionX;
 			setScrollPositionX(scrollPositionX + e.getCount() * scrollSpeedX);
 			if (scrollPositionX != temp) {
-				Frame.stopPropagation();
+				stopPropagation();
 			}
 		} else {
 			int temp = scrollPositionY;
 			setScrollPositionY(scrollPositionY + e.getCount() * scrollSpeedY);
 			if (scrollPositionY != temp) {
-				Frame.stopPropagation();
+				stopPropagation();
 			}
 		}
 	}
@@ -343,7 +317,7 @@ public class ScrollArea extends Container {
 	 * 
 	 */
 
-	protected float startHandleDragPos = -1;
+	protected int startHandleDragPos = -1;
 	private int whichScrollBar;
 	private static final int H_SCROLLBAR = 0;
 	private static final int V_SCROLLBAR = 1;
@@ -357,78 +331,29 @@ public class ScrollArea extends Container {
 		if (startHandleDragPos > -1) {
 			if (whichScrollBar == H_SCROLLBAR) {
 
-				float newScrollHandle_Pos = e.getX() - bounds.X0 - startHandleDragPos;
-				if (useNewMouseEvent)
-					newScrollHandle_Pos = e.getX() - getOffsetXWindow() - startHandleDragPos;
-				float newScrollPosition = newScrollHandle_Pos * (float) (fullScrollWidth - width) / (scrollbar_width() - scrollhandle_width());
-				setScrollPositionX((int) newScrollPosition);
+				int newScrollHandle_Pos = e.getX() - getOffsetXWindow() - startHandleDragPos;
+				int newScrollPosition = newScrollHandle_Pos * (fullScrollWidth - width) / (scrollbar_width() - scrollhandle_width());
+				setScrollPositionX(newScrollPosition);
 
 			} else if (whichScrollBar == V_SCROLLBAR) {
 
-				float newScrollHandle_Pos = e.getY() - bounds.Y0 - startHandleDragPos;
-				if (useNewMouseEvent)
-					newScrollHandle_Pos = e.getY() - getOffsetYWindow() - startHandleDragPos;
-				float newScrollPosition = newScrollHandle_Pos * (float) (fullScrollHeight - height) / (scrollbar_height() - scrollhandle_height());
-				setScrollPositionY((int) newScrollPosition);
+				int newScrollHandle_Pos = e.getY() - getOffsetYWindow() - startHandleDragPos;
+				int newScrollPosition = newScrollHandle_Pos * (fullScrollHeight - height) / (scrollbar_height() - scrollhandle_height());
+				setScrollPositionY(newScrollPosition);
 
 			}
 		}
 	}
 
-
+	// Do this here and not in containerPreItemsMouseEvent called, because the
+	// latter is not called when released outside this element.
 	@Override
-	protected void mouseEvent(MouseEvent e) {
-		if (visible) {
-
-			/*
-			 * handle the scrollbar dragging
-			 */
-
-			boolean mouseIsOverScrollAreaH = e.getY() > bounds.Y - scrollHandleStrength - 3 && e.getY() < bounds.Y && e.getX() > bounds.X0
-					&& e.getX() < bounds.X - (needsScrollbarV() ? scrollHandleStrength + 3 : 0);
-
-			boolean mouseIsOverScrollAreaV = e.getX() > bounds.X - scrollHandleStrength - 3 && e.getX() < bounds.X && e.getY() > bounds.Y0
-					&& e.getY() < bounds.Y - (needsScrollbarH() ? scrollHandleStrength + 3 : 0);
-
-
-			switch (e.getAction()) {
-			case MouseEvent.PRESS:
-				if (mouseIsOverScrollAreaH) {
-					whichScrollBar = H_SCROLLBAR;
-
-					float scrollhandle_posX = scrollhandle_posX();
-
-					// if clicked on scrollhandle itself (instead of entire scroll area) the
-					// dragging is started
-					if (e.getX() > scrollhandle_posX + bounds.X0 && e.getX() < scrollhandle_posX + bounds.X0 + scrollhandle_width()) {
-						startHandleDragPos = e.getX() - bounds.X0 - scrollhandle_posX;
-					}
-
-				} else if (mouseIsOverScrollAreaV) {
-					whichScrollBar = V_SCROLLBAR;
-
-					float scrollhandle_posY = scrollhandle_posY();
-
-					// if clicked on scrollhandle itself (instead of entire scroll area) the
-					// dragging is started
-					if (e.getY() > scrollhandle_posY + bounds.Y0 && e.getY() < scrollhandle_posY + bounds.Y0 + scrollhandle_height()) {
-						startHandleDragPos = e.getY() - bounds.Y0 - scrollhandle_posY;
-					}
-				}
-				break;
-
-			case MouseEvent.RELEASE:
-
-				// stop dragging scrollbar
-				startHandleDragPos = -1;
-				break;
-			}
-
-			super.mouseEvent(e);
-		}
+	protected void release(MouseEvent e) {
+		super.release(e);
+		startHandleDragPos = -1;
 	}
 
-	/*
+	/**
 	 * Need to check if mouse is over one of the scroll bars. If so, then content
 	 * items should not receive this mouse event (thus return false here in this
 	 * case).
@@ -450,7 +375,7 @@ public class ScrollArea extends Container {
 
 			if (mouseIsOverScrollBarH) {
 				whichScrollBar = H_SCROLLBAR;
-				float scrollhandle_posX = scrollhandle_posX();
+				int scrollhandle_posX = scrollhandle_posX();
 
 				// if clicked on scrollhandle itself (instead of entire scroll area) the
 				// dragging is started
@@ -461,7 +386,7 @@ public class ScrollArea extends Container {
 			} else if (mouseIsOverScrollBarV) {
 				whichScrollBar = V_SCROLLBAR;
 
-				float scrollhandle_posY = scrollhandle_posY();
+				int scrollhandle_posY = scrollhandle_posY();
 
 				// if clicked on scrollhandle itself (instead of entire scroll area) the
 				// dragging is started
@@ -471,58 +396,11 @@ public class ScrollArea extends Container {
 
 			}
 
-		} else if (currentMouseEvent.getAction() == MouseEvent.RELEASE)
-			startHandleDragPos = -1;
+		}
 
 		// return false if mouse is over either scroll bar.
 		// This way the items will not receive this mouse event.
 		return !(mouseIsOverScrollBarV || mouseIsOverScrollBarH);
 	}
-
-
-
-	/*
-	 * @Override protected void mouseEvent(int x, int y) { if (visible) { x -= x0; y
-	 * -= y0;
-	 * 
-	 * // // handle the scrollbar dragging //
-	 * 
-	 * boolean mouseIsOverScrollAreaV = x > width - scrollHandleStrength - 3 && x <
-	 * width && y > 0 && y < height - (needsScrollbarV() ? scrollHandleStrength + 3
-	 * : 0); boolean mouseIsOverScrollAreaH = y > height - scrollHandleStrength - 3
-	 * && y < height && x > 0 && x < width - (needsScrollbarH() ?
-	 * scrollHandleStrength + 3 : 0);
-	 * 
-	 * if (mouseIsOverScrollAreaH) { whichScrollBar = H_SCROLLBAR; float
-	 * scrollhandle_posX = scrollhandle_posX();
-	 * 
-	 * // if clicked on scrollhandle itself (instead of entire scroll area) the //
-	 * dragging is started if (x > scrollhandle_posX && x < scrollhandle_posX +
-	 * scrollhandle_width()) { if (e.getAction() == MouseEvent.PRESS)
-	 * startHandleDragPos = x - scrollhandle_posX;
-	 * 
-	 * // dont handle events for stuff below Control.first = this; //
-	 * Frame.stopPropagation(); } } else if (mouseIsOverScrollAreaV) {
-	 * whichScrollBar = V_SCROLLBAR;
-	 * 
-	 * float scrollhandle_posY = scrollhandle_posY();
-	 * 
-	 * // if clicked on scrollhandle itself (instead of entire scroll area) the //
-	 * dragging is started if (y > scrollhandle_posY && y < scrollhandle_posY +
-	 * scrollhandle_height()) { if (e.getAction() == MouseEvent.PRESS)
-	 * startHandleDragPos = y - scrollhandle_posY;
-	 * 
-	 * Control.first = this; // dont handle events for stuff below //
-	 * Frame.stopPropagation(); } }
-	 * 
-	 * switch (e.getAction()) { case MouseEvent.PRESS:
-	 * 
-	 * 
-	 * break; case MouseEvent.RELEASE:
-	 * 
-	 * // stop dragging scrollbar startHandleDragPos = -1; break; }
-	 * 
-	 * super.mouseEvent(x + x0, y + y0); } }
-	 */
 
 }

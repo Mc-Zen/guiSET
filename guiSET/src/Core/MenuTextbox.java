@@ -20,14 +20,14 @@ public class MenuTextbox extends MenuItem {
 
 	@Override
 	protected void render() {
-		containerRenderItem(t, 0, 0);
+		renderItem(t, 0, 0);
 	}
 
 
 	@Override
 	protected void mouseEvent(int x, int y) {
-		x -= relativeX;
-		y -= relativeY;
+		x -= offsetX;
+		y -= offsetY;
 		t.mouseEvent(x, y);
 	}
 

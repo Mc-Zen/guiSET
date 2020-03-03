@@ -1,14 +1,14 @@
 package guiSET.core;
 
 import processing.core.*;
-import processing.event.*;
 
 /**
- * Basic button template with automatic background colro hover and press effect.
+ * Basic button template for text or image buttons.
  * 
  * @author Mc-Zen
  *
  */
+
 public class Button extends Control {
 
 	public Button() {
@@ -80,8 +80,8 @@ public class Button extends Control {
 	 */
 	public Button(PImage image, int width, int height) {
 		setImage(image);
-		this.width = width;  // should be okay to set size without setter
-		this.height = height;
+		setWidthImpl(width);  // should be okay to set size without setter
+		setHeightImpl(height);
 		borderWidth = 0;
 	}
 
@@ -93,21 +93,20 @@ public class Button extends Control {
 
 	@Override
 	protected void render() {
-
 		drawDefaultBackground();
 		drawDefaultText();
-		standardDisabled();
-
+		drawDefaultDisabled();
 	}
+
 
 	@Override
-	protected void autosize() {
-		width = (int) PApplet.constrain(textWidth(text) + paddingLeft + paddingRight, minWidth, maxWidth);
+	protected void autosizeRule() {
+		setWidthImpl((int) (textWidth(text) + paddingLeft + paddingRight));
 		int numLines = text.split("\n").length;
-		// height = (int) PApplet.constrain(fontSize*1.1f + paddingTop + paddingBottom,
-		// minHeight, maxHeight);
-		height = (int) PApplet.constrain(numLines * textLeading() + paddingTop + paddingBottom, minHeight, maxHeight);
+		setHeightImpl((int) (numLines * textLeading() + paddingTop + paddingBottom));
 	}
+
+
 
 	/*
 	 * STYLE SETTING METHODS
@@ -117,35 +116,6 @@ public class Button extends Control {
 	@Override
 	public void setBackgroundColor(int clr) {
 		setStatusBackgroundColorsAutomatically(clr);
-	}
-
-	/*
-	 * EVENT METHODS
-	 * 
-	 * need to change some colors when hovered over or pressed.
-	 */
-	@Override
-	protected void enter(MouseEvent e) {
-		visualBackgroundColor = hoverColor;
-		update();
-	}
-
-	@Override
-	protected void exit(MouseEvent e) {
-		visualBackgroundColor = backgroundColor;
-		update();
-	}
-
-	@Override
-	protected void press(MouseEvent e) {
-		visualBackgroundColor = pressedColor;
-		update();
-	}
-
-	@Override
-	protected void release(MouseEvent e) {
-		visualBackgroundColor = hoverColor;
-		update();
 	}
 
 

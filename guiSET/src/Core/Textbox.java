@@ -41,14 +41,13 @@ import java.awt.datatransfer.DataFlavor;
 public class Textbox extends HScrollContainer {
 
 	protected int selectionColor = -13395457;
-	protected int cursorColor = 70;
+	protected int cursorColor = -12171706; // color(70)
 	protected String hint = ""; // text to display when textbox is empty
 
 	protected int cursorPosition;
 	protected int selectionStart;
 	protected int selectionEnd;
 
-	protected boolean autoScroll; // autoscroll to cursor when text changed, dont set it
 
 	// measure time to create blink animation
 	protected int cursorTime;
@@ -66,31 +65,29 @@ public class Textbox extends HScrollContainer {
 
 
 	public Textbox() {
-		this(100, 20, 13);
+		this(100, 13);
 
 	}
 
-	public Textbox(int width, int height) {
-		this(width, height, 12);
+	public Textbox(int width) {
+		this(width, 12);
 	}
 
-	public Textbox(int width, int height, int fontSize) {
+	public Textbox(int width, int fontSize) {
+		super(width, 20); // height does not matter
 
-		foregroundColor = 0;
-		backgroundColor = 220;
-		hoverColor = 220;
-		visualBackgroundColor = backgroundColor;
+		foregroundColor = -16777216;
+		setBackgroundColor(-2302756);
 
-		this.width = width;
 		this.fontSize = fontSize;
 		cursor = PApplet.TEXT;
 		setPadding(5);
-		autosize();
 		setSlimScrollHandle(true);
 
-		overridesFrameShortcuts = true;
 
-		setupListeners(3); // 3 additional listeners (textchanged, key, submit(enter))
+		autosize();
+
+		overridesFrameShortcuts = true;
 
 		// cursor animation:
 		Frame.frame0.papplet.registerMethod("pre", this);
@@ -100,16 +97,16 @@ public class Textbox extends HScrollContainer {
 
 
 
+	protected boolean needsScrolling; // autoscroll once to cursor when text changed, dont set it
 
 
 
 	@Override
 	protected void render() {
-
 		drawDefaultBackground();
 
 		if (borderWidth == 0) {
-			// draw 3D-Border
+			// draw "3D"-Border
 			pg.strokeWeight(1);
 			pg.stroke(70);
 			pg.line(0, 0, width, 0);
@@ -123,7 +120,7 @@ public class Textbox extends HScrollContainer {
 		pg.textAlign(PApplet.LEFT, PApplet.TOP);
 
 		// do this before drawing cursor!! - needs new fullScrollWidth
-		fullScrollWidth = (int) pg.textWidth(text) + paddingLeft + paddingRight;
+		fullScrollWidth = (int) textWidth(text) + paddingLeft + paddingRight;
 		scrollPosition = Math.max(0, Math.min(scrollPosition, Math.max(0, fullScrollWidth - width)));
 
 		/*
@@ -143,7 +140,7 @@ public class Textbox extends HScrollContainer {
 				pg.fill(selectionColor);
 				pg.noStroke();
 				pg.rect(paddingLeft - scrollPosition + selectionX + fontSize / 40f, paddingTop, selectionWidth + fontSize / 40f,
-						height - paddingBottom - paddingTop + pg.textDescent());
+						fontSize + pg.textDescent());
 			}
 		}
 
@@ -164,9 +161,7 @@ public class Textbox extends HScrollContainer {
 		drawScrollbar();
 
 
-		standardDisabled();
-
-
+		drawDefaultDisabled();
 	}
 
 
@@ -202,14 +197,13 @@ public class Textbox extends HScrollContainer {
 		float cursorHeight = fontSize;
 
 		// do this before drawing the cursor - scrollPositionX has to be set first!!
-		if (autoScroll) {
-			if (wordWidth - scrollPosition > width - paddingRight - paddingLeft) { // cursor left visible box at the
-				// right
+		if (needsScrolling) {
+			if (wordWidth - scrollPosition > width - paddingRight - paddingLeft) { // cursor has left visible box at the right
 				setScrollPosition((int) (wordWidth - width + paddingRight + paddingLeft));
-			} else if (wordWidth < scrollPosition + paddingLeft) { // cursor left visible box at the left
+			} else if (wordWidth < scrollPosition + paddingLeft) { // cursor has left visible box at the left
 				setScrollPosition((int) wordWidth);
 			}
-			autoScroll = false;
+			needsScrolling = false;
 		}
 		pg.stroke(cursorColor);
 		pg.line(paddingLeft + wordWidth - scrollPosition, paddingTop, wordWidth + paddingLeft - scrollPosition,
@@ -232,7 +226,7 @@ public class Textbox extends HScrollContainer {
 
 	// append character at cursorPosition
 	protected void append(char c) {
-		if (c != '\n') { // don't allow line breaks
+		if (c != '\n' && c != '\r') { // don't allow line breaks
 			text = text.substring(0, cursorPosition) + c + text.substring(cursorPosition);
 			cursorPosition += 1;
 			textChanged();
@@ -249,7 +243,7 @@ public class Textbox extends HScrollContainer {
 
 	// del char after cursor
 	protected void backspace() {
-		if (text.length() > 0 && cursorPosition >= 1) {
+		if (text.length() > 0 && cursorPosition > 0) {
 			text = text.substring(0, cursorPosition - 1) + text.substring(cursorPosition);
 			cursorPosition--;
 			textChanged();
@@ -282,7 +276,7 @@ public class Textbox extends HScrollContainer {
 
 	// called whenether the text has been altered through user interaction
 	protected void textChanged() {
-		handleRegisteredEventMethod(TEXTCHANGED_EVENT, null);
+		handleEvent(textChangeListener, null);
 		cursorPositionChanged();
 	}
 
@@ -293,7 +287,7 @@ public class Textbox extends HScrollContainer {
 		currentDisplayCurs = true;
 		selectionStart = cursorPosition;
 		selectionEnd = cursorPosition;
-		autoScroll = true;
+		needsScrolling = true;
 		update();
 	}
 
@@ -337,7 +331,7 @@ public class Textbox extends HScrollContainer {
 
 	/**
 	 * Set the start for the text selection. Selection start index can never be
-	 * higher than end index
+	 * higher than end index.
 	 * 
 	 * @param selectionStart selection start position
 	 */
@@ -348,7 +342,7 @@ public class Textbox extends HScrollContainer {
 
 	/**
 	 * Set the end for the text selection. Selection end index can never be less
-	 * than start index
+	 * than start index.
 	 * 
 	 * @param selectionEnd selection end position
 	 */
@@ -358,7 +352,7 @@ public class Textbox extends HScrollContainer {
 	}
 
 	/**
-	 * Set highlight color of selection
+	 * Set highlight color of selection.
 	 * 
 	 * @param selectionColor rgb integer color
 	 */
@@ -410,11 +404,12 @@ public class Textbox extends HScrollContainer {
 
 
 	@Override
-	protected void autosize() {
-		height = (int) (fontSize + paddingTop + paddingBottom);
+	protected void autosizeRule() {
+		setHeight((int) (fontSize + paddingTop + paddingBottom));
 	}
 
 
+	protected static final String wordDelimiters = " \n+-()[] {}().,:;_*\"\'$%&/=?!";
 	/*
 	 * start at cursorPosition and iterate over the text to find the next
 	 * space/bracket/comma etc...
@@ -424,12 +419,10 @@ public class Textbox extends HScrollContainer {
 		// in first phase search for next space, in second search for first letter
 		int phase = 0;
 
-		String delimiters = " \n+-()[] {}().,:;_*\"\'$%&/=?!";
-
 		for (int i = cursorPosition + 1; i < text.length(); i++) {
 			if (phase == 0) {
 
-				if (delimiters.indexOf(text.charAt(i)) > -1) {
+				if (wordDelimiters.indexOf(text.charAt(i)) > -1) {
 					if (text.charAt(i) != ' ') {
 						return i;// i == cursorPosition ? i+1 : i;
 					}
@@ -452,15 +445,10 @@ public class Textbox extends HScrollContainer {
 	 */
 
 	protected int findPreviousStop() {
-
-		String delimiters = " \n+-()[] {}().,:;_*\"\'$%&/=?!";
-
 		for (int i = cursorPosition - 2; i > 0; i--) {
-
-			if (delimiters.indexOf(text.charAt(i)) > -1) {
+			if (wordDelimiters.indexOf(text.charAt(i)) > -1) {
 				return i + 1;
 			}
-
 		}
 		// reached beginning of text
 		return 0;
@@ -475,102 +463,81 @@ public class Textbox extends HScrollContainer {
 	 * EVENT METHODS
 	 */
 
-	protected static final int KEY_EVENT = Frame.numberMouseListeners;
-	protected static final int TEXTCHANGED_EVENT = Frame.numberMouseListeners + 1;
-	protected static final int SUBMIT_EVENT = Frame.numberMouseListeners + 2;
-
+	protected EventListener keyPressListener;
+	protected EventListener textChangeListener;
+	protected EventListener submitListener;
 
 	/**
-	 * Add a key listener to the textbox. Event is triggered each time any key is
-	 * pressed when the textbox has focus.
+	 * Add a key listener to the textbox. The event is triggered each time any key
+	 * is pressed when the textbox has focus.
 	 * 
 	 * @param methodName name of callback method
 	 * @param target     object that declares callback method.
 	 */
-	public void addKeyListener(String methodName, Object target) {
-		registerEventRMethod(KEY_EVENT, methodName, target, KeyEvent.class);
+	public void addKeyPressListener(String methodName, Object target) {
+		keyPressListener = createEventListener(methodName, target, KeyEvent.class);
 	}
+
+	public void addKeyPressListener(String methodName) {
+		addKeyPressListener(methodName, getPApplet());
+	}
+
+	public void removeKeyPressListener() {
+		keyPressListener = null;
+	}
+
+
 
 	/**
-	 * @see #addKeyListener(String, Object)
-	 * @param methodName name of callback method
-	 */
-	public void addKeyListener(String methodName) {
-		addKeyListener(methodName, Frame.frame0.papplet);
-	}
-
-	public void removeKeyListener() {
-		deregisterEventRMethod(KEY_EVENT);
-	}
-
-	/**
-	 * Add a listener that fires when the text has actually changed (not the cursor
-	 * or selection).
+	 * Add a listener that fires when the text has actually changed (not just the
+	 * cursor or selection).
 	 * 
 	 * @param methodName name of callback method
 	 * @param target     object that declares callback method.
 	 */
-	public void addTextChangedListener(String methodName, Object target) {
-		registerEventRMethod(TEXTCHANGED_EVENT, methodName, target, null);
+	public void addTextChangeListener(String methodName, Object target) {
+		textChangeListener = createEventListener(methodName, target, null);
 	}
+
+	public void addTextChangeListener(String methodName) {
+		addTextChangeListener(methodName, getPApplet());
+	}
+
+	public void removeTextChangeListener() {
+		textChangeListener = null;
+	}
+
 
 	/**
-	 * @see #addTextChangedListener(String, Object)
-	 * @param methodName name of callback method
-	 */
-	public void addTextChangedListener(String methodName) {
-		addTextChangedListener(methodName, Frame.frame0.papplet);
-	}
-
-	public void removeTextChangedListener() {
-		deregisterEventRMethod(TEXTCHANGED_EVENT);
-	}
-
-	/**
-	 * So long as {@link #submitOnEnter} is set to true a press on enter or return
-	 * will remove the focus of the textbox and call this event.
+	 * So long as the property {@link #submitOnEnter} is set to true, pressing enter
+	 * or return will remove the focus of the textbox and call this event.
 	 * 
 	 * @param methodName name of callback method
 	 * @param target     object that declares callback method.
 	 */
 	public void addSubmitListener(String methodName, Object target) {
-		registerEventRMethod(SUBMIT_EVENT, methodName, target, null);
+		submitListener = createEventListener(methodName, target, null);
 	}
 
-	/**
-	 * @see #addSubmitListener(String, Object)
-	 * 
-	 * @param methodName name of callback method
-	 */
 	public void addSubmitListener(String methodName) {
-		addSubmitListener(methodName, Frame.frame0.papplet);
+		addSubmitListener(methodName, getPApplet());
 	}
 
 	public void removeSubmitListener() {
-		deregisterEventRMethod(SUBMIT_EVENT);
+		submitListener = null;
 	}
 
 
 
-	@Override
-	protected void enter(MouseEvent e) {
-		visualBackgroundColor = hoverColor;
-		update();
-	}
 
-	@Override
-	protected void exit(MouseEvent e) {
-		visualBackgroundColor = backgroundColor;
-		update();
-	}
+
+
+
 
 	protected int selectionInitial; // cursor at the time the dragging started
 
-
-
 	@Override
 	protected void press(MouseEvent e) {
-
 		if (e.getCount() < 2) {
 			setCursorByClick(e.getX());
 
@@ -580,19 +547,17 @@ public class Textbox extends HScrollContainer {
 
 			// should not be necessary as every control gets focus upon pressing it
 			// this.focus();
-
 		} else { // double click
 			setCursorByClick(e.getX());
 
 			selectionStart = findPreviousStop();
 			selectionEnd = findNextStop();
-
 		}
 	}
 
 	protected void setCursorByClick(int mX) {
 		// relative to textbox origin and ind respect to fullScrollWidth
-		int clickedPos = mX - bounds.X0 + scrollPosition - paddingLeft;
+		int clickedPos = mX - getOffsetXWindow() + scrollPosition - paddingLeft;
 		float wide = 0;
 		for (int i = 0; i < text.length(); i++) {
 			float letterWidth = pg.textWidth(text.substring(i, i + 1));
@@ -623,10 +588,12 @@ public class Textbox extends HScrollContainer {
 				selectionEnd = selectionInitial;
 			}
 
+			int x0 = getOffsetXWindow();
+
 			// scroll a bit when at left or right edge
-			if (e.getX() - bounds.X0 < 10) {
+			if (e.getX() - x0 < 10) {
 				setScrollPosition(scrollPosition - 10);
-			} else if (bounds.X - e.getX() < 10) {
+			} else if (x0 + width - e.getX() < 10) {
 				setScrollPosition(scrollPosition + 10);
 			}
 		}
@@ -636,8 +603,8 @@ public class Textbox extends HScrollContainer {
 	protected void mouseWheel(MouseEvent e) {
 		if (focused) {
 			super.mouseWheel(e);
-			// never allow parent scrolling when textbox has scrolled -> nicer user handling
-			Frame.stopPropagation();
+			// never allow parent scrolling when textbox has scrolled -> better UX
+			stopPropagation();
 		}
 	}
 
@@ -647,147 +614,144 @@ public class Textbox extends HScrollContainer {
 
 	@Override
 	protected void keyPress(KeyEvent e) {
-		if (enabled) {
-			char key = e.getKey();
-			int code = e.getKeyCode();
+		char key = e.getKey();
+		int code = e.getKeyCode();
 
-			boolean ctrl = e.isControlDown();
-			boolean shft = e.isShiftDown();
-			boolean alt = e.isAltDown();
-
-
-			/*
-			 * Manage copying, pasting, cutting and selecting everything
-			 */
-
-			if (ctrl && !shft && !alt) {
-				switch ((char) code) {
-
-				case 'C':
-					copy();
-					break;
-
-				case 'V':
-					paste();
-					break;
+		boolean ctrl = e.isControlDown();
+		boolean shft = e.isShiftDown();
+		boolean alt = e.isAltDown();
 
 
-				case 'X':
-					cut();
-					break;
+		/*
+		 * Manage copying, pasting, cutting and selecting everything
+		 */
 
-				case 'A':
-					selectionStart = 0;
-					selectionEnd = text.length();
-					update();
-					break;
-				}
-			}
+		if (ctrl && !shft && !alt) {
+			switch ((char) code) {
 
+			case 'C':
+				copy();
+				break;
 
+			case 'V':
+				paste();
+				break;
 
-			/*
-			 * Manage other inputs.
-			 */
+			case 'X':
+				cut();
+				break;
 
-			if (key == PApplet.CODED) {
-				switch (code) {
-
-				case PApplet.LEFT:
-					int selEnd = selectionEnd;
-
-					if (ctrl) {
-						moveCursorTo(findPreviousStop()); // jump to previous word
-					} else {
-						moveCursorBy(-1); // select if shift is pressed
-					}
-					if (shft) {
-						selectionEnd = selEnd;
-					}
-					break;
-
-				case PApplet.RIGHT:
-					int selStart = selectionStart;
-
-					if (ctrl) {
-						moveCursorTo(findNextStop()); // jump to next word
-					} else {
-						moveCursorBy(1); // select if shift is pressed
-					}
-					if (shft) {
-						selectionStart = selStart;
-					}
-					break;
-
-				case 35: // END key
-					moveCursorTo(text.length());
-					break;
-
-				case 36: // Pos1 key
-					moveCursorTo(0);
-					break;
-				}
-			}
-
-
-			/*
-			 * No coded keys (control), but enable Alt Gr (Alt + Control)
-			 */
-
-
-			else if (!ctrl || alt) {
-				switch (key) {
-				case PApplet.BACKSPACE:
-					if (selectionStart < selectionEnd) {
-
-						// store this because delete will call cursorChanged which resets selectionStart
-						int selStart = selectionStart;
-						deleteRange(selectionStart, selectionEnd);
-						moveCursorTo(selStart);
-					} else {
-						backspace();
-					}
-					break;
-
-				case PApplet.DELETE:
-					if (selectionStart < selectionEnd) {
-
-						// store this because delete will call cursorChanged which resets selectionStart
-						int selStart = selectionStart;
-						deleteRange(selectionStart, selectionEnd);
-						moveCursorTo(selStart);
-					} else {
-						deleteKey();
-					}
-					break;
-
-				case PApplet.RETURN: // for macinthosh
-				case PApplet.ENTER:
-					if (submitOnEnter) {
-						this.blur();
-						handleRegisteredEventMethod(SUBMIT_EVENT, null);
-						update();
-					}
-					break;
-
-				default:
-					if (selectionStart < selectionEnd) { // if there is a selection then replace
-
-						// store this because delete will call cursorChanged which resets selectionStart
-						int selStart = selectionStart;
-						deleteRange(selectionStart, selectionEnd);
-						moveCursorTo(selStart);
-					}
-					append(key);
-				}
-			} else if (ctrl && key == PApplet.BACKSPACE) { // delete last word
-				int xx = findPreviousStop();
-				deleteRange(xx, selectionEnd);
-				moveCursorTo(xx);
-
+			case 'A':
+				selectionStart = 0;
+				selectionEnd = text.length();
+				update();
+				break;
 			}
 		}
-		handleRegisteredEventMethod(KEY_EVENT, e);
+
+
+		/*
+		 * Manage other inputs.
+		 */
+
+		if (key == PApplet.CODED) {
+			switch (code) {
+
+			case PApplet.LEFT:
+				int selEnd = selectionEnd;
+
+				if (ctrl) {
+					moveCursorTo(findPreviousStop()); // jump to previous word
+				} else {
+					moveCursorBy(-1); // select if shift is pressed
+				}
+				if (shft) {
+					selectionEnd = selEnd;
+				}
+				break;
+
+			case PApplet.RIGHT:
+				int selStart = selectionStart;
+
+				if (ctrl) {
+					moveCursorTo(findNextStop()); // jump to next word
+				} else {
+					moveCursorBy(1); // select if shift is pressed
+				}
+				if (shft) {
+					selectionStart = selStart;
+				}
+				break;
+
+			case 35: // END key
+				moveCursorTo(text.length());
+				break;
+
+			case 36: // Pos1 key
+				moveCursorTo(0);
+				break;
+			}
+		}
+
+
+		/*
+		 * No coded keys (control), but enable Alt Gr (Alt + Control)
+		 */
+
+
+		else if (!ctrl || alt) {
+			switch (key) {
+			case PApplet.BACKSPACE:
+				if (selectionStart < selectionEnd) {
+
+					// store this because delete will call cursorChanged which resets selectionStart
+					int selStart = selectionStart;
+					deleteRange(selectionStart, selectionEnd);
+					moveCursorTo(selStart);
+				} else {
+					backspace();
+				}
+				break;
+
+			case PApplet.DELETE:
+				if (selectionStart < selectionEnd) {
+
+					// store this because delete will call cursorChanged which resets selectionStart
+					int selStart = selectionStart;
+					deleteRange(selectionStart, selectionEnd);
+					moveCursorTo(selStart);
+				} else {
+					deleteKey();
+				}
+				break;
+
+			case PApplet.RETURN: // for macinthosh
+			case PApplet.ENTER:
+				if (submitOnEnter) {
+					handleEvent(submitListener, null);
+					this.blur();
+					update();
+				}
+				break;
+
+			default:
+				if (selectionStart < selectionEnd) { // if there is a selection then replace
+
+					// store this because delete will call cursorChanged which resets selectionStart
+					int selStart = selectionStart;
+					deleteRange(selectionStart, selectionEnd);
+					moveCursorTo(selStart);
+				}
+				append(key);
+			}
+		} else if (ctrl && key == PApplet.BACKSPACE) { // delete last word
+			int xx = findPreviousStop();
+			deleteRange(xx, selectionEnd);
+			moveCursorTo(xx);
+
+
+		}
+		handleEvent(keyPressListener, e);
 	}
 
 	/**
@@ -799,7 +763,6 @@ public class Textbox extends HScrollContainer {
 			Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
 			clipboard.setContents(selection, selection);
 		}
-
 	}
 
 	/**
@@ -838,7 +801,5 @@ public class Textbox extends HScrollContainer {
 		moveCursorTo(selStart);
 		selectionStart = 0;
 		selectionEnd = 0;
-
-
 	}
 }

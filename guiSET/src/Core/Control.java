@@ -3,6 +3,7 @@ package guiSET.core;
 import processing.core.*;
 import processing.event.*;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
 
 import guiSET.classes.*;
 
@@ -61,15 +62,6 @@ public abstract class Control {
 	protected boolean dirty = true;
 
 
-	/*
-	 * type of control class, i.e. all containers are marked as such (needed for
-	 * quick render decisions without casting)
-	 */
-
-	protected int cType = DEFAULT;
-	protected static final int DEFAULT = 0;
-	protected static final int CONTAINER = 1;
-
 
 	/*
 	 * Status properties
@@ -79,7 +71,7 @@ public abstract class Control {
 	protected boolean stickyFocus = false; 		// when true than its focused state can't be overridden by other elements
 											 		// requesting focus, only when itself calls blur
 
-	protected boolean enabled = true; 			// setting this to false prevents it from getting any mouse and key events
+	protected boolean enabled = true; 			// if false, then will not receive mouse events, also different look
 	protected boolean visible = true;
 
 
@@ -125,6 +117,7 @@ public abstract class Control {
 	 * them manually!
 	 */
 
+	@Deprecated
 	protected Bounds bounds = new Bounds(0, 0, 0, 0);
 
 
@@ -182,7 +175,7 @@ public abstract class Control {
 
 	protected int cursor;				// type of cursor to display when hovering over this control
 
-	protected float opacity = 1; 		// opacity
+	protected float opacity = 1; 		// opacity in percent from 0 to 1
 
 
 	/*
@@ -214,13 +207,12 @@ public abstract class Control {
 		width = 50;
 
 		backgroundColor = -1;			// color(255)
-		visualBackgroundColor = 255;
+		visualBackgroundColor = -1;
 		foregroundColor = -16777216; 	// color(0)
-		borderColor = 20;
+		borderColor = -15461356;		// color(20)
 		hoverColor = -1;				// color(255)
 		pressedColor = -1;				// color(255)
 
-		setupListeners(0);
 	}
 
 
@@ -228,7 +220,10 @@ public abstract class Control {
 
 
 
-
+	/*
+	 * Called after sketchs setup() and before rendering the first time.
+	 * Don't call setZ(int) in initialize() nor any function or constructor (like MenuSurface) that does!
+	 */
 	protected void initialize() {
 
 	}
@@ -241,26 +236,14 @@ public abstract class Control {
 	 */
 
 	/*
-	 * This method has to be implemented by all container classes. Containers have
-	 * to set their childrens bounds in respect to their own.
-	 * 
-	 * Bounds are always relative to the window origin If a child is a container
-	 * itself (child.cType == CONTAINER) its calcBounds()-method has to be called
-	 * too.
-	 */
-
-	protected void calcBounds() {
-	};
-
-	/*
 	 * Main drawing method that determines the looks of the object.
 	 * 
 	 * It has to be implemented for each control individually. Just start with
 	 * something like:
 	 * 
-	 * pg.rect(...); pg.line(...) ...
+	 * pg.rect(...); pg.line(...) ... ,
 	 * 
-	 * , using the standard drawing funcions. It is not necessary to create the
+	 * using the standard drawing funcions. It is not necessary to create the
 	 * PGraphics object nor to call beginDraw() or endDraw() as you are maybe used
 	 * to.
 	 * 
@@ -273,7 +256,7 @@ public abstract class Control {
 
 	protected abstract void render();
 
-	protected final void containerRenderItem(Control item, int x, int y) {
+	protected final void renderItem(Control item, int x, int y) {
 		// check visiblity in render(), because some containers need to check it in
 		// render() anyway
 
@@ -284,16 +267,18 @@ public abstract class Control {
 		 * item.y0 = y; }else
 		 */ {
 		}
+
+
 		if (item.opacity == 0) {
 
 			// make this thing inaccessible to mouse events
-			item.relativeX = width;
-			item.relativeY = height;
+			item.offsetX = width;
+			item.offsetY = height;
 			return;
 		}
 
-		item.relativeX = x;
-		item.relativeY = y;
+		item.offsetX = x;
+		item.offsetY = y;
 
 
 		if (item.dirty) {
@@ -318,6 +303,17 @@ public abstract class Control {
 		}
 
 		pg.image(item.getGraphics(), x, y);
+	}
+
+	protected PGraphics getGraphicsAndRenderIfDirty() {
+		if (dirty) {
+			dirty = false; // do this before render, so it can use animations by calling update again
+
+			preRender();
+			render();
+			pg.endDraw();
+		}
+		return pg;
 	}
 
 	/*
@@ -371,23 +367,23 @@ public abstract class Control {
 
 
 	/*
-	 * Called by containers when they add this object to themselves
+	 * Called by containers when they add this object to their content list.
 	 */
 	protected void addedToParent() {
 
 	}
 
 	/*
-	 * Called by animations after a change Some components might need to adjust
+	 * Called by animations after a change. Some components might need to adjust
 	 * stuff then as no setter is called.
 	 */
 	protected void animated() {
 		update();
 	}
 
-	/**
+	/*
 	 * Force a re-render of this Component. This shouldn't be needed, but just in
-	 * case
+	 * case.
 	 */
 	public void forceRender() {
 		update();
@@ -400,9 +396,10 @@ public abstract class Control {
 
 
 	/**
-	 * Request the Frame Component to focus this object. The Frame decides upon the
-	 * demand and can set this Components focused-state to true. There can only be
-	 * one focused element at a time and it is stored in the Frames property
+	 * Request the Frame component to focus this object. The Frame decides upon the
+	 * demand and can set this elements focused state to true. There can only be one
+	 * focused element at a time and it is stored in the Frames focusedElement
+	 * property.
 	 * 
 	 * @see Frame#focusedElement focusedElement.
 	 */
@@ -413,7 +410,7 @@ public abstract class Control {
 
 
 	/**
-	 * Request the Frame Component to blur this object(set focus to false).
+	 * Request the Frame component to blur this object (set focus to false).
 	 * 
 	 * @see Frame#focusedElement focusedElement.
 	 */
@@ -422,6 +419,7 @@ public abstract class Control {
 	}
 
 	// just a useful debugging function
+	@Deprecated
 	protected void drawBounds() {
 		Frame.frame0.papplet.rect(bounds.X0, bounds.Y0, bounds.X - bounds.X0, bounds.Y - bounds.Y0);
 	}
@@ -589,10 +587,10 @@ public abstract class Control {
 
 	/**
 	 * Standard disabled-state drawing feature. If called at end of render() it will
-	 * draw a transparent grey rectangel upon the control to indicate its diabled
+	 * draw a transparent grey rectangle upon the control to indicate its disabled
 	 * state.
 	 */
-	protected void standardDisabled() {
+	protected void drawDefaultDisabled() {
 		if (!enabled) {
 			pg.fill(200, 100);
 			pg.noStroke();
@@ -612,7 +610,7 @@ public abstract class Control {
 	private static PFont pfont;
 
 	// called by Frame at constructor
-	protected static void init_textinfo_graphics() {
+	protected static void init_pfont() {
 
 		textInfo_graphics = Frame.frame0.papplet.createGraphics(1, 1);
 		textInfo_graphics.beginDraw();
@@ -642,7 +640,7 @@ public abstract class Control {
 	 */
 	protected float textDescent() {
 		if (pfont == null)
-			throw new RuntimeException("Frame needs to be intialized before any other guiSET Component");
+			throw new RuntimeException("Frame needs to be intialized before any other guiSET element");
 		return pfont.descent() * fontSize;
 	}
 
@@ -651,7 +649,7 @@ public abstract class Control {
 	 */
 	protected float textAscent() {
 		if (pfont == null)
-			throw new RuntimeException("Frame needs to be intialized before any other guiSET Component");
+			throw new RuntimeException("Frame needs to be intialized before any other guiSET element");
 		return pfont.ascent() * fontSize;
 	}
 
@@ -664,16 +662,9 @@ public abstract class Control {
 	 */
 	protected float textWidth(String text) {
 		if (pfont == null)
-			throw new RuntimeException("Frame needs to be intialized before any other guiSET Component");
+			throw new RuntimeException("Frame needs to be intialized before any other guiSET element");
 
 
-//		char[] buffer = text.toCharArray();
-//		float wide = 0.0f;
-//		for (int i = 0; i < buffer.length; i++) {
-//			wide += pfont.width(buffer[i]) * fontSize;
-//		}
-//
-//
 //		System.out.println(wide + " " + (textInfo_graphics.textWidth(text) - wide) + " " + textWidthStr(text) + " " + text);
 //		return wide;
 
@@ -686,6 +677,7 @@ public abstract class Control {
 	static char[] textWidthBuffer = new char[3];
 
 	// copied from PGraphics
+	// also takes care of strings with \n
 	private float textWidthStr(String str) {
 		int length = str.length();
 		if (length > textWidthBuffer.length) {
@@ -741,10 +733,11 @@ public abstract class Control {
 	 * right and left edges will keep their distance to the container Bounds which
 	 * results in a new size of this control.
 	 * 
-	 * The anchors-array is set to all MIN_VALUE per default. When an anchor is
-	 * added it stores the distance from the top, bottom, left or right edge of this
-	 * control to the according edge of the container. When the resize() function is
-	 * called the anchors will be checked and applied.
+	 * The anchors-array is set to all MIN_VALUE per default which means they are
+	 * inactive. When an anchor is added it stores the distance from the top,
+	 * bottom, left or right edge of this control to the according edge of the
+	 * container. When the resize() function is called the anchors will be checked
+	 * and applied.
 	 *
 	 * 
 	 * The new size of the control will be constrained by minimal and maximal
@@ -774,15 +767,16 @@ public abstract class Control {
 	 * function is called the Component will remember the CURRENT(!) distances to
 	 * the parents bounds. Multiple anchors can be set with this method.
 	 * 
-	 * @param newAnchors accepts TOP, RIGHT, LEFT or BOTTOM. Pass up to four anchor
-	 *                   types (order doesn't matter)
+	 * @param anchorTypes accepts TOP, RIGHT, LEFT or BOTTOM. Pass up to four anchor
+	 *                    types (order doesn't matter)
 	 */
-	public void addAutoAnchor(int... newAnchors) {
+	public void addAutoAnchors(int... anchorTypes) {
 		if (parent == null) {
 			System.err.println("addAutoAnchor() ignored: element " + this + " has no parent");
+			return;
 		}
 
-		for (int anchor : newAnchors) {
+		for (int anchor : anchorTypes) {
 			switch (anchor) {
 			case PApplet.TOP:
 				anchors[TOP_ANCHOR] = y;
@@ -807,18 +801,10 @@ public abstract class Control {
 
 
 
-	/*
-	 * Not yet ready for users.
-	 * 
-	 * resize() needs to be called, so the changes that should be applied so the
-	 * anchor is executed correctly need to be updated. On the other hand this needs
-	 * the parent to be set. Unlike
-	 */
-
 	/**
 	 * Set an Anchor of type TOP BOTTOM, LEFT or RIGHT to a certain value. This also
 	 * immediately sets the position or size of this element if necessary according
-	 * to the anchors. Unlike with {@link #addAutoAnchor(int...)} only one anchor
+	 * to the anchors. Unlike with {@link #addAutoAnchors(int...)} only one anchor
 	 * can be set with one call of this function so you might want to call it
 	 * several times.
 	 * 
@@ -827,7 +813,8 @@ public abstract class Control {
 	 */
 	public void setAnchor(int anchorType, int value) {
 		if (parent == null) {
-			System.err.println("addAutoAnchor() ignored: element has no parent");
+			System.err.println("addAutoAnchor() ignored: element " + this + " has no parent");
+			return;
 		}
 
 		switch (anchorType) {
@@ -926,8 +913,8 @@ public abstract class Control {
 			if (anchors[RIGHT_ANCHOR] != Integer.MIN_VALUE) {
 				if (anchors[LEFT_ANCHOR] != Integer.MIN_VALUE) { // also left anchor
 
-					// don't use setter here, so not to call this method over and over
-					width = Math.max(Math.min(parent.width - x - anchors[RIGHT_ANCHOR], maxWidth), minWidth);
+					// don't call setWidth - would call resize() again etc.
+					setWidthImpl(parent.width - x - anchors[RIGHT_ANCHOR]);
 				} else { // only right anchor
 					x = parent.width - width - anchors[RIGHT_ANCHOR];
 				}
@@ -935,14 +922,14 @@ public abstract class Control {
 			if (anchors[BOTTOM_ANCHOR] != Integer.MIN_VALUE) {
 				if (anchors[TOP_ANCHOR] != Integer.MIN_VALUE) { // also top anchor
 
-					// don't use setter here, so not to call this method over and over
-					height = Math.max(Math.min(parent.height - y - anchors[BOTTOM_ANCHOR], maxHeight), minHeight);
+					// don't call setHeight - would call resize() again etc.
+					setHeightImpl(parent.height - y - anchors[BOTTOM_ANCHOR]);
 				} else { // only bottom anchor
 					y = parent.height - height - anchors[BOTTOM_ANCHOR];
 				}
 			}
 			update();
-			handleRegisteredEventMethod(RESIZE_EVENT, this);
+			handleEvent(resizeListener, this);
 		}
 	}
 
@@ -950,11 +937,45 @@ public abstract class Control {
 
 
 	/**
-	 * Autosize specifies actions that will set width/height new when i.e. padding,
-	 * text or fontSize is changed. Each class can override it to specify custom
-	 * calculations.
+	 * AUTO-SIZE
+	 * 
+	 * autosizeRule specifies actions that will set width/height new when i.e.
+	 * padding, text or fontSize is changed. Each class can override it to specify
+	 * custom calculations.
+	 * 
+	 * If properties change that are regarded in autosizeRule(), their setter needs
+	 * to call autosize().
+	 * 
+	 * I.e. setPadding(), setText(), setFontSize(), Checkbox.setCheckboxSize() all
+	 * do.
+	 * 
+	 * As position anchors are stronger than autosize rules, autosize is disabled
+	 * for elements with anchors. In autosizeRule() setWidthImpl() and
+	 * setHeightImpl() should be used.
 	 */
-	protected void autosize() {
+	protected void autosizeRule() {
+	}
+
+
+
+	protected final void autosize() {
+		if (!usingAnchors) {
+			autosizeRule();
+			// of course resize() should not be called for this element. But it might have
+			// children that rely on it and as usingAnchors is false if this code is
+			// reached, only the items will process resize (if they do at all).
+//			resize();
+		}
+	}
+
+	/**
+	 * Disable autosizing by setting a LEFT anchor (only if no anchors set) which
+	 * does nothing without a RIGHT anchor.
+	 */
+	public void noAutosize() {
+		if (usingAnchors)
+			return;
+		addAutoAnchors(PApplet.LEFT);
 	}
 
 
@@ -969,8 +990,8 @@ public abstract class Control {
 	 */
 
 	/**
-	 * Set x-coordinate of Component relative to parent. Does not apply if Component
-	 * is added to a FlowContainer.
+	 * Set x-coordinate of element relative to parent. Does not apply if element is
+	 * added to containers that provide some other layout.
 	 * 
 	 * @param x pixel integer
 	 */
@@ -981,8 +1002,8 @@ public abstract class Control {
 	}
 
 	/**
-	 * Set y-coordinate of Component relative to parent. Does not apply if Component
-	 * is added to a FlowContainer.
+	 * Set y-coordinate of element relative to parent. Does not apply if element is
+	 * added to containers that provide some other layout.
 	 * 
 	 * @param y pixel integer
 	 */
@@ -993,27 +1014,27 @@ public abstract class Control {
 	}
 
 	/**
-	 * Set z-coordinate of Component. Components are sorted by z-index when
-	 * overlapping on the screen.
+	 * Set z-coordinate of element. element are sorted by z-index when overlapping
+	 * on the screen.
 	 * 
 	 * @param z z-index
 	 */
 	public void setZ(int z) {
 		this.z = z;
-		if (parent != null)
+		if (parent != null) {
 			try {
 				// no use to sort containers with autolayout (its bad actually because it could
-				// chang order
+				// change order)
 				if (!((Container) parent).containerMakesAutoLayout)
 					((Container) parent).sortContent();
 			} catch (ClassCastException cce) {
-
 			}
+		}
 		update();
 	}
 
 	/**
-	 * Set Location relative to parent.
+	 * Set position relative to parent.
 	 * 
 	 * @param x x-coordinate
 	 * @param y y-coordinate
@@ -1025,23 +1046,125 @@ public abstract class Control {
 		update();
 	}
 
+
+
+
+	/*
+	 * Some notes about size for me and people who need/want to know:
+	 * 
+	 * The values of width and height can be changed through a lot of different ways
+	 * which follow a few rules.
+	 * The set width can be overwritten by anchors, autosize and min/maxWidth (same with height). 
+	 * 
+	 * The hierachy is:
+	 *  1. width as set by user (weakest)
+	 *  2. autosize (i.e. in Button, so text fits)
+	 *  3. anchors 
+	 *  4. minWidth/maxWidth (strongest)
+	 *  
+	 *  autosize is not called if ANY anchor is set. This way we can surpress autosize by setting 
+	 *  an anchor (f.e. only LEFT, which does nothing on its own). 
+	 *  
+	 * 
+	 * 
+	 * Changing width/height also needs to be followed by one or more of the
+	 * following actions (no pun intended^^), depending on who changes it:
+	 * - constrain between minWidth and maxWidth 
+	 *   (as this is the strongest rule, it has to be executed always)
+	 * - call resize() 
+	 * - call updateAnchors()
+	 * - call update()
+	 * 
+	 * 
+	 * 
+	 * 	***** Constraining is always necessary (min and max width can NEVER be exceeded)
+	 * 			that's why setWidthImpl() should be called and not "width = ..."
+	 * 
+	 * 
+	 * 
+	 * 
+	 * Width (and height similarily) can be changed by: 
+	 * - calling setWidth(int): 					need to call resize, updateAnchors() and update()
+	 * - setMin/MaxWidth: 							need to call resize, updateAnchors() and update() (might need to set width new)
+	 * - automatic change of width in resize(): 	don't call resize/updateAnchors!, do call update 
+	 * - Default or given width in constructor: 	all unnecessary, nothing yet set
+	 * - exceptions where it's changed in render(): for ListItem: no prob, has no children (yet)
+	 * - in autosize():								resize (for children), updateAnchors unnecessary as none are set, update unnecessary (already called)
+	 * - in Container.fitContent():					need to call resize, updateAnchors() and update()
+	 * - set width through animation: 				all? (big problem)
+	 * 
+	 * 
+	 */
+
+
+	/*
+	 * In this library never set width/height like "width = ..." Always used
+	 * setWidthImpl(int) and setHeightImpl(int).
+	 * 
+	 * This ensures that dimensions are always constrained by min/max dimensions.
+	 * 
+	 */
+	protected void setWidthImpl(int width) {
+		this.width = Math.max(Math.min(width, maxWidth), minWidth);
+	}
+
+	protected void setHeightImpl(int height) {
+		this.height = Math.max(Math.min(height, maxHeight), minHeight);
+	}
+
+
+
 	/**
-	 * Set width of Component in pixel.
+	 * Set width of element.
 	 * 
 	 * @param width width in pixel
 	 */
 	public void setWidth(int width) {
-		// constrain width immediately
-		this.width = Math.max(Math.min(width, maxWidth), minWidth);
+		if (width == this.width) // no unnecessary resize event calling when setting min/max
+			return;
 		// call the resize event.
+		setWidthImpl(width);
+
+		updateAnchors();
+		resize();
+		update();
+	}
+
+
+	/**
+	 * Set height of element.
+	 * 
+	 * @param height height in pixel
+	 */
+	public void setHeight(int height) {
+		if (height == this.height) // no unnecessary resize event calling when setting min/max
+			return;
+		setHeightImpl(height);
+
 		updateAnchors();
 		resize();
 		update();
 	}
 
 	/**
-	 * Set minimum width of Component in pixel. Width of Component will never be
-	 * less than minWidth. minWidth cannot be smaller than 1.
+	 * Set width and height of element.
+	 * 
+	 * @param width  width
+	 * @param height height
+	 */
+	public void setSize(int width, int height) {
+		setHeightImpl(height);
+		setWidthImpl(width);
+
+		updateAnchors();
+		resize();
+		update();
+	}
+
+
+	/**
+	 * Set minimum width of element in pixel. Width of element will never be less
+	 * than minWidth. Minimum width cannot be smaller than 1.
 	 * 
 	 * @param minWidth minimum width in pixel
 	 */
@@ -1049,39 +1172,25 @@ public abstract class Control {
 		// don't allow width ever to go below 1 (that produces errors when creating
 		// graphics)
 		this.minWidth = Math.max(1, minWidth);
-		autosize();
-		update();
+		setWidth(width);
 	}
 
 	/**
-	 * Set maximum width of Component in pixel. Width of Component will never be
-	 * greater than maxWidth. Default is 100000.
+	 * Set maximum width of element in pixel. Width of element will never be greater
+	 * than maxWidth. Default is 100000.
 	 * 
 	 * @param maxWidth maximum width in pixel
 	 */
 	public void setMaxWidth(int maxWidth) {
 		this.maxWidth = Math.max(minWidth, maxWidth);
-		autosize();
-		update();
+		setWidth(width);
 	}
 
 
-	/**
-	 * Set height of Component in pixel.
-	 * 
-	 * @param height height in pixel
-	 */
-	public void setHeight(int height) {
-		// constrain height immeditaly
-		this.height = Math.max(Math.min(height, maxHeight), minHeight);
-		updateAnchors();
-		resize();
-		update();
-	}
 
 	/**
-	 * Set minimum height of Component in pixel. Width of Component will never be
-	 * less than minHeight. minHeight cannot be smaller than 1.
+	 * Set minimum height of element in pixel. Width of element will never be less
+	 * than minHeight. Minimum height cannot be smaller than 1.
 	 * 
 	 * @param minHeight minimum height in pixel
 	 */
@@ -1089,34 +1198,26 @@ public abstract class Control {
 		// don't allow height ever to go below 1 (that produces errors when creating
 		// graphics)
 		this.minHeight = Math.max(1, minHeight);
-		autosize();
-		update();
+		setHeight(height);
 	}
 
 	/**
-	 * Set maximum height of Component in pixel. Width of Component will never be
+	 * Set maximum height of element in pixel. Width of element will never be
 	 * greater than maxHeight. Default is 100000.
 	 * 
 	 * @param maxHeight maximum height in pixel
 	 */
 	public void setMaxHeight(int maxHeight) {
 		this.maxHeight = Math.max(minHeight, maxHeight);
-		autosize();
-		update();
+		setHeight(height);
 	}
 
-	public void setSize(int width, int height) {
-		// no setter used here so not to call resize twice
-		this.width = Math.max(Math.min(width, maxWidth), minWidth);
-		this.height = Math.max(Math.min(height, maxHeight), minHeight);
-		updateAnchors();
-		resize();
-		update();
-	}
+
+
 
 	/**
-	 * Set the plain background color of the Component. Actual displayed color can
-	 * vary if the Component is i.e. hovered over.
+	 * Set the plain background color of the element. Actual displayed color can
+	 * vary if the element is i.e. hovered over.
 	 * 
 	 * @param clr integer rgb color
 	 */
@@ -1132,7 +1233,7 @@ public abstract class Control {
 	}
 
 	/**
-	 * Automatically generates hover and pressed color of backgroundColor
+	 * Automatically generates hover and pressed color of backgroundColor.
 	 * 
 	 * @param clr integer rgb color
 	 */
@@ -1158,7 +1259,7 @@ public abstract class Control {
 	}
 
 	/**
-	 * Set the foreground color (usually the text color)
+	 * Set the foreground color (usually the text color).
 	 * 
 	 * @param clr integer rgb color
 	 */
@@ -1188,7 +1289,7 @@ public abstract class Control {
 	}
 
 	/**
-	 * Color of Components border.
+	 * Color of elements border.
 	 * 
 	 * @param clr integer rgb color
 	 */
@@ -1198,7 +1299,7 @@ public abstract class Control {
 	}
 
 	/**
-	 * Stroke width of the Components border.
+	 * Stroke width of the elements border.
 	 * 
 	 * @param borderWidth border with in pixel
 	 */
@@ -1208,7 +1309,7 @@ public abstract class Control {
 	}
 
 	/**
-	 * Rounds the corners of the Component. Negative values will be ignored.
+	 * Rounds the corners of the element. Negative values will be ignored.
 	 * 
 	 * @param borderRadius border radius
 	 */
@@ -1219,8 +1320,8 @@ public abstract class Control {
 
 
 	/**
-	 * Set the text content. Some Components do not display any text (i.e. most
-	 * Containers).
+	 * Set the text content. Some elements do not display any text (i.e. most
+	 * containers).
 	 * 
 	 * @param text text
 	 */
@@ -1237,7 +1338,7 @@ public abstract class Control {
 	}
 
 	/**
-	 * Set the text align (works for most Components).
+	 * Set the text align (works for most classes).
 	 * 
 	 * @param align LEFT, CENTER, RIGHT
 	 */
@@ -1248,7 +1349,7 @@ public abstract class Control {
 	}
 
 	/**
-	 * Vertical align (not implemented in all Components).
+	 * Vertical align (not implemented in all classes).
 	 * 
 	 * @param align TOP, MIDDLE, BOTTOM
 	 */
@@ -1259,7 +1360,7 @@ public abstract class Control {
 	}
 
 	/**
-	 * Set the cursor displayed when mouse is over this Component.
+	 * Set the cursor displayed when mouse is over this element.
 	 * 
 	 * @param cursor Integer between 0 and 11. Can use constants like ARROW, CROSS,
 	 *               HAND, MOVE, TEXT, or WAIT.
@@ -1271,8 +1372,8 @@ public abstract class Control {
 	}
 
 	/**
-	 * Set the (background) image of the Component. This is not implemented in all
-	 * but in most Components. The image is copied!
+	 * Set the (background) image of the element. This is not implemented in all but
+	 * in most classes. The image is copied!
 	 * 
 	 * @param image PImage or PGraphics object.
 	 */
@@ -1286,7 +1387,7 @@ public abstract class Control {
 	}
 
 	/**
-	 * Set the image filling mode. @see FILL @see FIT @see FIT_INSIDE
+	 * Set the image filling mode. @see FILL @see FIT @see FIT_INSIDE.
 	 * 
 	 * @param imageMode. Use Control.FILL, Control.FIT or Control.FIT_INSIDE
 	 */
@@ -1296,7 +1397,7 @@ public abstract class Control {
 	}
 
 	/**
-	 * Set background to a vertical gradient between the two given colros. This
+	 * Set background to a vertical gradient between the two given colors. This
 	 * removes the background image if set.
 	 * 
 	 * @param clr1 top color
@@ -1315,41 +1416,56 @@ public abstract class Control {
 	}
 
 	/**
-	 * Set the enabled state of this Component. If false it will not receive any
+	 * Set the enabled state of this element. If false it will not receive any
 	 * events and be displayed in a different (mostly greyish) way.
 	 * 
 	 * @param enabled enabled state
 	 */
 	public void setEnabled(boolean enabled) {
 		this.enabled = enabled;
+		if (!enabled && focused)
+			blur();
 		update();
 	}
 
 	/**
-	 * Set the visibility. Invisible Components will not be rendered and receive not
+	 * Set the visibility. Invisible elements will not be rendered and receive not
 	 * events.
 	 * 
 	 * @param visible visibility state
 	 */
 	public void setVisible(boolean visible) {
 		this.visible = visible;
+		if (!visible && focused)
+			blur();
 		update();
 	}
+
+	/**
+	 * Just in case someone expects a "setVisibility" method instead of
+	 * "setVisible".
+	 * 
+	 * @param visible visibility state
+	 */
+	public void setVisibility(boolean visible) {
+		setVisible(visible);
+	}
+
 
 	/**
 	 * Set opacity (opposite of transparency).
 	 * 
 	 * @param opacity opacity from 0 (transparent) to 1 (opaque).
 	 */
-	public void setOpacity(float opacity) {
-		this.opacity = Math.max(0, Math.min(1, opacity));
+	public void setOpacity(double opacity) {
+		this.opacity = (float) Math.max(0, Math.min(1, opacity));
 		update();
 	}
 
 	/**
-	 * Apply margins to all sides of the Component. In FlowContainers and similar
-	 * containers neighboring Components this determines the distance to neighbor
-	 * Components and the parents bounds.
+	 * Apply margins to all sides of the element. In FlowContainers and similar
+	 * containers neighboring elements this determines the distance to neighbor
+	 * elements and the parents bounds.
 	 * 
 	 * @param all margin in pixel
 	 */
@@ -1436,8 +1552,8 @@ public abstract class Control {
 	}
 
 	/**
-	 * Apply individual padding to all sides of the Component. Padding will create
-	 * space inside the Component between borders and content.
+	 * Apply individual padding to all sides of the element. Padding will create
+	 * space inside the element between borders and content.
 	 * 
 	 * @param top    top padding in pixel
 	 * @param right  right padding in pixel
@@ -1660,144 +1776,106 @@ public abstract class Control {
 	 * 
 	 */
 
-	class RMethod {
+	class EventListener {
 		Method method;
 		Object target;
-		Class<?> args;
+		boolean invokeWithArgs;
 
-		RMethod(Method m, Object t, Class<?> args) {
+		EventListener(Method m, Object t, boolean invokeWithArgs) {
 			method = m;
 			target = t;
-			this.args = args;
+			this.invokeWithArgs = invokeWithArgs;
+		}
+
+		void handle(Object args) {
+			try {
+				if (this.invokeWithArgs) { // might have no args
+					method.invoke(target, args);
+				} else {
+					method.invoke(target);
+				}
+			} catch (IllegalAccessException ie) {
+				ie.printStackTrace();
+			} catch (InvocationTargetException te) {
+				te.printStackTrace();
+			}
 		}
 	}
 
-	protected RMethod[] registeredRMethods;
-
-	protected static final int PRESS_EVENT = 0;
-	protected static final int RELEASE_EVENT = 1;
-	protected static final int ENTER_EVENT = 2;
-	protected static final int EXIT_EVENT = 3;
-	protected static final int MOVE_EVENT = 4;
-	protected static final int DRAG_EVENT = 5;
-	protected static final int WHEEL_EVENT = 6;
-	protected static final int RESIZE_EVENT = 7;
-	protected static final int FOCUS_EVENT = 8;
-
-	static final int numberMouseListeners = 9;
-
-	protected int totalNumberListeners = numberMouseListeners;
 
 
-
-	protected void setupListeners(int number) {
-		totalNumberListeners = totalNumberListeners + number;
-		registeredRMethods = new RMethod[totalNumberListeners];
+	protected void handleEvent(EventListener callback, Object args) {
+		if (callback == null)
+			return;
+		callback.handle(args);
 	}
 
-	/*
-	 * WORKING WITH EVENTS IN ProcessingGUI :
-	 * 
-	 *
-	 *
-	 *
-	 * The programmer can add certain listeners to his objects. Mouse listeners are
-	 * available for all Controls. They can be assigned and given a registered
-	 * method with the addMouseListener() method, specifying the type with a string
-	 * ("press", "release"...) If no target is specified with the overloaded
-	 * addMouseListener() method, papplet will be assumed.
-	 * 
-	 * How MouseListener works: Frame registers a mouseEvent() method at papplet.
-	 * Every Container (also Frame) calls the mouseEvent of all its items, but only
-	 * if have the activatedInternalMouseListener property set true. Containers do
-	 * that by default and so do buttons, textboxes, sliders etc. (almost
-	 * everything) but once the programmer adds a mouseListener it's set to true
-	 * anyway.
-	 * 
-	 * When a Control gets a mouseEvent it Control can decide to stop the
-	 * propagation by calling the Frames stopPropagation() method to true (it will
-	 * be set to false automatically at the beginning of each frame). This way
-	 * objects with high z-index, which will be checked fist can prevent lower
-	 * objects from getting the mouseEvent. This is needed for example with menus,
-	 * spinners, popups etc.
-	 *
-	 *
-	 * Moreover Controls like frame, textbox feature a keylistener or an
-	 * itemchanged-listener (listview, menustrip). These listeners are usually
-	 * assigned with extra methods like "addItemChangedListener()" etc.
-	 * 
-	 *
-	 * All listener-adding-methods call registerEventRMethod(int number, String
-	 * methodName, Object target, Class<?> args) If a listener needs no arguments it
-	 * can pass null for args. registerEventRMethod() will try to find a method in
-	 * the target that has no args first, even if it should have one, so it doesn't
-	 * break down if the programmer forgets to add i.e. "MouseEvent e" or doesn't
-	 * need it at all. Then it checks if args are provided at all and if so tries to
-	 * find a method in the target. If none is found error will be thrown.
-	 *
-	 *
-	 *
-	 *
-	 *
-	 * CREATING OWN CONTROLS WITH CUSTOM LISTENERS
-	 *
-	 * If you create a custom control with custom listeners you have to provide
-	 * methods to add them to the object.
-	 *
-	 *
-	 *
-	 * You have to honor some essential rules: - all registered methods are stored
-	 * in the "registeredRMethods" array. The first 7 (from 0 to 6) methods are
-	 * reserved for the mouselisteners: press/release/enter/exit/move/drag/wheel,
-	 * DON'T TOUCH THEM!
-	 *
-	 * - by default this array is 9 (for mouse/resize/focus listeners) in size - a
-	 * custom control needs to recreate this array in the constructor with needed
-	 * size. This is done by calling setupListeners(int) in the constructor and
-	 * passing the number of ADDITIONAL listeners for this class
-	 *
-	 * - If your object inherits from any other that "Control" beware that the
-	 * parent might already use a listener for an index
-	 *
-	 * - Create a static final int variable that specifies the index for your
-	 * listener (starting at the static Frame.numberMouseListeners) and always use
-	 * that one also when handling the method. Default number might change in future
-	 * and this should be an easy update.
-	 *
-	 * - Provide new methods to add AND remove those listeners (best provide an
-	 * option with target object, and without making the default target the papplet)
-	 *
-	 *
-	 */
+	/*protected EventListener createEventListener(String methodName, Object target, Class<?> args_class) {
+		Class<?> c = target.getClass();
+		try { // try with no args
+			Method m = c.getMethod(methodName);
+			return new EventListener(m, target, false);
+		} catch (NoSuchMethodException nsme) {
+			try { // try with args
+				if (args_class != null) {
+					Method m = c.getMethod(methodName, args_class);
+					return new EventListener(m, target, true);
+	
+				} else {
+					Frame.frame0.papplet.die("There is no public " + methodName + "() method with the right arguments.");
+				}
+			} catch (NoSuchMethodException nsme2) {
+				getPApplet().die("There is no public " + methodName + "() method with the right arguments.");
+			}
+		}
+		return null;
+	}*/
 
-	/*
-	 * protected boolean activatedInternalMouseListener = false;
-	 * 
-	 * protected void activateInternalMouseListener() {
-	 * activatedInternalMouseListener = true;
-	 * 
-	 * }
-	 * 
-	 * protected void deactivateInternalMouseListener() {
-	 * activatedInternalMouseListener = false; }
-	 */
-
-
-
-	// if zero do not process move events.
-	private static int moveListenersCount = 0;
-
-	protected static void incrementMoveListenersCount() {
-		moveListenersCount++;
+	protected EventListener createEventListener(String methodName, Object target, Class<?> args_class) {
+		Class<?> c = target.getClass();
+		try { // try with args
+			Method m = c.getMethod(methodName, args_class);
+			return new EventListener(m, target, true);
+		} catch (NoSuchMethodException nsme) {
+			try { // try without args (maybe user forgot or does not need them)
+				Method m = c.getMethod(methodName);
+				return new EventListener(m, target, false);
+			} catch (NoSuchMethodException nsme2) {
+				getPApplet().die("There is no public " + methodName + "() method with the right arguments.");
+			}
+		}
+		return null;
 	}
 
-	protected static void decrementMoveListenersCount() {
-		moveListenersCount = Math.max(0, --moveListenersCount);
+	protected EventListener createEventListenerMultipleArgs(String methodName, Object target, Class<?>[] args_classes) {
+		Class<?> c = target.getClass();
+		try { // try with args
+			Method m = c.getMethod(methodName, args_classes);
+			return new EventListener(m, target, false);
+		} catch (NoSuchMethodException nsme) {
+			try { // try without args
+				Method m = c.getMethod(methodName);
+				return new EventListener(m, target, true);
+
+			} catch (NoSuchMethodException nsme2) {
+				getPApplet().die("There is no public " + methodName + "() method with the right arguments.");
+			}
+		}
+		return null;
 	}
 
-	protected int moveListenersCount() {
-		return moveListenersCount;
-	}
+
+	EventListener pressListener;
+	EventListener releaseListener;
+	EventListener enterListener;
+	EventListener exitListener;
+	EventListener moveListener;
+	EventListener dragListener;
+	EventListener wheelListener;
+	EventListener resizeListener;
+	EventListener focusListener;
+
+
 
 	/**
 	 * Adds a mouse listener. The type can be "press", "release", "enter", "exit,
@@ -1814,7 +1892,7 @@ public abstract class Control {
 	 *         already been registered for this type. Returns true if successful.
 	 */
 	public boolean addMouseListener(String type, String methodName) {
-		return addMouseListener(type, methodName, Frame.frame0.papplet);
+		return addMouseListener(type, methodName, getPApplet());
 	}
 
 	/**
@@ -1830,23 +1908,28 @@ public abstract class Control {
 	public boolean addMouseListener(String type, String methodName, Object target) {
 		switch (type) {
 		case "press":
-			return registerEventRMethod(PRESS_EVENT, methodName, target, MouseEvent.class);
+			pressListener = createEventListener(methodName, target, MouseEvent.class);
+			return pressListener == null;
 		case "release":
-			return registerEventRMethod(RELEASE_EVENT, methodName, target, MouseEvent.class);
+			releaseListener = createEventListener(methodName, target, MouseEvent.class);
+			return releaseListener == null;
 		case "enter":
-			return registerEventRMethod(ENTER_EVENT, methodName, target, MouseEvent.class);
+			enterListener = createEventListener(methodName, target, MouseEvent.class);
+			return enterListener == null;
 		case "exit":
-			return registerEventRMethod(EXIT_EVENT, methodName, target, MouseEvent.class);
+			exitListener = createEventListener(methodName, target, MouseEvent.class);
+			return exitListener == null;
 		case "move":
-			incrementMoveListenersCount();
-			return registerEventRMethod(MOVE_EVENT, methodName, target, MouseEvent.class);
+			moveListener = createEventListener(methodName, target, MouseEvent.class);
+			return moveListener == null;
 		case "drag":
-			return registerEventRMethod(DRAG_EVENT, methodName, target, MouseEvent.class);
+			dragListener = createEventListener(methodName, target, MouseEvent.class);
+			return dragListener == null;
 		case "wheel":
-			return registerEventRMethod(WHEEL_EVENT, methodName, target, MouseEvent.class);
-		default:
-			return false;
+			wheelListener = createEventListener(methodName, target, MouseEvent.class);
+			return wheelListener == null;
 		}
+		return false;
 	}
 
 	/**
@@ -1857,131 +1940,159 @@ public abstract class Control {
 	public void removeMouseListener(String type) {
 		switch (type) {
 		case "press":
-			deregisterEventRMethod(PRESS_EVENT);
-			break;
+			pressListener = null;
+			return;
 		case "release":
-			deregisterEventRMethod(RELEASE_EVENT);
-			break;
+			releaseListener = null;
+			return;
 		case "enter":
-			deregisterEventRMethod(ENTER_EVENT);
-			break;
+			enterListener = null;
+			return;
 		case "exit":
-			deregisterEventRMethod(EXIT_EVENT);
-			break;
+			exitListener = null;
+			return;
 		case "move":
-			if (registeredRMethods[MOVE_EVENT] != null) // tell Frame there is one move listener less
-				decrementMoveListenersCount();
-			deregisterEventRMethod(MOVE_EVENT);
-			break;
+			moveListener = null;
+			return;
 		case "drag":
-			deregisterEventRMethod(DRAG_EVENT);
-			break;
+			dragListener = null;
+			return;
 		case "wheel":
-			deregisterEventRMethod(WHEEL_EVENT);
-			break;
+			wheelListener = null;
+			return;
 		}
 	}
 
 
-	// resize and focus listener
 
 	/**
-	 * Add a resize listener that fires each time the Component is resized by anchor
+	 * Add a resize listener that fires each time the element is resized by anchor
 	 * resizing. Event arguments: null
 	 * 
 	 * @param methodName name of callback method
 	 * @param target     Object where the callback method is declared.
 	 */
 	public void addResizeListener(String methodName, Object target) {
-		registerEventRMethod(RESIZE_EVENT, methodName, target, Control.class);
+		resizeListener = createEventListener(methodName, target, Control.class);
+	}
+
+	public void addResizeListener(String methodName) {
+		addResizeListener(methodName, getPApplet());
+	}
+
+	public void removeResizeListener() {
+		resizeListener = null;
 	}
 
 	/**
-	 * Add a focus listener that fires when the Component gets focus (through mouse
+	 * Add a focus listener that fires when the element gets focus (through mouse
 	 * click, programmatically, ...). Event arguments: null
 	 * 
 	 * @param methodName name of callback method
 	 * @param target     Object where the callback method is declared.
 	 */
 	public void addFocusListener(String methodName, Object target) {
-		registerEventRMethod(FOCUS_EVENT, methodName, target, Control.class);
+		focusListener = createEventListener(methodName, target, Control.class);
+		print(focusListener, target);
 	}
 
-	/**
-	 * @see #addResizeListener(String) , target is the PApplet sketch
-	 * 
-	 * @param methodName method to call.
-	 */
-	public void addResizeListener(String methodName) {
-		addResizeListener(methodName, Frame.frame0.papplet);
-	}
-
-	/**
-	 * @see #addFocusListener(String) , target is the PApplet sketch
-	 * @param methodName method to call.
-	 */
 	public void addFocusListener(String methodName) {
-		addFocusListener(methodName, Frame.frame0.papplet);
-	}
-
-
-
-	public void removeResizeListener() {
-		deregisterEventRMethod(RESIZE_EVENT);
+		addFocusListener(methodName, getPApplet());
 	}
 
 	public void removeFocusListener() {
-		deregisterEventRMethod(FOCUS_EVENT);
+		focusListener = null;
 	}
 
 
 
 
-	protected boolean registerEventRMethod(int number, String methodName, Object target, Class<?> args) {
-		if (registeredRMethods[number] == null) { // sure?
-			Class<?> c = target.getClass();
-			try { // try with no args
-				Method m = c.getMethod(methodName);
-				registeredRMethods[number] = new RMethod(m, target, null);
-				return true;
-			} catch (NoSuchMethodException nsme) {
-				try { // try with args
-					if (args != null) {
-						Method m = c.getMethod(methodName, args);
-						registeredRMethods[number] = new RMethod(m, target, args);
-						return true;
-					} else {
-						Frame.frame0.papplet.die("There is no public " + methodName + "() method with the right arguments.");
-						registeredRMethods[number] = null;
-					}
-				} catch (NoSuchMethodException nsme2) {
-					Frame.frame0.papplet.die("There is no public " + methodName + "() method with the right arguments.");
-					registeredRMethods[number] = null;
-				}
-			}
-		}
-		return false;
+	/*
+	 * WORKING WITH EVENTS IN guiSET :
+	 * 
+	 *
+	 *
+	 *
+	 * The programmer can add certain listeners to his objects. Mouse listeners are
+	 * available for all classes. They can be assigned and given a callback method
+	 * with the addMouseListener() method, specifying the type with a string
+	 * ("press", "release"...). If no target is specified with the overloaded
+	 * addMouseListener() method, papplet will be assumed.
+	 * 
+	 * How MouseListener works: Frame registers a mouseEvent() method at papplet.
+	 * Every container (also Frame) calls the mouseEvent for all its items. When an
+	 * element gets a mouseEvent, it can decide to stop the propagation by calling
+	 * stopPropagation(). This way elements with high z-index, which will be checked
+	 * first and can prevent lower elements from getting the mouseEvent. This is
+	 * needed for example with menus, spinners, popups etc.
+	 *
+	 *
+	 * Moreover classes like Frame and Textbox feature key listeners or an
+	 * itemchanged-listener (ListView, MenuItem). These listeners are usually
+	 * assigned with extra methods like "addItemChangeListener()" etc.
+	 * 
+	 * 
+	 * 
+	 * 
+	 * How to make an event listener in a new class
+	 * --------------------------------------------
+	 * - In the class, create an EventListener with 
+	 *   an appropriate name (don't initialize it)
+	 * - Provide adding and removing methods 
+	 * - Also provide a simple adding method that 
+	 *   defaults target to papplet (the sketch)
+	 * 
+	 *   An example with no arguments. 
+	 *   
+	 *   
+	 * 
+	 *	 protected EventListener myListener;
+	 *	 public void addMyListener(String methodName, Object target) {
+	 *	     myListener = createEventListener(methodName, target, null);
+	 *	 }
+	 *	 public void addMyListener(String methodName) {
+	 *	     addMyListener(methodName, getPApplet());
+	 *	 }
+	 *	 public void removeMyListener(){
+	 *	     myListener = null; // setting listener to null is the way to do it
+	 *	 }
+	 *   protected void someFunctionThatChangesObervedState(){
+	 *       // do stuff
+	 *       handleEvent(myListener, null);
+	 *   }
+	 *   
+	 *   
+	 *   If arguments shall be passed to the callback function, then pass their 
+	 *   class to the createEventListener() method as third argument. When handling 
+	 *   the event, pass the argument here. Look at the example from focusListener. 
+	 *     
+	 * 
+	 */
+
+
+	// not used
+	
+	// if zero do not process move events.
+	private static int moveListenersCount = 0;
+
+	protected static void incrementMoveListenersCount() {
+		moveListenersCount++;
 	}
 
-	protected void deregisterEventRMethod(int number) {
-		registeredRMethods[number] = null;
+	protected static void decrementMoveListenersCount() {
+		moveListenersCount = Math.max(0, --moveListenersCount);
 	}
 
-	protected void handleRegisteredEventMethod(int number, Object args) {
-		if (registeredRMethods[number] != null) {
-
-			try {
-				if (registeredRMethods[number].args != null) {
-					registeredRMethods[number].method.invoke(registeredRMethods[number].target, args);
-				} else
-					registeredRMethods[number].method.invoke(registeredRMethods[number].target);
-			} catch (IllegalAccessException ie) {
-				ie.printStackTrace();
-			} catch (InvocationTargetException te) {
-				te.printStackTrace();
-			}
-		}
+	protected int moveListenersCount() {
+		return moveListenersCount;
 	}
+
+
+
+
+
+
+
 
 
 
@@ -1989,25 +2100,26 @@ public abstract class Control {
 
 	// new mouse event stuff
 	/*
-	 * replace bounds with x0, y0 Right and bottom bounds are not needed for an item
+	 * Replace bounds with x0, y0 Right and bottom bounds are not needed for an item
 	 * gets the mouse event only if mouse is over parent. This way no constraining
-	 * like in calcbounds is needed. instead of passing the mouseevent, this is
+	 * like in calcbounds is needed. instead of passing the mouseEvent, this is
 	 * stored globally (in Control.e) and relative x,y coords are passed. Each
 	 * container subtracts its own x0,y0 from them so the items only need to know
 	 * their relative position to parent and not absolute position in window to
 	 * determine if mouse is over the item.
 	 * 
 	 * x0,y0 store computed position origin of item relative container it is
-	 * evaluated and set in containerRenderItem(). Problem: Flowcontainers decide
-	 * not to draw items that are out of the visible area and needs to set x0,y0 to
-	 * somewhere outside this area.
+	 * evaluated and set in renderItem(). Problem: Flowcontainers decide not to draw
+	 * items that are out of the visible area and needs to set x0,y0 to somewhere
+	 * outside this area.
 	 * 
 	 * hovering is now dealt with in a different way: the first item to find out
-	 * that the mouse is over it sets the Control.first to itself. At then end of
-	 * mouseEvent processing Frame checks Control.first and if this items pHovered
-	 * is false then Frame calls enter(), handleRegEvent(..) and first.pHovered =
-	 * true; Also the cursor is set to the cursor of this item. Similarily exit() is
-	 * called if Control.first has changed through the event propagation.
+	 * that the mouse is over it sets the Control.hoveredElement to itself. At then
+	 * end of mouseEvent processing Frame checks Control.hoveredElement and if this
+	 * items pHovered is false then Frame calls enter(), handleEventCallback(..) and
+	 * hoveredElement.pHovered = true; Also the cursor is set to the cursor of this
+	 * item. Similarily exit() is called if Control.hoveredElement has changed
+	 * through the event propagation.
 	 * 
 	 * 
 	 * 
@@ -2019,18 +2131,12 @@ public abstract class Control {
 	 * 
 	 * - only one element can be hovered on (not really an issue)
 	 * 
-	 * - scrollcontainers still set their fullscrollsize in calcBounds and use
-	 * bounds in their event listening (solved?)
-	 * 
-	 * - scrollarea, scrollcontainers: content in scrollarea is accessible if mouse
-	 * over scrollbar
-	 * 
 	 * 
 	 */
 
 	// origin coordinates relative to parent. Set by parent in
 	// containerRenderItem(Control, int, int)
-	protected int relativeX, relativeY;
+	protected int offsetX, offsetY;
 
 	// current mouse event is stored here by Frame, no need to carry it around
 	protected static MouseEvent currentMouseEvent;
@@ -2046,69 +2152,38 @@ public abstract class Control {
 	protected static boolean useNewMouseEvent = true;
 
 
-	protected void mouseEvent(MouseEvent e) {
-		int x = e.getX();
-		int y = e.getY();
-		PApplet.println("Old Mouse Event", this);
+	/*
+	 * stopPropagation is a very important property that is used to indicate that
+	 * one element "swallowed up" the mouseEvent so no other element will get it.
+	 * 
+	 * I.e. when one element is locally below another one then only the above should
+	 * get the click event.
+	 */
 
-		if (visible && enabled) {
+	protected static boolean propagationStopped = false;
 
-			if (bounds.isWithin(x, y)) { // if over element
-				/*
-				 * if(Frame.topmost == null) { System.out.println(this); Frame.topmost = this; }
-				 */
+	/**
+	 * Stop mouse event propagation. If called then no Components lower or at the
+	 * same level in the Container hierachy will receive the currently processed
+	 * mouse event.
+	 */
+	public static void stopPropagation() {
+		propagationStopped = true;
+	}
 
-				switch (e.getAction()) {
-				case MouseEvent.PRESS:
-					focus();
-					press(e);
-					draggedElement = this;
-					Frame.stopPropagation();
-					handleRegisteredEventMethod(PRESS_EVENT, e);
-					break;
-				case MouseEvent.RELEASE:
-					release(e);
-					Frame.stopPropagation();
-					handleRegisteredEventMethod(RELEASE_EVENT, e);
-					break;
-				case MouseEvent.MOVE:
-					move(e);
-					handleRegisteredEventMethod(MOVE_EVENT, e);
-					break;
-				case MouseEvent.DRAG:
-					// this code wont be reached anymore for every drag event will be caught by
-					// frame
-					drag(e);
-					handleRegisteredEventMethod(DRAG_EVENT, e);
-					Frame.stopPropagation();
-					break;
-				case MouseEvent.WHEEL:
-					mouseWheel(e);
-					handleRegisteredEventMethod(WHEEL_EVENT, e);
-					break;
-				}
-				if (!pHovered) { // ENTER
-					Frame.frame0.papplet.cursor(cursor);
-					enter(e);
-					handleRegisteredEventMethod(ENTER_EVENT, e);
-					pHovered = true;
-					Frame.stopPropagation();
-				}
-			} else {
-				if (pHovered) { // EXIT
-					Frame.frame0.papplet.cursor(0); // default cursor
-					exit(e);
-					handleRegisteredEventMethod(EXIT_EVENT, e);
-					pHovered = false;
-				}
-			}
-		}
+	/**
+	 * Check if the mouse event propagation has been stopped.
+	 * 
+	 * @return propagation stop state
+	 */
+	public static boolean isPropagationStopped() {
+		return propagationStopped;
 	}
 
 	// check if given coordinates (need to be relative to parent) are within this
 	// elements bounds
-	protected boolean relCoordsAreWithin(int x, int y) {
-		return x > relativeX && y > relativeY && x < relativeX + width && y < relativeY + height;
+	public boolean relCoordsAreWithin(int x, int y) {
+		return x > offsetX && y > offsetY && x < offsetX + width && y < offsetY + height;
 	}
 
 	/**
@@ -2117,7 +2192,7 @@ public abstract class Control {
 	 * @return relative x
 	 */
 	public int getOffsetXParent() {
-		return relativeX;
+		return offsetX;
 	}
 
 	/**
@@ -2126,7 +2201,7 @@ public abstract class Control {
 	 * @return relative y
 	 */
 	public int getOffsetYParent() {
-		return relativeY;
+		return offsetY;
 	}
 
 	/**
@@ -2135,7 +2210,7 @@ public abstract class Control {
 	 * @return absolute x
 	 */
 	public int getOffsetXWindow() {
-		return relativeX + parent.getOffsetXWindow();
+		return offsetX + parent.getOffsetXWindow();
 	}
 
 	/**
@@ -2144,8 +2219,31 @@ public abstract class Control {
 	 * @return absolute y
 	 */
 	public int getOffsetYWindow() {
-		return relativeY + parent.getOffsetYWindow();
+		return offsetY + parent.getOffsetYWindow();
 	}
+
+
+
+	protected static ArrayList<Control> coordinateTrace = new ArrayList<Control>(0);
+
+
+	/**
+	 * @see Container#traceRelativeCoordinates(int, int) and
+	 * @see Container#traceAbsoluteCoordinates(int, int)
+	 * 
+	 * @param relX relx
+	 * @param relY rely
+	 */
+	protected void traceCoordsImpl(int relX, int relY) {
+		if (visible && enabled && relCoordsAreWithin(relX, relY)) {
+			coordinateTrace.add(this);
+		}
+	}
+
+
+
+
+
 
 
 	protected void mouseEvent(int x, int y) {
@@ -2153,34 +2251,35 @@ public abstract class Control {
 			return;
 
 		if (relCoordsAreWithin(x, y)) {
-			if (hoveredElement == null)
+			if (hoveredElement == null) {
 				hoveredElement = this;
+			}
+
 			switch (currentMouseEvent.getAction()) {
+			case MouseEvent.MOVE: // most often
+				move(currentMouseEvent);
+				handleEvent(moveListener, currentMouseEvent);
+				break;
 			case MouseEvent.PRESS:
 				focus();
-
 				draggedElement = this;
-				Frame.stopPropagation();
+				stopPropagation();
 				press(currentMouseEvent);
-				handleRegisteredEventMethod(PRESS_EVENT, currentMouseEvent);
+				handleEvent(pressListener, currentMouseEvent);
 				break;
-
-			case MouseEvent.RELEASE:
-				Frame.stopPropagation();
-				release(currentMouseEvent);
-				handleRegisteredEventMethod(RELEASE_EVENT, currentMouseEvent);
-				break;
-
-			case MouseEvent.MOVE:
-				move(currentMouseEvent);
-				handleRegisteredEventMethod(MOVE_EVENT, currentMouseEvent);
-				break;
-
 			case MouseEvent.WHEEL:
 				mouseWheel(currentMouseEvent);
-				handleRegisteredEventMethod(WHEEL_EVENT, currentMouseEvent);
+				handleEvent(wheelListener, currentMouseEvent);
 				break;
-
+			case MouseEvent.RELEASE:
+				// Happens rarely here. Usually a release is preceded by a press and in between
+				// only
+				// drag events come. These and the final release event are handled by Frame.
+				// Still this code might be executed i.e. if user presses two buttons at once.
+				stopPropagation();
+				release(currentMouseEvent);
+				handleEvent(releaseListener, currentMouseEvent);
+				break;
 			case MouseEvent.DRAG:
 				// this code wont be reached anymore for every drag event will be caught by
 				// frame
@@ -2193,16 +2292,13 @@ public abstract class Control {
 
 	}
 
-	/*
-	 * protected void press(MouseEvent e) { }
-	 * 
-	 * protected void release(MouseEvent e) { }
-	 * 
-	 * protected void enter(MouseEvent e) { }
-	 * 
-	 * protected void exit(MouseEvent e) { }
-	 */
 
+
+	/*
+	 * EVENT METHODS
+	 * 
+	 * need to change some colors when hovered over or pressed.
+	 */
 	protected void move(MouseEvent e) {
 	}
 
@@ -2210,6 +2306,7 @@ public abstract class Control {
 	}
 
 	protected void mouseWheel(MouseEvent e) {
+
 	}
 
 	protected void enter(MouseEvent e) {
@@ -2232,8 +2329,8 @@ public abstract class Control {
 		update();
 	}
 
-	// methods that will be called when key events occured and this Control is the
-	// currently focused element.
+	// methods that will be called when key events occured and this element is the
+	// currently focusedElement.
 
 	/**
 	 * Called by {@link Frame} through KeyListener
@@ -2259,8 +2356,14 @@ public abstract class Control {
 	protected void keyTyped(KeyEvent e) {
 	}
 
-
+	// finally! should've done this earlier
 	protected static void print(Object... v) {
 		PApplet.println(v);
 	}
+
+	protected static PApplet getPApplet() {
+		return Frame.getPApplet();
+	}
+
+
 }

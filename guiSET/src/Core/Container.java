@@ -17,31 +17,32 @@ import java.util.Comparator;
  * Also do containers draw their items looks onto themselves so that without any container nothing would be ever visible.
  * 
  * With containers it is possibly to give the gui a nested structure.    
- * The Frame object is a container itself and the always root of the created tree. It initiates a lot of the processes 
+ * The Frame object is a container itself and always the root of the created tree. It initiates a lot of the processes 
  * which then go through all containers recursively to reach every integrated element that is part of the tree structure. 
  * 
  * The most important recursions are:
  * 		- the render()-method: 
- * 				which calls the element to draw the looks on its PGraphics object
- * 				containers invoke this method on all children and then project all PGraphics on themselves
+ * 				which calls the element to draw the looks on its PGraphics object.
+ * 				Containers invoke this method on all children and then project all PGraphics on themselves. No items should be added to item list here. 
+ * 		- the mouseEvent():
+ * 				When Frame receives a mouse event from the sketch, is passes it to all children and so on until one element calls stopPropagation()
+ * 		- the resize() function:
+ * 				When the size (width or height) of a control has been changed, children can react to that if they have anchors enabled. In this way it's possible to 
+ * 				align controls at the right of a container or make the resize too. Child items are notified by calling their resize() method
+ * 		- the initialize() method:
+ * 				Frame calls each element to initialize (recursively) when the draw() method of the sketch is running for the first time. Here new items may be added. 
+ * 
+ * 		Deprecated
  * 		- the calcBounds()-method: 
  * 				at the beginning of each frame it is important for all objects to know their positions and size (relative to window origin) 
  * 				so they can react to mouse events. This is done via this method. It is initiated by the Frame after the rendering has been done. 
- * 		- the mouseEvent():
- * 				when the frame receives a mouse event from the sketch, is passes it to all children and so on...
- * 				If no element interrupts the event propagation by calling frame0.stopPropagation() every element will get this event which is especially
- * 				useful for dragging events. 
- * 		- the resize() function:
- * 				When the size (width or height) of a control has been changed, children can react to that if they have anchors enabled. In this way it's possible to 
- * 				align controls at the right of a container or make the resize too. 
- * 		- the initialize() method:
- * 				This function isn't really being used at the moment. It is planned that the Frame calls each element to intialize when the draw() method of the sketch is running for the first time
  * 
  * 
- * The container has a useful feature - containerRenderItem(). This method does all the stuff needed to check if looks of children have to be refreshed, if opacity is changing etc...
- * Other classes inheriting from Container should use this method if they implement a new render() method. 
+ * The container has a useful feature - containerRenderItem(Control item, int x, int y). This method does all the stuff needed to check if looks of children have to 
+ * be refreshed, if opacity has changed, local positioning for mouse events etc...
+ * Other classes inheriting from Container should use this method to draw their children if they implement a new render() method. 
  * 
- * Panel containers (containers that pay respect to the position aspired by their children without setting them to new locations (autolayout)) also need sorting the content by z coordinate!
+ * Panel containers (containers that pay respect to the position aspired by their children without setting them to new locations (containerMakesAutoLayout)) also need sorting the content by z coordinate!
  * This is already done and distinguished under the hood but it is necessary for each inheriting class that uses an automatic layout to change the containerMakesAutoLayout property to true!
  * 
  * 
@@ -50,8 +51,8 @@ import java.util.Comparator;
 
 
 /**
- * Base Class for all Containers. Containers group Components and can be nested
- * to create complex graphics structures.
+ * Base class for all containers. Containers group items and can be nested to
+ * create complex graphics structures.
  * 
  * @author Mc-Zen
  *
@@ -61,11 +62,11 @@ public class Container extends Control {
 	/*
 	 * list of items
 	 */
-	protected ArrayList<Control> content;
+	protected ArrayList<Control> items;
 
 
 	/*
-	 * If a subclass of this class applies auto layout (overrides coordinates of
+	 * If a subclass of container applies auto layout (overrides x,y-coordinates of
 	 * items) then set this to true in constructor. Auto-layouting containers do not
 	 * sort their content by z-index.
 	 */
@@ -73,7 +74,7 @@ public class Container extends Control {
 
 
 	/**
-	 * Default Constructor sets width and height to 100
+	 * Default constructor sets width and height to 100
 	 */
 	public Container() {
 		this(100, 100);
@@ -81,15 +82,13 @@ public class Container extends Control {
 
 
 	public Container(int width, int height) {
-		this.width = width;
-		this.height = height;
-		cType = CONTAINER; 		// for Container and all subclasses
+		setWidthImpl(width);
+		setHeightImpl(height);
 
 
-		// is this better? It seems that ArrayList has a default capacity of 10 at
-		// first.
-		// This might be wasteful if a lot of containers are used. Lets start with 1
-		content = new ArrayList<Control>(1);
+		// It seems that ArrayList has a default capacity of 10 at first. This might be
+		// wasteful if a lot of containers are used. Lets start with 1.
+		items = new ArrayList<Control>(1);
 	}
 
 
@@ -98,8 +97,13 @@ public class Container extends Control {
 	@Override
 	protected void initialize() {
 		super.initialize();
-		for (Control c : content)
+
+		// no iterator here, as list might be modified
+		// still a call to setZ() will modify the list and then it will break;
+		for (int i = 0; i < items.size(); i++) {
+			Control c = items.get(i);
 			c.initialize();
+		}
 	}
 
 
@@ -118,13 +122,10 @@ public class Container extends Control {
 	@Override
 	protected void resize() {
 		super.resize();
-		for (Control c : content)
+		for (Control c : items) {
 			c.resize();
+		}
 	}
-
-
-
-
 
 
 
@@ -133,41 +134,19 @@ public class Container extends Control {
 	 * DRAWING AND RENDERING
 	 */
 
-	@Override
-	protected void calcBounds() {
-		for (Control c : content) {
-			if (c.visible) {
-				Frame.calcBoundsCount++;
 
-				// set bounds of child so it has absolute values for listener processing
-				c.bounds.X0 = Math.max(this.bounds.X0 + c.x, this.bounds.X0);
-				c.bounds.Y0 = Math.max(this.bounds.Y0 + c.y, this.bounds.Y0);
-				// crop overflow
-				c.bounds.X = Math.min(this.bounds.X0 + c.x + c.width, this.bounds.X);
-				c.bounds.Y = Math.min(this.bounds.Y0 + c.y + c.height, this.bounds.Y);
-
-				if (c.cType == CONTAINER) {
-					c.calcBounds();
-				}
-			}
-		}
-	}
-
+	// content list should not be changed in items render() while iterating
 	@Override
 	protected void render() {
 		drawDefaultBackground();
 
-		for (int i = 0; i < content.size(); i++) {
-			Control c = content.get(i);
-			if (c.visible)
-				containerRenderItem(c, c.x, c.y);
+		for (Control c : items) {
+			if (c.visible) {
+				renderItem(c, c.x, c.y);
+			}
 		}
+		drawDefaultDisabled();
 	}
-
-
-
-
-
 
 
 
@@ -177,40 +156,41 @@ public class Container extends Control {
 	 * Content Operations
 	 */
 
-	// internal adding method
-	protected void addItem(int position, Control c) {
-		content.add(position, c);
-		c.parent = this;
-		c.addedToParent(); // notify control it has been added to this parent
+	// internal item adding method
+	protected void addItem(int position, Control newItem) {
+		items.add(position, newItem);
+		newItem.parent = this;
+		newItem.addedToParent(); // notify control that it has been added to this parent
 		// update(); // called once by public add/insert
 	}
 
+
 	/**
-	 * Add Components in given order to Container. Containers that don't layout
-	 * their items automatically like i.e. {@link VFlowContainer} or
-	 * {@link VScrollContainer} sort them by z-index!
+	 * Add items to Container. Containers that don't layout their items
+	 * automatically like i.e. {@link VFlowContainer} or {@link VScrollContainer}
+	 * sort them by z-index!
 	 * 
-	 * @param controls pass arbitrary number of Components.
+	 * @param newItems arbitrary number of items.
 	 */
-	public void add(Control... controls) {
-		for (Control c : controls) {
-			addItem(content.size(), c);
+	public void add(Control... newItems) {
+		for (Control c : newItems) {
+			addItem(items.size(), c);
 		}
-		if (!containerMakesAutoLayout) { // don't sort auto-layout containers!
+		if (!containerMakesAutoLayout) { // don't sort containers with custom layout
 			sortContent();
 		}
 		update();
 	}
 
 	/**
-	 * Insert Components at given index position.
+	 * Insert items at given index position.
 	 * 
-	 * @param position index in item list.s
-	 * @param controls pass arbitrary number of Components.
+	 * @param position index to insert items into list.
+	 * @param newItems arbitrary number of items.
 	 */
-	public void insert(int position, Control... controls) {
-		for (int i = 0; i < controls.length; i++) {
-			addItem(position + i, controls[i]);
+	public void insert(int position, Control... newItems) {
+		for (int i = 0; i < newItems.length; i++) {
+			addItem(position + i, newItems[i]);
 		}
 		if (!containerMakesAutoLayout) { // don't sort auto-layout containers!
 			sortContent();
@@ -222,7 +202,11 @@ public class Container extends Control {
 	 * Remove all items.
 	 */
 	public void clear() {
-		content.clear();
+		items.clear();
+
+		// not really necessary. But imagine clearing a huge list and now we have just a
+		// lot of null pointers
+		items.trimToSize();
 		update();
 	}
 
@@ -232,56 +216,70 @@ public class Container extends Control {
 	 * @param index position
 	 */
 	public void remove(int index) {
-		content.remove(index);
+		items.remove(index);
 		update();
 	}
 
 	/**
 	 * Remove a specific item from item list.
 	 * 
-	 * @param c item to remove.
+	 * @param item item to remove.
 	 */
-	public void remove(Control c) {
-		content.remove(c);
+	public boolean remove(Control item) {
+		boolean result = items.remove(item);
 		update();
+		return result;
 	}
 
 	/**
-	 * Get list index given item. Returns -1 if item is no child of this container.
+	 * Get list index of given item. Returns -1 if item is no child of this
+	 * container.
 	 * 
-	 * @param c item to get index for
+	 * @param item item to get index to
 	 * @return index
 	 */
-	public int indexOf(Control c) {
-		return content.indexOf(c);
+	public int indexOf(Control item) {
+		return items.indexOf(item);
 	}
 
 	/**
-	 * Retrieve all items.
+	 * Retrieve all items as Control array.
 	 * 
 	 * @return array of items
 	 */
 	public Control[] getItems() {
-		Control[] c = new Control[content.size()];
-		for (int i = 0; i < content.size(); i++) {
-			c[i] = content.get(i);
+		Control[] c = new Control[items.size()];
+		for (int i = 0; i < items.size(); i++) {
+			c[i] = items.get(i);
 		}
 		return c;
 	}
 
 	/**
-	 * Get item in content list at given index. Returns null if index exceeds list.
+	 * Get item in item list at given index. Throws error if index exceeds list
+	 * length.
 	 * 
 	 * @param index index of requested item
 	 * @return item
 	 */
 	public Control get(int index) {
-		return content.get(index);
+		return items.get(index);
 	}
+
+	/**
+	 * Get number of items.
+	 * 
+	 * @return number of items
+	 */
+	public int getNumItems() {
+		return items.size();
+	}
+
+
 
 	// sort items by z-Index
 	protected void sortContent() {
-		Collections.sort(content, new Comparator<Control>() {
+		Collections.sort(items, new Comparator<Control>() {
 			@Override
 			public int compare(Control c1, Control c2) {
 				return c1.z - c2.z;
@@ -297,19 +295,14 @@ public class Container extends Control {
 	public void fitContent() {
 		int mWidth = 1;
 		int mHeight = 1;
-		for (int i = 0; i < content.size(); i++) {
-			Control c = content.get(i);
+		for (int i = 0; i < items.size(); i++) {
+			Control c = items.get(i);
 			if (c.visible) {
-				if (c.x + c.width > mWidth) {
-					mWidth = c.x + c.width;
-				}
-				if (c.y + c.height > mHeight) {
-					mHeight = c.y + c.height;
-				}
+				mWidth = Math.max(mWidth, c.offsetX + c.width);
+				mHeight = Math.max(mHeight, c.offsetY + c.height);
 			}
 		}
-		width = mWidth;
-		height = mHeight;
+		setSize(mWidth, mHeight);
 	}
 
 
@@ -343,29 +336,6 @@ public class Container extends Control {
 	 * EVENTS
 	 */
 
-	@Override
-	protected void mouseEvent(MouseEvent e) {
-		if (visible) {
-
-			// reverse iteration direction (as to drawing) so topmost elements will
-			// get the chance to stop the event propagation for objects below
-			for (int i = content.size() - 1; i >= 0; i--) {
-
-				// don't allow further listening when event propagation has been stopped
-				if (Frame.isPropagationStopped())
-					return;
-
-				content.get(i).mouseEvent(e);
-
-
-				// it's possible that contents have changed meanwhile
-				i = Math.min(i, content.size());
-			}
-			if (!Frame.isPropagationStopped()) {
-				super.mouseEvent(e); // execute mouseEvent for this object afterwards
-			}
-		}
-	}
 
 	@Override
 	protected void mouseEvent(int x, int y) {
@@ -373,34 +343,48 @@ public class Container extends Control {
 			return;
 
 		if (relCoordsAreWithin(x, y)) {
-			int x_ = x - relativeX;
-			int y_ = y - relativeY;
-			if (containerPreItemsMouseEvent(x_, y_)) {
+			int x_ = x - offsetX;
+			int y_ = y - offsetY;
+
+
+			if (containerPreItemsMouseEvent(x_, y_)) { // allows container to peek into the event
 
 				// reverse iteration direction (as to drawing) so topmost elements will
 				// get the chance to stop the event propagation for objects below
-				for (int i = content.size() - 1; i >= 0; i--) {
+				for (int i = items.size() - 1; i >= 0; i--) {
 
 					// don't allow further listening when event propagation has been stopped
-					if (Frame.isPropagationStopped())
+					if (isPropagationStopped()) {
 						return;
+					}
+					// print("hovered element", hoveredElement, items.get(i));
 
-					content.get(i).mouseEvent(x_, y_);
+					items.get(i).mouseEvent(x_, y_);
 
 
-					// it's possible that contents have changed meanwhile
-					i = Math.min(i, content.size());
+					// it's possible that item list has changed meanwhile, but iterator not nice
+					// here
+					i = Math.min(i, items.size());
 				}
 			}
 
 
-			if (!Frame.isPropagationStopped()) {
-				containerPostItemsMouseEvent(x_, y_); // execute mouseEvent for this object afterwards
+			if (!isPropagationStopped()) {
+				containerPostItemsMouseEvent(x_, y_); // execute real mouseEvent for this object afterwards
 			}
 		}
 	}
 
 
+	/**
+	 * Called by {@link #mouseEvent(int, int)} before dealing with the items. It
+	 * enables the container to process the mouse event before the items do and if
+	 * this returns false the items will not receive the event at all.
+	 * 
+	 * @param x y
+	 * @param y y
+	 * @return should items receive the current event
+	 */
 	protected boolean containerPreItemsMouseEvent(int x, int y) {
 		return true;
 	}
@@ -420,27 +404,31 @@ public class Container extends Control {
 	protected void containerPostItemsMouseEvent(int x, int y) {
 		if (hoveredElement == null)
 			hoveredElement = this;
+
 		switch (currentMouseEvent.getAction()) {
+		case MouseEvent.MOVE: // most often - try first
+			move(currentMouseEvent);
+			handleEvent(moveListener, currentMouseEvent);
+			break;
 		case MouseEvent.PRESS:
 			focus();
 			draggedElement = this;
-			Frame.stopPropagation();
-
+			stopPropagation();
 			press(currentMouseEvent);
-			handleRegisteredEventMethod(PRESS_EVENT, currentMouseEvent);
-			break;
-		case MouseEvent.RELEASE:
-			Frame.stopPropagation();
-			release(currentMouseEvent);
-			handleRegisteredEventMethod(RELEASE_EVENT, currentMouseEvent);
-			break;
-		case MouseEvent.MOVE:
-			move(currentMouseEvent);
-			handleRegisteredEventMethod(MOVE_EVENT, currentMouseEvent);
+			handleEvent(pressListener, currentMouseEvent);
 			break;
 		case MouseEvent.WHEEL:
 			mouseWheel(currentMouseEvent);
-			handleRegisteredEventMethod(WHEEL_EVENT, currentMouseEvent);
+			handleEvent(wheelListener, currentMouseEvent);
+			break;
+		case MouseEvent.RELEASE:
+			// Happens rarely here. Usually a release is preceded by a press and in between
+			// only
+			// drag events come. These and the final release event are handled by Frame.
+			// Still this code might be executed i.e. if user presses two buttons at once.
+			stopPropagation();
+			release(currentMouseEvent);
+			handleEvent(releaseListener, currentMouseEvent);
 			break;
 		case MouseEvent.DRAG:
 			// this code wont be reached anymore for every drag event will be caught by
@@ -452,6 +440,44 @@ public class Container extends Control {
 		}
 	}
 
+	/**
+	 * Get a list of arbitrarly nested child elements that given coordinates go
+	 * through, ordered by layer on the screen. This version takes relative
+	 * coordinates of this object.
+	 * 
+	 * @param x x coordinate on this element
+	 * @param y y coordinate on this element
+	 * @return list of traces elements
+	 */
+	public ArrayList<Control> traceRelativeCoordinates(int x, int y) {
+		coordinateTrace.clear();
+		traceCoordsImpl(x, y);
+		return coordinateTrace;
+	}
 
+	/**
+	 * Get a list of arbitrarly nested child elements that given coordinates go
+	 * through, ordered by layer on the screen. This version takes absolute window
+	 * coordinates. Invisible and disabled elements are ignored.
+	 * 
+	 * @param x absolute x window coordinate
+	 * @param y absolute y window coordinate
+	 * @return list of traces elements
+	 */
+	public ArrayList<Control> traceAbsoluteCoordinates(int x, int y) {
+		coordinateTrace.clear();
+		traceCoordsImpl(x - getOffsetXWindow(), y - getOffsetYWindow());
+		print(x - getOffsetXWindow(), y - getOffsetYWindow());
+		return coordinateTrace;
+	}
 
+	@Override
+	protected void traceCoordsImpl(int relX, int relY) {
+		if (visible && enabled && relCoordsAreWithin(relX, relY)) {
+			for (int i = items.size() - 1; i >= 0; i--) {
+				items.get(i).traceCoordsImpl(relX - offsetX, relY - offsetY);
+			}
+			coordinateTrace.add(this);
+		}
+	}
 }

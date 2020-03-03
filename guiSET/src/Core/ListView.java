@@ -47,15 +47,11 @@ public class ListView extends VScrollContainer {
 	}
 
 	public ListView(int width, int height) {
-		super();
-		setSize(width, height);
+		super(width, height);
 		selectedItems = new ArrayList<Control>();
-
-		setupListeners(1);
 
 		setBackgroundColor(-3618616); // light grey
 		setSelectionColor(-12171706);
-
 		itemBackgroundColor = -1; // color(255)
 	}
 
@@ -136,8 +132,8 @@ public class ListView extends VScrollContainer {
 	 * 
 	 */
 	protected void selectImpl(int index) {
-		if (index >= 0 && index < content.size()) {
-			selectedItem = content.get(index);
+		if (index >= 0 && index < items.size()) {
+			selectedItem = items.get(index);
 
 			if (!selectedItems.contains(selectedItem)) {
 				selectedItems.add(selectedItem);
@@ -149,7 +145,7 @@ public class ListView extends VScrollContainer {
 					((ListItem) selectedItem).selected = true; // dont use setter here
 					selectedItem.update();
 
-					handleRegisteredEventMethod(SELECT_EVENT, selectedItem);
+					handleEvent(selectListener, selectedItem);
 				}
 			} catch (ClassCastException e) {
 			}
@@ -176,8 +172,8 @@ public class ListView extends VScrollContainer {
 	 * @param index index of item to deselect. Throws no error if index is bad.
 	 */
 	public void deselect(int index) {
-		if (index >= 0 && index < content.size()) {
-			Control c = content.get(index);
+		if (index >= 0 && index < items.size()) {
+			Control c = items.get(index);
 			try {
 				// only raise event if item has not been selected before
 				if (((ListItem) c).selected) {
@@ -270,7 +266,7 @@ public class ListView extends VScrollContainer {
 
 	/**
 	 * Simple adding method just giving the text as String will create automatically
-	 * new ListItems - one-item-version.
+	 * new ListItems.
 	 * 
 	 * @param newItems item text
 	 */
@@ -287,9 +283,9 @@ public class ListView extends VScrollContainer {
 		newListItem.textAlign = textAlign;
 		newListItem.selectionColor = selectionColor;
 		newListItem.selectionHoverColor = selectionHoverColor;
-		newListItem.width = this.width;
+		newListItem.setWidthImpl(this.width);
 
-		//newListItem.setBackgroundColor(itemBackgroundColor);
+		// newListItem.setBackgroundColor(itemBackgroundColor);
 		newListItem.setForegroundColor(foregroundColor);
 		this.add(newListItem);
 	}
@@ -300,7 +296,7 @@ public class ListView extends VScrollContainer {
 	 */
 	public void clear() {
 		deselectAll();
-		content.clear();
+		items.clear();
 		update();
 	}
 
@@ -311,7 +307,7 @@ public class ListView extends VScrollContainer {
 	 */
 	public void remove(int index) {
 		deselect(index);
-		content.remove(index);
+		items.remove(index);
 		update();
 	}
 
@@ -320,10 +316,11 @@ public class ListView extends VScrollContainer {
 	 * 
 	 * @param c item to remove.
 	 */
-	public void remove(Control c) {
+	public boolean remove(Control c) {
 		deselect(c);
-		content.remove(c);
+		boolean result = items.remove(c);
 		update();
+		return result;
 	}
 
 
@@ -376,6 +373,7 @@ public class ListView extends VScrollContainer {
 	 */
 	public void setSelectionHoverColor(int selectionHoverColor) {
 		this.selectionHoverColor = selectionHoverColor;
+		update();
 	}
 
 	/**
@@ -417,7 +415,7 @@ public class ListView extends VScrollContainer {
 	}
 
 	public int getSelectionIndex() {
-		return content.indexOf(selectedItem);
+		return items.indexOf(selectedItem);
 	}
 
 	public ArrayList<Control> getSelectedItems() {
@@ -437,56 +435,48 @@ public class ListView extends VScrollContainer {
 	 * EVENTS
 	 */
 
-	protected static final int SELECT_EVENT = Frame.numberMouseListeners;
+	protected EventListener selectListener;
 
 	/**
 	 * Add a listener for when an item is selected. The event passes the item that
 	 * has been selected.
 	 * 
-	 * @param methodName callback method name
-	 */
-	public void addItemSelectedListener(String methodName) {
-		addItemSelectedListener(methodName, Frame.frame0.papplet);
-	}
-
-	/**
-	 * @see #addItemSelectedListener(String)
 	 * @param methodName methodName
 	 * @param target     target
 	 */
-	public void addItemSelectedListener(String methodName, Object target) {
-		registerEventRMethod(SELECT_EVENT, methodName, target, Control.class);
+
+	public void addItemSelectListener(String methodName, Object target) {
+		selectListener = createEventListener(methodName, target, Control.class);
 	}
 
-	public void removeItemSelectedListener() {
-		deregisterEventRMethod(SELECT_EVENT);
+	public void addItemSelectListener(String methodName) {
+		addItemSelectListener(methodName, getPApplet());
 	}
 
-	@Override
-	protected void press(MouseEvent e) {
-		focus();
+	public void removeItemSelectListener() {
+		selectListener = null;
 	}
+
 
 
 	@Override
 	protected void keyPress(KeyEvent e) {
-		if (enabled) {
-			switch (e.getKeyCode()) {
-			case PApplet.DOWN:
-				int selectionIndex = getSelectionIndex();
-				if (selectionIndex < content.size() - 1) {
-					itemPressed(content.get(selectionIndex + 1));
-					scrollToItem(selectionIndex);
-				}
-				break;
-			case PApplet.UP:
-				selectionIndex = getSelectionIndex();
-				if (selectionIndex > 0) {
-					itemPressed(content.get(selectionIndex - 1));
-					scrollToItem(selectionIndex);
-				}
-				break;
+		super.keyPress(e);
+		switch (e.getKeyCode()) {
+		case PApplet.DOWN:
+			int selectionIndex = getSelectionIndex();
+			if (selectionIndex < items.size() - 1) {
+				itemPressed(items.get(selectionIndex + 1));
+				scrollToItem(selectionIndex + 1);
 			}
+			break;
+		case PApplet.UP:
+			selectionIndex = getSelectionIndex();
+			if (selectionIndex > 0) {
+				itemPressed(items.get(selectionIndex - 1));
+				scrollToItem(selectionIndex - 1);
+			}
+			break;
 		}
 	}
 }

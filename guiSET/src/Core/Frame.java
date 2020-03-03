@@ -58,13 +58,17 @@ public class Frame extends Container {
 	 * This is a static Frame that when a new Frame object is created is initialized
 	 * with this exact Frame. It is available to all classes for exchanging
 	 * information. Normally a programmer does not need it except when developing
-	 * custom Component classes. Only one Frame may exist per sketch.
+	 * custom component classes. Only one Frame may exist per sketch.
 	 */
 	public static Frame frame0 = new Frame();
-	protected boolean isNullFrame = true; 		// indicates that frame0 is intially a placeholder, is set to false as soon as
-											 		// another one is created
+	private boolean isNullFrame = true; 		// indicates that frame0 is intially a placeholder, is set to false as soon as
+										 		// another one is created
 
-	private String versionCode = "Version 0.8.1";
+	protected boolean isNullFrame() {
+		return isNullFrame;
+	}
+
+	private String versionCode = "Version 0.0.3";
 
 
 
@@ -78,11 +82,9 @@ public class Frame extends Container {
 	 */
 	protected PApplet papplet;
 
-	public PApplet getPApplet() {
-		return papplet;
-	}
 
-	public static PApplet papplet() {
+
+	public static PApplet getPApplet() {
 		return frame0.papplet;
 	}
 
@@ -129,7 +131,7 @@ public class Frame extends Container {
 	 * It is necessary to pass the sketch object here. In most cases (if not in
 	 * scope of a class) just use "this".
 	 * 
-	 * @param pa
+	 * @param pa papplet
 	 */
 	public Frame(PApplet pa) {
 		this(pa, DRAW_PRE);
@@ -138,7 +140,7 @@ public class Frame extends Container {
 	/**
 	 * Specify the draw time mode with this constructor.
 	 * 
-	 * @param pa
+	 * @param pa         papplet
 	 * @param timeToDraw DRAW_PRE or DRAW_POST
 	 */
 	public Frame(PApplet pa, int timeToDraw) {
@@ -153,37 +155,25 @@ public class Frame extends Container {
 
 		this.papplet = pa;
 
-		/*
-		 * if (timeToDraw == DRAW_PRE) { papplet.registerMethod("pre", this); } else if
-		 * (timeToDraw == DRAW_POST) { papplet.registerMethod("draw", this); } else {
-		 * System.out.println("error can't initialize frame with these arguments: " +
-		 * timeToDraw); }
-		 */
+
 
 		// default size fills out entire sketch window
 		width = papplet.width;
 		height = papplet.height;
 		bounds.X = papplet.width;
 		bounds.Y = papplet.height;
-		relativeX = 0;
-		relativeY = 0;
+		offsetX = 0;
+		offsetY = 0;
 		currentWidth = width;
 		currentHeight = height;
 
-		setupListeners(5); // add 5 additional listeners: key, enter, exit, resize, init
-
-		// papplet.registerMethod("keyEvent", this);
 		keyListener = new KeyListener(this);
-
-		// papplet.registerMethod("mouseEvent", this);
 
 		animations = new ArrayList<Animation>();
 
+		init_pfont();		// initialize a pfont for getting textWidth/textDescent...
 
-		Control.init_textinfo_graphics();		// initialize a 1x1 dummy graphics used for getting textwidth
-
-		@SuppressWarnings("unused")
-		Protected_Frame f = new Protected_Frame(timeToDraw);
+		new Protected_Frame(timeToDraw);
 	}
 
 
@@ -222,28 +212,20 @@ public class Frame extends Container {
 
 
 
-	// PFont myFont = createFont(new Font("Lucida Sans", Font.PLAIN, 1), 1, true,
-	// null, false);;
-
-	// private PFont createFont(Font baseFont, float size, boolean smooth, char[]
-	// charset, boolean stream) {
-	// return new PFont(baseFont.deriveFont(size * 2), smooth, charset, stream, 2);
-	// }
-
 
 
 	/*
 	 * Draw mode determines how often the gui will be drawn:
 	 *
-	 * - In economic mode the sketch runs as usual but the gui will be drawn only
-	 * when changes occured. This can save ressources
+	 * - In efficient mode the sketch runs as usual but the gui will be drawn only
+	 * when changes occured. This saves resources. 
 	 *
 	 * - In continous mode the gui is drawn each frame new. This can be helpful when
 	 * the guiSET is combined with normal drawing functions in the draw()-method.
 	 * This way the gui itself will always be visible and not overdrawn in strange
 	 * manners. It is the most inefficient mode but not by far.
 	 *
-	 * - super_eco is an experiment that shuts off the looping altogether. The
+	 * - no_loop is an experiment that shuts off the looping altogether. The
 	 * draw()-method is only called when the gui changed due to any events. Still
 	 * that leads to problems with resizing the window and details such as the
 	 * cursor animation with textboxes.
@@ -255,41 +237,40 @@ public class Frame extends Container {
 
 	/**
 	 * Draw frequency mode. Continous makes Frame draw the entire GUI EACH time
-	 * (standard is 60 times per sec) if it hsa changed or not. This is useful if
+	 * (standard is 60 times per sec) if it has changed or not. This is useful if
 	 * guiSET is combined with manual drawing on the sketch but it is the most
-	 * wasteful mode.
+	 * wasteful mode.This is the default and for many cases recommended mode.
 	 */
 	public static final int CONTINOUS = 0;
 
 	/**
-	 * Draw frequency mode. Only refresh if any Component has changed. It still
-	 * keeps the {@link PApplet#draw()} loop running to check for some events but
-	 * only redraws if necessary.
+	 * Draw frequency mode. Only refresh if an element has changed. It still keeps
+	 * the {@link PApplet#draw()} loop running to check for some events but only
+	 * redraws if necessary.
 	 */
 	public static final int EFFICIENT = 1;
 
 	/**
 	 * Most efficient mode (but not a lot more than EFFICIENT). The
-	 * {@link PApplet#draw()} loops is interrupted and only key and mouse events are
+	 * {@link PApplet#draw()} loop is interrupted and only key and mouse events are
 	 * still received and can change the state of the GUI. Also animations have
-	 * trouble working here (yet). This is the default and for many cases
-	 * recommended mode.
+	 * trouble working here (yet).
 	 */
-	public static final int SUPER_EFF = 2; // noLoop(), only draw when necessary (still problems with animations though)
+	public static final int NO_LOOP = 2;
 
 	/**
 	 * Set draw frequency mode {@link #EFFICIENT} {@link #CONTINOUS}
-	 * {@link #SUPER_EFF}
+	 * {@link #NO_LOOP}
 	 * 
-	 * @param mode accepts Frame.EFFICIENT, Frame.CONTINOUS, Frame.SUPER_EFF
+	 * @param mode accepts Frame.EFFICIENT, Frame.CONTINOUS, Frame.NO_LOOP
 	 */
 	public void setMode(int mode) {
 		this.drawMode = mode;
-		if (mode == SUPER_EFF) {
+		if (mode == NO_LOOP) {
 			papplet.noLoop();
 			papplet.redraw();
 			if (resizable) {
-				System.out.println("resizing doesn't really work together with SUPER_ECO drawing mode");
+				System.out.println("Resizable windows doesn't really work together with NO_LOOP drawing mode");
 			}
 		} else {
 			papplet.loop();
@@ -303,29 +284,8 @@ public class Frame extends Container {
 	protected int currentWidth;
 	protected int currentHeight;
 
-	// before draw() already draw GUI, so the user may draw above it, has to be
-	// public
 
 
-	/**
-	 * DO NOT CALL THIS METHOD. It is automatically called by the sketch and needs
-	 * to be public for that reason.
-	 */
-	/*
-	 * public void pre() { this.display(); }
-	 */
-
-	// Post version. (not really post() because then we would not see the changes).
-	// after draw() happened draw GUI, so the gui overwrites everything that has
-	// been drawn before in this frame, has to be public
-
-	/**
-	 * DO NOT CALL THIS METHOD. It is automatically called by the sketch and needs
-	 * to be public for that reason.
-	 */
-	/*
-	 * public void draw() { this.display(); }
-	 */
 
 
 
@@ -334,9 +294,23 @@ public class Frame extends Container {
 	 */
 	private void display() {
 
-		// int t1 = papplet.millis();
+
+		if (!initialized) {
+
+			initialize();	// recursive procedure going through all elements connected to Frame
+			handleEvent(guiInitializedListener, null);
+			initialized = true;
 
 
+			if (resizable) {
+				// somehow sometimes a second render is important if resizable is active.
+				// In fact that's because a PFont() is created which calls some stuff. Has to do
+				// with something in Graphics awt java class
+				render();
+				update();
+				return;
+			}
+		}
 
 		/*
 		 * check if window has been resized
@@ -345,7 +319,7 @@ public class Frame extends Container {
 			currentWidth = papplet.width;
 			currentHeight = papplet.height;
 
-			handleRegisteredEventMethod(WINDOW_RESIZE_EVENT, null);
+			handleEvent(windowResizeListener, null);
 
 			// always resize frame to window size
 			this.width = papplet.width;
@@ -356,12 +330,11 @@ public class Frame extends Container {
 			// perform own and childrens internal resize event
 			resize();
 
-			// frame resize event (need to call this because in resize no anchors aare set
+			// frame resize event (need to call this because in resize no anchors are set
 			// usually
 			// yes, this is basically redundant to the WINDOW_RESIZE_EVENT (for the Frame
-			// class) but
-			// it's easier for users.
-			handleRegisteredEventMethod(RESIZE_EVENT, null);
+			// class) but it's easier for users.
+			handleEvent(resizeListener, null);
 
 			update();
 		}
@@ -378,33 +351,39 @@ public class Frame extends Container {
 		/*
 		 * re-render if graphics have been changed
 		 */
-		if (dirty && visible) {
 
-//			calcBoundsCount = 0;
-//			renderCount = 0;
-//			renderedObjects = "";
+		if (visible) {
+			render();
+		}
+
+
+
+
+
+
+	}
+
+
+	@Override
+	protected void render() {
+		if (dirty) {
+
+//				calcBoundsCount = 0;
+//				renderCount = 0;
+//				renderedObjects = "";
 
 			dirty = false;
 			// long t0 = System.nanoTime();
 
-			calcBounds();
+
+			// removing this soon !!
+			// calcBounds();
 
 			preRender(); // for frame
-			render();    // render everything
+			super.render();    // render everything
 			pg.endDraw();
 
 			// System.out.println((System.nanoTime() - t0));
-			// t0 = System.nanoTime();
-			// System.out.println(System.nanoTime() - t0 + " " + calcB + " " + render);
-
-			/*
-			 * first render, then calcBounds?
-			 * 
-			 * then controls could change their dimensions in render();
-			 * 
-			 * but scrollcontainers need their items to know their bounds so they can check
-			 * which ones are actually visible on screen
-			 */
 
 
 			if (drawMode == EFFICIENT) {
@@ -412,28 +391,12 @@ public class Frame extends Container {
 			}
 		}
 
-		if (!initialized) {
-
-			initialize();	// recursive procedure going through all elements connected to Frame
-			handleRegisteredEventMethod(GUI_INITIALIZED_EVENT, null);
-			
-			if (resizable)
-				// somehow an update is important a second time if resizable is active
-				// in fact thats because a PFont() is created which calls some stuff. Has to do
-				// with something in Graphics awt java class
-				update();
-
-			initialized = true;
-		}
-
-
 		// project graphics onto papplet
-		if (visible && (drawMode == CONTINOUS || drawMode == SUPER_EFF)) {
+		if (drawMode == CONTINOUS || drawMode == NO_LOOP) {
 			papplet.image(pg, 0, 0);
 		}
 
 	}
-
 
 
 
@@ -445,7 +408,7 @@ public class Frame extends Container {
 		/*
 		 * call redraw upon sketch when changed occured
 		 */
-		if (drawMode == SUPER_EFF) {
+		if (drawMode == NO_LOOP) {
 			papplet.redraw();
 		}
 	}
@@ -553,7 +516,7 @@ public class Frame extends Container {
 		} catch (NoSuchMethodException nsme) {
 			papplet.die("There is no public " + methodName + "() method in the class " + target.getClass().getName());
 		} catch (Exception e) {
-			papplet.die("Could not register " + methodName + " + () for " + target, e);
+			papplet.die("Could not register " + methodName + " +() for " + target, e);
 		}
 		return false;
 	}
@@ -578,7 +541,7 @@ public class Frame extends Container {
 		try {
 			method.invoke(object);
 		} catch (Exception e) {
-			// check for wrapped exception, get root exception
+			// check for wrapped exception and get the root exception
 			Throwable t;
 			if (e instanceof InvocationTargetException) {
 				InvocationTargetException ite = (InvocationTargetException) e;
@@ -586,12 +549,11 @@ public class Frame extends Container {
 			} else {
 				t = e;
 			}
-			// check for RuntimeException, and allow to bubble up
+			// check for a RuntimeException and allow to bubble up
 			if (t instanceof RuntimeException) {
 				// re-throw exception
 				throw (RuntimeException) t;
 			} else {
-				// trap and print as usual
 				t.printStackTrace();
 			}
 		}
@@ -626,7 +588,7 @@ public class Frame extends Container {
 			focusedElement.focused = true;
 			focusedElement.update();
 
-			focusedElement.handleRegisteredEventMethod(FOCUS_EVENT, focusedElement);
+			focusedElement.handleEvent(focusedElement.focusListener, focusedElement);
 		}
 	}
 
@@ -634,7 +596,7 @@ public class Frame extends Container {
 		if (focusedElement == control) {
 			focusedElement.focused = false;
 			focusedElement.update();
-			focusedElement = this;
+			focusedElement = this; // focusedElement should never be null!
 		}
 	}
 
@@ -701,8 +663,8 @@ public class Frame extends Container {
 	 * @param resizable resizable
 	 */
 	public void setResizable(boolean resizable) {
-		if (drawMode == SUPER_EFF) {
-			System.out.println("resizing doesn't really work together with SUPER_ECO drawing mode");
+		if (resizable && drawMode == NO_LOOP) {
+			System.out.println("Window resizing doesn't work properly with SUPER_EFF drawing mode");
 		}
 		this.resizable = resizable;
 		papplet.getSurface().setResizable(resizable);
@@ -711,7 +673,7 @@ public class Frame extends Container {
 	/**
 	 * Check if application has been set to resizable.
 	 * 
-	 * @return resizable
+	 * @return resizable resizable
 	 */
 	public boolean isResizable() {
 		return resizable;
@@ -739,7 +701,31 @@ public class Frame extends Container {
 
 
 
+	// Dont allow setting these attributes for Frame
 
+	@Override
+	public void setWidth(int width) {
+	}
+
+	@Override
+	public void setHeight(int height) {
+	}
+
+	@Override
+	public void setX(int x) {
+	}
+
+	@Override
+	public void setY(int y) {
+	}
+
+	@Override
+	public void addAutoAnchors(int... anchors) {
+	}
+
+	@Override
+	public void setAnchor(int anchorType, int value) {
+	}
 
 
 
@@ -748,174 +734,170 @@ public class Frame extends Container {
 	 * EVENTS
 	 */
 
-
-	public static final int KEY_EVENT = Frame.numberMouseListeners;
-
-	public static final int GUI_INITIALIZED_EVENT = Frame.numberMouseListeners + 1;
-
-	public static final int WINDOW_RESIZE_EVENT = Frame.numberMouseListeners + 2;
-
-	public static final int MOUSE_ENTER_WINDOW_EVENT = Frame.numberMouseListeners + 3;
-	public static final int MOUSE_EXIT_WINDOW_EVENT = Frame.numberMouseListeners + 4;
-
+	protected EventListener openKeyListener;
+	protected EventListener guiInitializedListener;
+	protected EventListener windowResizeListener;
+	protected EventListener enterWindowListener;
+	protected EventListener exitWindowListener;
 
 	/**
-	 * Add some more special listeners.
+	 * Add a key listener which fires on key press, type and release events.
 	 * 
-	 * @param type       {@link #KEY_EVENT} {@link #GUI_INITIALIZED_EVENT}
-	 *                   {@value #WINDOW_RESIZE_EVENT}
-	 *                   {@link #MOUSE_ENTER_WINDOW_EVENT}
-	 *                   {@link #MOUSE_EXIT_WINDOW_EVENT}
-	 * @param methodName callback method name
-	 * @return true if adding has been successful
+	 * @param methodName method name
+	 * @param target     object
 	 */
-	public boolean addListener(int type, String methodName) {
-		return addListener(type, methodName, papplet);
+	public void addKeyListener(String methodName, Object target) {
+		openKeyListener = createEventListener(methodName, target, null);
+	}
+
+	public void addKeyListener(String methodName) {
+		addKeyListener(methodName, getPApplet());
+	}
+
+	public void removeKeyListener() {
+		openKeyListener = null;
 	}
 
 	/**
-	 * @see #addListener(int, String) . Version with custom target.
-	 * @param type
-	 * @param methodName callback method name
-	 * @param target
-	 * @return true if adding has been successful
-	 */
-	public boolean addListener(int type, String methodName, Object target) {
-		switch (type) {
-		case KEY_EVENT:
-			return registerEventRMethod(KEY_EVENT, methodName, target, KeyEvent.class);
-		case GUI_INITIALIZED_EVENT:
-			return registerEventRMethod(GUI_INITIALIZED_EVENT, methodName, target, null);
-		case WINDOW_RESIZE_EVENT:
-			return registerEventRMethod(WINDOW_RESIZE_EVENT, methodName, target, null);
-		case MOUSE_ENTER_WINDOW_EVENT:
-			return registerEventRMethod(MOUSE_ENTER_WINDOW_EVENT, methodName, target, MouseEvent.class);
-		case MOUSE_EXIT_WINDOW_EVENT:
-			return registerEventRMethod(MOUSE_EXIT_WINDOW_EVENT, methodName, target, MouseEvent.class);
-		}
-		return false;
-	}
-
-	/**
-	 * Remove special listeners set with {@link #addListener(int, String, Object)}
+	 * Called when gui is initialized and draw() runs for the first time.
 	 * 
-	 * @param type
-	 * @param methodName
-	 * @param target
+	 * @param methodName method name
+	 * @param target     object
 	 */
-	public void removeListener(int type, String methodName, Object target) {
-		switch (type) {
-		case KEY_EVENT:
-			deregisterEventRMethod(KEY_EVENT);
-			break;
-		case GUI_INITIALIZED_EVENT:
-			deregisterEventRMethod(GUI_INITIALIZED_EVENT);
-			break;
-		case WINDOW_RESIZE_EVENT:
-			deregisterEventRMethod(WINDOW_RESIZE_EVENT);
-			break;
-		case MOUSE_ENTER_WINDOW_EVENT:
-			deregisterEventRMethod(MOUSE_ENTER_WINDOW_EVENT);
-			break;
-		case MOUSE_EXIT_WINDOW_EVENT:
-			deregisterEventRMethod(MOUSE_EXIT_WINDOW_EVENT);
-			break;
-		}
+	public void addGuiInitializedListener(String methodName, Object target) {
+		guiInitializedListener = createEventListener(methodName, target, null);
 	}
+
+	public void addGuiInitializedListener(String methodName) {
+		addGuiInitializedListener(methodName, getPApplet());
+	}
+
+	public void removeGuiInitializedListener() {
+		guiInitializedListener = null;
+	}
+
+	/**
+	 * Called when the application window is resized.
+	 * 
+	 * @param methodName method name
+	 * @param target     object
+	 */
+	public void addWindowResizeListener(String methodName, Object target) {
+		windowResizeListener = createEventListener(methodName, target, MouseEvent.class);
+	}
+
+	public void addWindowResizeListener(String methodName) {
+		addWindowResizeListener(methodName, getPApplet());
+	}
+
+	public void removeWindowResizeListener() {
+		windowResizeListener = null;
+	}
+
+	/**
+	 * Listen for the mouse entering the window.
+	 * 
+	 * @param methodName method name
+	 * @param target     object
+	 */
+	public void addEnterWindowListener(String methodName, Object target) {
+		enterWindowListener = createEventListener(methodName, target, MouseEvent.class);
+	}
+
+	public void addEnterWindowListener(String methodName) {
+		addEnterWindowListener(methodName, getPApplet());
+	}
+
+	public void removeEnterWindowListener() {
+		enterWindowListener = null;
+	}
+
+	/**
+	 * Listen for the mouse exiting the window.
+	 * 
+	 * @param methodName method name
+	 * @param target     object
+	 */
+	public void addExitWindowListener(String methodName, Object target) {
+		exitWindowListener = createEventListener(methodName, target, MouseEvent.class);
+	}
+
+	public void addExitWindowListener(String methodName) {
+		addExitWindowListener(methodName, getPApplet());
+	}
+
+	public void removeExitWindowListener() {
+		exitWindowListener = null;
+	}
+
+
 
 
 
 	/*
-	 * stopPropagation is a very important property that is used to indicate that
-	 * one element "swallowed up" the mouseEvent so no other element will get it.
+	 * Mouse event uniqe to the Frame class. 
+	 * This is called by PApplet through Protected_Frame. 
+	 * From here all other mouseEvents are executed.  
 	 * 
-	 * I.e. when one element is locally below another one then only the above should
-	 * get the click event.
+	 * (non-Javadoc)
+	 * @see guiSET.core.Control#mouseEvent(processing.event.MouseEvent)
 	 */
 
-	protected boolean stopPropagation = false;
-
-	/**
-	 * Stop mouse event propagation. If called then no Components lower or at the
-	 * same level in the Container hierachy will receive the currently processed
-	 * mouse event.
-	 */
-	public static void stopPropagation() {
-		frame0.stopPropagation = true;
-	}
-
-	/**
-	 * Check if the mouse event propagation has been stopped.
-	 * 
-	 * @return propagation stop state
-	 */
-	public static boolean isPropagationStopped() {
-		return frame0.stopPropagation;
-	}
-
-
-
-	/**
-	 * DO NOT CALL THIS METHOD. Handled by the sketch and needs to be public.
-	 */
-	@Override
 	protected void mouseEvent(MouseEvent e) {
 		/*
 		 * dragging is handled separately and only for the draggedElement (which is
 		 * always set when clicking on a control).
 		 */
 
-		topmost = null;
+		currentMouseEvent = e;							// store mouse event statically here. No need to carry it around all the time
 
-		Control.currentMouseEvent = e;				// store mouse event statically here. No need to carry it around all the time
 		Control prevHoveredElement = hoveredElement;	// control that has been hovered over during the previous frame
-		Control.hoveredElement = null;		// reset to find out the control that is being hovered over this frame
+		hoveredElement = null;							// reset to find out the control that is being hovered over this frame
 
 		int mousex = e.getX();
 		int mousey = e.getY();
 
+
 		// handle window mouse enter/exit events
 		// not beautiful to call super.mouseEvents() in each case but anyway
 		switch (e.getAction()) {
+		case MouseEvent.DRAG:
+			if (draggedElement != null) {
+				stopPropagation(); // not even necessary, we dont call mouseEvent()
+				hoveredElement = draggedElement;
+				draggedElement.drag(e);
+				draggedElement.handleEvent(draggedElement.dragListener, e);
+			}
+			break;
 		case MouseEvent.RELEASE:
 			if (draggedElement != null) {
 
-				// release after drag: Only draggedElement should receive this event, so
-				// propagation needs to be stopped. But then "hoveredElement" will be null so
-				// set hoveredElement
-				// to draggedElement because otherwise we get an immediate exit event.
-				Frame.stopPropagation();
-				hoveredElement = draggedElement;
+				// release after drag: Only draggedElement should receive this event.
+				stopPropagation(); // not even necessary, we dont call mouseEvent()
 
 				draggedElement.release(e);
-				draggedElement.handleRegisteredEventMethod(RELEASE_EVENT, e);
+				draggedElement.handleEvent(draggedElement.releaseListener, e);
+
+				// now we need to check if mouse is still over the element
+				ArrayList<Control> trace = traceAbsoluteCoordinates(mousex, mousey);
+
+				if (trace.get(0) == draggedElement) {
+					hoveredElement = draggedElement; // hoveredElement not set, because not calling mouseEvent
+				} else {
+					print("drop on ", trace.get(0));
+				}
 				draggedElement = null;
-			}
-			if (useNewMouseEvent)
-				super.mouseEvent(mousex, mousey);
-			else
-				super.mouseEvent(e);
-			break;
-		case MouseEvent.DRAG:
-			if (draggedElement != null) {
-				Frame.stopPropagation();
-				draggedElement.drag(e);
-				draggedElement.handleRegisteredEventMethod(DRAG_EVENT, e);
+			} else {
+				mouseEvent(mousex, mousey);
 			}
 			break;
 		case MouseEvent.ENTER:
-			handleRegisteredEventMethod(MOUSE_ENTER_WINDOW_EVENT, e);
-			if (useNewMouseEvent)
-				super.mouseEvent(mousex, mousey);
-			else
-				super.mouseEvent(e);
+			handleEvent(enterWindowListener, e);
+			mouseEvent(mousex, mousey);
 			break;
 		case MouseEvent.EXIT:
-			handleRegisteredEventMethod(MOUSE_EXIT_WINDOW_EVENT, e);
-			if (useNewMouseEvent)
-				super.mouseEvent(mousex, mousey);
-			else
-				super.mouseEvent(e);
+			handleEvent(exitWindowListener, e);
+			mouseEvent(mousex, mousey);
 			break;
 
 //			case MouseEvent.MOVE:
@@ -926,56 +908,48 @@ public class Frame extends Container {
 //			break;
 //
 		default:
-			if (useNewMouseEvent)
-				super.mouseEvent(mousex, mousey);
-			else
-				super.mouseEvent(e);
+			mouseEvent(mousex, mousey);
 		}
 
 
 
-		if (useNewMouseEvent) {
-			if (prevHoveredElement != hoveredElement && prevHoveredElement != null) {
-				prevHoveredElement.pHovered = false;
-				prevHoveredElement.exit(e);
-				prevHoveredElement.handleRegisteredEventMethod(EXIT_EVENT, e);
-			}
-			if (hoveredElement != null) {
-				papplet.cursor(hoveredElement.cursor);
-				// PApplet.println(hoveredElement);
-
-				if (!hoveredElement.pHovered) {
-					hoveredElement.pHovered = true;
-					hoveredElement.enter(e);
-					hoveredElement.handleRegisteredEventMethod(ENTER_EVENT, e);
-				}
-			}
-		} else {
-			if (topmost != null)
-				papplet.cursor(topmost.cursor);
+		// exit previously hovered element
+		if (prevHoveredElement != hoveredElement && prevHoveredElement != null) {
+			prevHoveredElement.pHovered = false;
+			prevHoveredElement.exit(e);
+			prevHoveredElement.handleEvent(prevHoveredElement.exitListener, e);
 		}
 
+		// enter currently hovered element
+		if (hoveredElement != null) {
+			papplet.cursor(hoveredElement.cursor);
+
+			if (!hoveredElement.pHovered) {
+				hoveredElement.pHovered = true;
+				hoveredElement.enter(e);
+				hoveredElement.handleEvent(hoveredElement.enterListener, e);
+			}
+		}
 
 		// reset stopPropagation for next frame (after handling mouseEvent and not
-		// before, in case mode is ECONOMIC)
-		stopPropagation = false;
+		// before, in case render mode is EFFICIENT)
+		propagationStopped = false;
 	}
+
+
 
 	@Override
 	public int getOffsetXWindow() {
-		return relativeX;
+		return offsetX;
 	}
 
 	@Override
 	public int getOffsetYWindow() {
-		return relativeY;
+		return offsetY;
 	}
 
 
 
-
-
-	protected static Control topmost;
 
 
 	/*
@@ -992,12 +966,10 @@ public class Frame extends Container {
 
 	protected KeyListener keyListener;
 
-	/**
-	 * DO NOT CALL THIS METHOD. Handled by the sketch and needs to be public.
-	 */
-	protected void keyEvent(KeyEvent e) {
+
+	private void keyEvent(KeyEvent e) {
 		keyListener.handleKeyEvent(e, focusedElement);
-		handleRegisteredEventMethod(KEY_EVENT, e);
+		handleEvent(openKeyListener, e);
 	}
 
 	/**
@@ -1045,7 +1017,7 @@ public class Frame extends Container {
 	/**
 	 * Get guiSET version.
 	 * 
-	 * @return
+	 * @return version
 	 */
 	public String getVersion() {
 		return versionCode;

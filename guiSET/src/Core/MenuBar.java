@@ -2,6 +2,7 @@ package guiSET.core;
 
 import guiSET.classes.Color;
 import processing.core.*;
+import processing.event.MouseEvent;
 
 
 /**
@@ -13,20 +14,22 @@ import processing.core.*;
  */
 public class MenuBar extends HFlowContainer {
 
-
 	public MenuBar() {
 		setGradient(Color.create(230), Color.create(200));
-		height = MenuItem.MENUITEM_HEIGHT;
+		setZ(MenuItem.MenuZIndex);
+		setHeightImpl(MenuItem.MENUITEM_HEIGHT);
 	}
-
-
-
 
 	@Override
 	protected void addedToParent() {
-		width = parent.width;
-		addAutoAnchor(PApplet.LEFT, PApplet.RIGHT);
+		setWidthImpl(parent.width);
+		addAutoAnchors(PApplet.LEFT, PApplet.RIGHT);
 	}
 
-
+	// enable MenuSurface to close when clicked somewhere on menubar that is not an
+	// item
+	@Override
+	protected void press(MouseEvent e) {
+		propagationStopped = false;
+	}
 }

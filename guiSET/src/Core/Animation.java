@@ -133,9 +133,11 @@ public class Animation {
 
 				}
 			} catch (NoSuchFieldException nsfe) {
-				nsfe.printStackTrace();
+				System.out.println("Animation error: The attribute \"" + attribute + "\" does not exist for this object");
+				cancel = true;
 			} catch (IllegalAccessException iae) {
 				iae.printStackTrace();
+				cancel = true;
 			}
 		}
 	}

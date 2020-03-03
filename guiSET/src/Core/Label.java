@@ -4,7 +4,7 @@ import processing.core.*;
 
 
 /**
- * A basic template for plain text labels.
+ * A basic template for plain text or image labels.
  * 
  * @author E-Bow
  *
@@ -39,7 +39,7 @@ public class Label extends Control {
 		setText(text);
 		setFontSize(fontSize);
 		borderWidth = 0;
-		visualBackgroundColor = 0;
+		setBackgroundColor(0); // tranparent
 		setPadding(2); // might cut off a tiny part of the text otherwise
 	}
 
@@ -73,8 +73,8 @@ public class Label extends Control {
 	 */
 	public Label(PImage image, int width, int height) {
 		setImage(image);
-		this.width = width;  // should be okay to set size without setter
-		this.height = height;
+		setWidthImpl(width);  // should be okay to set size without setter
+		setHeightImpl(height);
 		borderWidth = 0;
 	}
 
@@ -87,9 +87,13 @@ public class Label extends Control {
 
 
 	@Override
-	protected void autosize() {
-		width = (int) PApplet.constrain(textWidth(text) + paddingLeft + paddingRight, minWidth, maxWidth);
+	protected void autosizeRule() {
+		setWidthImpl((int) (textWidth(text) + paddingLeft + paddingRight));
 		int numLines = text.split("\n").length;
-		height = (int) PApplet.constrain(numLines * textLeading() + paddingTop + paddingBottom, minHeight, maxHeight);
+		setHeightImpl((int) (numLines * textLeading() + paddingTop + paddingBottom));
+	}
+	
+	@Override protected void mouseEvent(int x, int y) {
+		super.mouseEvent(x, y);
 	}
 }

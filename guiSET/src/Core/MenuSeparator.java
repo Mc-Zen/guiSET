@@ -4,19 +4,19 @@ import processing.event.MouseEvent;
 
 
 /**
- * Separator line in menus between MenuItems {@link MenuItem}. 
+ * Separator line in menus between MenuItems {@link MenuItem}.
+ * 
  * @author E-Bow
  *
  */
 public class MenuSeparator extends MenuItem {
 	public MenuSeparator() {
 		super();
-		height = 5;
+		setHeightImpl(5);
 	}
 
 	@Override
 	protected void render() {
-
 		drawDefaultBackground();
 		pg.fill(foregroundColor);
 
@@ -25,15 +25,11 @@ public class MenuSeparator extends MenuItem {
 		pg.line(23, height / 2 - 1, width - 2, height / 2 - 1);
 		pg.stroke(255);
 		pg.line(23, height / 2, width - 2, height / 2);
-
 	}
 
+	// remove the functionality of all these events from MenuItem
 	@Override
 	protected void enter(MouseEvent e) {
-	}
-
-	@Override
-	protected void exit(MouseEvent e) {
 	}
 
 	@Override
@@ -44,7 +40,4 @@ public class MenuSeparator extends MenuItem {
 	protected void release(MouseEvent e) {
 	}
 
-	@Override
-	protected void mouseEvent(MouseEvent e) {
-	}
 }

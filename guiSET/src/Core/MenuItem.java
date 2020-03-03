@@ -12,29 +12,147 @@ import guiSET.classes.*;
 
 
 /**
- * Basic brick for creating menus. Just take a {@link HFlowContainer}, make its
- * width fill out the window and height = 25 and add MenuItems to it.
+ * Basic brick for creating menus. Just take a {@link MenuBar}and add MenuItems
+ * to it.
  * 
  * You can add other MenuItems to them and so on to create any structure of menu
  * items. Also take a look at the {@link MenuSeparator} which provides a
  * non-clickable and slim line for separating parts of the menu strip.
  * 
- * There is only this one class for every position in the structure tree.
+ * There is only this one class for every position in the menu tree.
  * 
  * 
  * The MenuItems aren't displayed and rendered at the position of the hierachy
- * they are added to. Instead they create a {@link ToolStrip} (called
+ * they are added to. Instead they create a {@link MenuStrip} (called
  * "dropdown") Object (if they have children/subitems at all) which then is
- * added to the Frame directly. This is necessary to be able to display it at
- * any place. By default the ToolStrips are invisible and are only set to
- * visible when opening a strip by clicking on it. When removing all subitems
- * from an item the ToolStrip will be removed too.
+ * added to an instance of MenuSurface. This is necessary to be able to display
+ * it at any place. MenuSurface is created automatically once if it does not
+ * exist yet and adds itself to {@link Frame}. Clicking on anywhere on the
+ * MenuSurface which is not a MenuItem will close all open strips.
+ * 
+ * 
+ * By default the ToolStrips are invisible and are only set to visible when
+ * opening a strip by clicking on it. When removing all subitems from an item,
+ * the ToolStrip will be removed too.
  * 
  * MenuItems and ToolStrips can also be used to create menus that pop up when
  * i.e. right-clicking on something.
  * 
  */
+
+
+
+/*class A {
+
+	static int num;
+
+	static final int L1 = getListener();
+	static final int L2 = getListener();
+
+	static int getListener() {
+		return num++;
+	}
+}
+
+class B extends A {
+	static int num = A.num;
+
+	static final int LB = getListener();
+
+	static int getListener() {
+		return num++;
+	}
+}
+
+class D extends A {
+	static int num = A.num;
+
+	static final int LR = getListener();
+	static final int LT = getListener();
+
+	static int getListener() {
+		return num++;
+	}
+}
+
+
+class C extends B {
+	static int num = B.num;
+
+	static final int L3 = getListener();
+
+	static int getListener() {
+		return num++;
+	}
+}*/
+
+
+class MenuSurface extends Container {
+	protected static MenuSurface staticMS;
+
+	private MenuSurface() {
+		if (staticMS == null) {
+			staticMS = this;
+			Frame.frame0.add(this);
+			setVisible(false);
+			setAnchor(PApplet.LEFT, 0);
+			setAnchor(PApplet.RIGHT, 0);
+			setAnchor(PApplet.TOP, 0); // leave top free for change-menustrip-by-hover
+			setAnchor(PApplet.BOTTOM, 0);
+			setZ(MenuItem.MenuZIndex);
+			setBackgroundColor(0);
+		}
+
+
+
+		// print(A.L1, A.L2, B.LB, C.L3, D.LR, D.LT,"num",A.num,B.num, C.num, D.num);
+		// lol
+	}
+
+
+	// Called by MenuItem constructor to notify MenuSurface that menus will be used.
+	protected static void usingMenus() {
+		if (staticMS == null)
+			new MenuSurface();
+	}
+
+
+	protected static void addToolStrip(MenuStrip t) {
+		if (staticMS == null)
+			new MenuSurface();
+
+		staticMS.add(t);
+	}
+
+	protected static void openMenu() {
+		staticMS.setVisible(true);
+	}
+
+	protected static void closeMenu() {
+		staticMS.setVisible(false);
+	}
+
+
+	// Definitely called after all MenuItems got the event.
+	// Only called if propagation not yet stopped, which means, that no item has
+	// been pressed.
+	@Override
+	protected void press(MouseEvent e) {
+		MenuItem.closeOpenHeaders();
+		closeMenu();
+
+		// now that the menu has closed, allow pressing immediately with the same
+		// click on other elements (even dragging works this way).
+		propagationStopped = false;
+	}
+
+}
+
 public class MenuItem extends Control {
+
+
+	public static final int MenuZIndex = 20;
+	public static final int MENUITEM_HEIGHT = 23; // default height for menu items and menu bars - looks good in my opinion
 
 
 	/*
@@ -42,13 +160,13 @@ public class MenuItem extends Control {
 	 * references a Toolstrip that is placed in the Frame with high z-index and that
 	 * is the real parent of all subitems.
 	 * 
-	 * It's easier to keep this list a Control-List and not a MenuItem-List because
-	 * the ToolStrip extends Container which has Control list and both lists are
+	 * It's easier to keep this list a Control-list and not a MenuItem-list because
+	 * the ToolStrip extends Container which has a Control-list and the lists are
 	 * synchronized.
 	 */
 	protected ArrayList<Control> items;
 
-	protected ToolStrip dropDown;
+	protected MenuStrip dropDown;
 
 	/*
 	 * There are two types of menuitems: one is the "menu header" which is always
@@ -56,9 +174,10 @@ public class MenuItem extends Control {
 	 * other is the "menu item", the basic items/subitems that make up the structure
 	 * of the strip.
 	 * 
-	 * Both have different drawing and handling of special events etc... MenuItems
-	 * should not change their position at runtime because the type change won't be
-	 * recognized.
+	 * Both have different drawing and handling of special events etc...
+	 * 
+	 * Menu items should not change their tree position at runtime because the type
+	 * change won't be recognized. Or not? Maybe it would work now.
 	 * 
 	 * "type" gives the possibility to discern between the two versions intenally.
 	 * The type is only determined at runtime when the graphics have been
@@ -80,7 +199,6 @@ public class MenuItem extends Control {
 	 * subitems of this item are visible
 	 */
 	protected boolean open = false;
-	protected boolean init = false;
 
 	/*
 	 * Shortcut to display. When setting shortcut it does not necessarily do
@@ -94,12 +212,9 @@ public class MenuItem extends Control {
 	 * closing entire strips when another one ie opened - or opening on hover when
 	 * any header is already open (no clicking needed).
 	 */
-	private static MenuItem headers[] = {};
+	protected static MenuItem headers[] = {};
 
 	protected boolean checked = false;
-
-	protected static final int MENUITEM_HEIGHT = 23; // default height for menu items and menu bars - looks good in my opinion
-
 
 
 	public MenuItem() {
@@ -108,7 +223,7 @@ public class MenuItem extends Control {
 
 	public MenuItem(String text) {
 		super();
-		height = MENUITEM_HEIGHT;
+		setHeightImpl(MENUITEM_HEIGHT);
 		setPadding(0, 6, 10, 6);
 		setText(text);
 		fontSize = 13;
@@ -118,16 +233,14 @@ public class MenuItem extends Control {
 		hoverColor = 1342177280; 		// just darken menucontainer backgroundcolor a bit
 		pressedColor = 1677721600; 		// only used by menu headers
 
-
 		items = new ArrayList<Control>(0);
-		setupListeners(1); // 1 additional listener (itemSelectedListener)
-
+		MenuSurface.usingMenus();
 	}
 
 
 	/**
-	 * Constructor for immediatley setting text and name of method to call when
-	 * pressed.
+	 * Constructor for immediately setting text and name of method to call when
+	 * selected.
 	 * 
 	 * @param text       text
 	 * @param methodName method name
@@ -135,45 +248,41 @@ public class MenuItem extends Control {
 	public MenuItem(String text, String methodName) {
 		this(text);
 
-		// specified method will be executed on mose release
-		addMouseListener("release", methodName);
+		addSelectListener(methodName);
+		// specified method will be executed on mouse release
+		// addMouseListener("release", methodName);
 	}
 
 	public MenuItem(String text, String methodName, Shortcut shortcut) {
 		this(text, methodName);
 
-		// specified method will be executed on mose release
+		// specified method will be executed on mouse release
 		setShortcut(shortcut);
 		Frame.frame0.registerShortcut(shortcut, methodName);
+		addSelectListener(methodName);
 	}
 
 
 
 
 
-
+	protected void registerShortcutAndMethod(String methodName, Shortcut shortcut) {
+		setShortcut(shortcut);
+		Frame.frame0.registerShortcut(shortcut, methodName);
+		addSelectListener(methodName);
+	}
 
 
 
 	@Override
 	protected void render() {
-		if (!init) {
-			init();
-		}
-
-		// change color when active
+		// change color if open
 		if (open) {
 			if (type == MENU_HEADER)
 				visualBackgroundColor = pressedColor;
 			else
 				visualBackgroundColor = hoverColor;
 		}
-
-
-		if (type == MENU_ITEM)
-			textAlign = PApplet.LEFT;
-		else if (type == MENU_HEADER)
-			textAlign = PApplet.CENTER;
 
 		/*
 		 * grey out if disabled
@@ -186,92 +295,79 @@ public class MenuItem extends Control {
 		drawDefaultText();
 
 
-		/*
-		 * draw triangle to indicate that this item has subitems
-		 */
+		if (type == MENU_ITEM) {
 
-		if (items.size() > 0 && type == MENU_ITEM) {
-			pg.fill(enabled ? 0 : 150);
-			pg.stroke(0);
-			pg.strokeWeight(0);
-			pg.triangle(width - 4, height / 2, width - 7, height / 2 + 3, width - 7, height / 2 - 3);
+			/*
+			 * Draw triangle to indicate that this item has subitems
+			 */
+			if (items.size() > 0) {
+				pg.fill(enabled ? 0 : 150);
+				pg.stroke(0);
+				pg.strokeWeight(0);
+				pg.triangle(width - 4, height / 2, width - 7, height / 2 + 3, width - 7, height / 2 - 3);
+			}
+
+			/*
+			 * Draw shortcut if specified
+			 */
+			if (shortcut != null) {
+				String textBKP = text;
+				textAlign = PApplet.RIGHT; // temporary RIGHT (no need to reset)
+				text = shortcut.toString() + " ";
+				drawDefaultText();
+				text = textBKP;
+				textAlign = PApplet.LEFT; // temporary RIGHT (no need to reset)
+			}
+
+			/*
+			 * Draw checkmark
+			 */
+			if (checked) {
+				pg.fill(180, 180, 250, 130);
+				pg.stroke(60, 60, 100, 150);
+				pg.rect(2, 3, 18, 18, 2); 	// box
+
+				pg.strokeWeight(2);
+				pg.line(8, 13, 10, 16);		// checkmark
+				pg.line(10, 16, 15, 8);
+			}
 		}
-
-
-		/*
-		 * Draw shortcut if specified
-		 */
-
-		if (shortcut != null && type == MENU_ITEM) {
-			String textBKP = text;
-			textAlign = PApplet.RIGHT; // temporary RIGHT (no need to reset)
-			text = shortcut.toString() + " ";
-			drawDefaultText();
-			text = textBKP;
-		}
-
-		/*
-		 * draw checkmark
-		 */
-		if (checked) {
-			pg.fill(180, 180, 250, 130);
-			pg.stroke(60, 60, 100, 150);
-			pg.rect(2, 3, 18, 18, 2); 	// box
-
-			pg.strokeWeight(2);
-			pg.line(8, 13, 10, 16);		// checkmark
-			pg.line(10, 16, 15, 8);
-		}
-
 		foregroundColor = temp;
 	}
 
 
 
 
-	/*
-	 * Menu items need to be initialized once by analyzing if they are a child or
-	 * header of a menustrip and make appropriate adjustments
+	/**
+	 * When added to their parent, it is determined whether this item is a
+	 * {@link #MENU_HEADER} or a {@link #MENU_ITEM}. Some styles are set
+	 * accordingly.
 	 */
 
-	protected void init() {
-
-		/*
-		 * preferrably add dropdown here, so the order of items to subitems is honored
-		 * (Strips from different layers overlap a bit).
-		 * 
-		 * When adding items at runtime the adding method takes care of it.
-		 */
-
-
-		if (items.size() > 0) {
-			Frame.frame0.add(dropDown);
-		}
-
-
-		/*
-		 * if the parent is a toolstrip then this must be a MENU_ITEM, else it will be a
-		 * header. This changes some of the visual attributes.
-		 */
-
-		try {
-			@SuppressWarnings("unused")
-			ToolStrip pa = ((ToolStrip) parent);
-
+	@Override
+	protected void addedToParent() {
+		if (parent instanceof MenuStrip) {
 			type = MENU_ITEM;
 
+			textAlign = PApplet.LEFT;
 			hoverColor = 671088660;
 			paddingLeft = 27;
 
-		} catch (ClassCastException cce) {
-
+			// If this whole strip (that this item just has been added to) is already added
+			// to a MenuBar or similar, we need to add the dropDown for this item separately
+			if (headerStrip != null && headerStrip.parent != null) {
+				addToolStrips(); // add all toolstrips recursively (preserve right z-order)
+			}
+		} else {
 			type = MENU_HEADER;
-
+			textAlign = PApplet.CENTER;
+			// set this as header recursively for all (sub...-) children. This is only
+			// necessary for headers as it is already included in the add() method when
+			// adding MenuItems.
 			setHeader(this);
+			addToolStrips(); // add all toolstrips recursively (preserve right z-order)
 
-			/*
-			 * add this item to headers array
-			 */
+			// add this item to static headers array
 			MenuItem headersTemp[] = new MenuItem[headers.length + 1];
 			for (int i = 0; i < headers.length; i++) {
 				headersTemp[i] = headers[i];
@@ -279,45 +375,49 @@ public class MenuItem extends Control {
 			headersTemp[headers.length] = this;
 			headers = headersTemp;
 		}
-
-		init = true;
+		autosize();
 	}
 
+
+	protected void addToolStrips() {
+		if (dropDown != null) {
+			MenuSurface.addToolStrip(dropDown);
+			for (Control c : items) {
+				((MenuItem) c).addToolStrips();
+			}
+		}
+	}
 
 
 
 	@Override
-	protected void autosize() {
+	protected void autosizeRule() {
 		float shortcutWidth = (shortcut != null ? textWidth(shortcut.toString()) + 30 : 0);
-		int w = (int) (textWidth(text) + paddingLeft + paddingRight + shortcutWidth);
+		int baseWidth = (int) (textWidth(text) + shortcutWidth);
 
 		/*
-		 * if subitem then only require this as minimal width; as header it's the actual
-		 * width
+		 * if subitem, then only require this as minimal width; as header it's the
+		 * actual width
 		 */
-		if (type == MENU_ITEM)
-			minWidth = w + 27; // 27 is the left padding
-
-		else if (type == MENU_HEADER)
-			width = w;
-
-		else {					// undefined state (before this item has fully been initialized)
-			minWidth = w + 27; // 27 is the left padding
-			width = w;
+		if (type == MENU_ITEM) {
+			setMinWidth(baseWidth + paddingLeft + paddingRight); // 27 is the left padding
+		} else if (type == MENU_HEADER) {
+			setWidthImpl(baseWidth + paddingLeft + paddingRight);
+		} else {
+			// undefined state (before this item has fully been initialized).
+			// At least when called in addedToParent(), the type is defined.
 		}
 	}
-
 
 
 	/*
 	 * Setting header recursively (also for the subitems etc). Method is called at
-	 * initializing and always when new item added
+	 * addedToParent and always when new item added
 	 */
-
 	protected void setHeader(MenuItem header) {
 		this.headerStrip = header;
-		for (int i = 0; i < items.size(); i++) {
-			((MenuItem) items.get(i)).setHeader(header);
+		for (Control c : items) {
+			((MenuItem) c).setHeader(header);
 		}
 	}
 
@@ -325,49 +425,45 @@ public class MenuItem extends Control {
 
 
 	/*
-	 * open this strip properly if it has subitems, else select item
+	 * Internal method for opening this strip properly. Called by press event, long
+	 * hover and hover over header if other header already open.
+	 * 
+	 * If it has no subitems, select item
 	 */
-
 	protected void open() {
 		if (items.size() > 0) { // has subitems itself -> open them
 
 			// first close all potentially open siblings
 			try {
-				for (int i = 0; i < ((ToolStrip) parent).content.size(); i++)
-					((MenuItem) ((ToolStrip) parent).content.get(i)).close();
+				for (Control c : ((MenuStrip) parent).items) {
+					((MenuItem) c).close();
+				}
 			} catch (ClassCastException cce) {
 				// ignore casting errors
+			} catch (NullPointerException e) {
+				//
 			}
 
 			open = true;
 
 
+
+			// MenuSurface.openMenu();
 			/*
 			 * Draw first layer items BENEATH this item and all other layers always NEXT to
 			 * this item
 			 */
+			if (type == MENU_HEADER) {
+				dropDown.x = offsetX;
+				dropDown.y = MENUITEM_HEIGHT;
 
-			if (useNewMouseEvent) {
-				if (type == MENU_HEADER) {
-					dropDown.x = getOffsetXWindow();
-					dropDown.y = getOffsetYWindow() + height;
-					// reset timer (when closing the strip the timer is always ceased)
-					timer = new Timer();
-				} else {
-					dropDown.x = getOffsetXWindow() + width - 10;
-					dropDown.y = getOffsetYWindow();
-				}
+				// reset timer (when closing the strip the timer is always ceased)
+				hoverTimer = new Timer();
 			} else {
-				if (type == MENU_HEADER) {
-					dropDown.x = this.bounds.X0;
-					dropDown.y = this.bounds.Y;
-					// reset timer (when closing the strip the timer is always ceased)
-					timer = new Timer();
-				} else {
-					dropDown.x = this.bounds.X - 10;
-					dropDown.y = this.bounds.Y0;
-				}
+				dropDown.x = getOffsetXWindow() + width - 10;
+				dropDown.y = getOffsetYWindow() - MenuSurface.staticMS.offsetY;
 			}
+
 
 
 			// make toolstrip (dropdown) visible
@@ -380,10 +476,13 @@ public class MenuItem extends Control {
 			open = true;
 
 			// notify header that an item has been selected, header will start the closing
+			if (headerStrip != null) {
+				headerStrip.childSelected(this);
+			} else {
 
-			if (headerStrip != null)
-				headerStrip.itemSelected(this);
-
+				// only used for free ToolStrips unbound to a menu
+				((MenuStrip) parent).itemSelected(this);
+			}
 		}
 	}
 
@@ -391,12 +490,9 @@ public class MenuItem extends Control {
 
 
 
-	/*
-	 * close recursively all items from (first layer menu items (header)) to
-	 * subitems
-	 */
+
 	/**
-	 * Close this item/strip. Recursively closes all subitems and parent strips.
+	 * Close this item/strip. Recursively closes all subitems.
 	 */
 	public void close() {
 		if (open) {
@@ -405,52 +501,72 @@ public class MenuItem extends Control {
 			open = false;
 
 			// close sub items
-			for (int i = 0; i < items.size(); i++) {
-				((MenuItem) items.get(i)).close();
+			for (Control c : items) {
+				((MenuItem) c).close();
 			}
 
-			if (dropDown != null)
+			if (dropDown != null) {
 				dropDown.hide();
-
+			}
 			update();
 
-			// headers need to stop the timer
+			// headers need to stop the timer and close the surface
 			if (type == MENU_HEADER) {
-				if (tt != null) {
-					tt.cancel();
-					tt = null;
+
+				MenuSurface.closeMenu();
+
+				if (hoverTimerTask != null) {
+					hoverTimerTask.cancel();
+					hoverTimerTask = null;
 
 					// cease timer completely
-					timer.cancel();
-					timer.purge();
+					hoverTimer.cancel();
+					hoverTimer.purge();
 				}
 			}
 		}
 	}
 
 
+	protected static void closeOpenHeaders() {
+		for (MenuItem h : headers) {
+			h.close();
+		}
+	}
 
 	/**
 	 * Set the displayed shortcut (shortcut has no real effect unless set manually
 	 * at Frame).
 	 * 
-	 * @param s
+	 * @param shortcut shortcut
 	 */
-	public void setShortcut(Shortcut s) {
-		this.shortcut = s;
+	public void setShortcut(Shortcut shortcut) {
+		this.shortcut = shortcut;
 		autosize();
 	}
 
-
+	public Shortcut getShortcut() {
+		return shortcut;
+	}
 
 
 	/*
 	 * Only for header items. When an item is selected by clicking then it calls
 	 * this method for its header. The header then closes up the entire strip.
 	 */
-	protected void itemSelected(Control c) {
+	protected void childSelected(MenuItem c) {
 		close();
-		handleRegisteredEventMethod(ITEM_SELECTED_EVENT, c);
+		if (c != this) { // not sure if this can even happen
+			c.selected(c);
+		}
+		handleEvent(childSelectListener, c);
+	}
+
+	/*
+	 * For all items. Header calls this after being selected
+	 */
+	protected void selected(MenuItem c) {
+		handleEvent(selectListener, c);
 	}
 
 
@@ -460,12 +576,6 @@ public class MenuItem extends Control {
 
 
 
-
-
-
-	public boolean isChecked() {
-		return checked;
-	}
 
 	/**
 	 * MenuItems can be checked / unchecked with this method (little icon on the
@@ -478,6 +588,10 @@ public class MenuItem extends Control {
 		update();
 	}
 
+	public boolean isChecked() {
+		return checked;
+	}
+
 
 
 
@@ -488,46 +602,43 @@ public class MenuItem extends Control {
 
 	// internal adding method
 
-	protected void addItem(int position, MenuItem c) {
-		items.add(position, c);
-
+	protected void addItem(int position, MenuItem item) {
+		items.add(position, item); // update called here
 		// need to create the toolstrip if not already existent
 		if (dropDown == null) {
-			dropDown = new ToolStrip();
+			dropDown = new MenuStrip();
 			// sync DropDown content with items
-			dropDown.content = items;
+			dropDown.items = items;
 
+			// unschön aber nötig
+			if (item.items.size() == 0)
+				MenuSurface.addToolStrip(dropDown);
 
-			/*
-			 * when adding items at runtime we need to add this new strip to Frame but when
-			 * first creating the gui the dropdowns are added in the init() function to
-			 * preserve the order (in z-indices).
-			 */
-
-			if (init)
-				Frame.frame0.add(dropDown);
+			// The dropdowns parent will be the static MenuSurface staticMS.
+			// a dropdown is added to staticMS when a menu-header is added to its container
+			// (usually a MenuBar) by calling addToolStrips().
+			// This method recursively adds the ToolStrips for all (sub...-) items that have
+			// one.
 		}
 
 		// !!!parent has to be the dropdown because dropdown is the real parent when
 		// drawing
-		c.parent = dropDown;
-
-		// update(); update in public add/insert methods. No need to call update too
-		// often.
-		c.setHeader(this.headerStrip);
+		item.parent = dropDown;
+		item.setHeader(this.headerStrip); // setHeader before addedToParent() because the latter checks header
+		item.addedToParent();
 	}
 
 
 	/**
 	 * Add subitems for this item.
 	 * 
-	 * @param controls
+	 * @param newItems newItems
 	 */
-	public void add(MenuItem... controls) {
-		for (MenuItem c : controls) {
+	public void add(MenuItem... newItems) {
+		for (MenuItem c : newItems) {
 			addItem(items.size(), c);
 		}
-		update();
+		dropDown.update(); // dont need to update this
 	}
 
 
@@ -540,31 +651,32 @@ public class MenuItem extends Control {
 		for (String s : strings) {
 			addItem(items.size(), new MenuItem(s));
 		}
-		update();
+		dropDown.update();// dont need to update this
 	}
 
 
 	/**
 	 * Insert subitems at given position
 	 * 
-	 * @param position
-	 * @param controls arbitrary number of items
+	 * @param position position
+	 * @param newItems arbitrary number of items
 	 */
-	public void insert(int position, MenuItem... controls) {
-		for (int i = 0; i < controls.length; i++) {
-			addItem(position + i, controls[i]);
+	public void insert(int position, MenuItem... newItems) {
+		for (int i = 0; i < newItems.length; i++) {
+			addItem(position + i, newItems[i]);
 		}
-		update();
+		dropDown.update();// dont need to update this
 	}
 
 
 	public void clear() {
 		items.clear();
 		// remove dropdown
-		Frame.frame0.remove(dropDown);
-		dropDown = null;
-
-		update();
+		if (dropDown != null) {
+			dropDown.update();// dont need to update this
+			MenuSurface.staticMS.remove(dropDown);
+			dropDown = null;
+		}
 	}
 
 
@@ -573,15 +685,21 @@ public class MenuItem extends Control {
 	}
 
 
-	public void remove(Control c) {
-		items.remove(c);
+	public void remove(Control item) {
+		((MenuItem) item).close();
+		items.remove(item);
 
+		if (dropDown != null) {
+			dropDown.update();// dont need to update this
+		}
 		// if dropdown empty, remove it
 		if (items.size() == 0) {
-			Frame.frame0.remove(dropDown);
+			if (dropDown != null)
+				dropDown.hide();
+			MenuSurface.staticMS.remove(dropDown);
 			dropDown = null;
+
 		}
-		update();
 	}
 
 
@@ -601,33 +719,69 @@ public class MenuItem extends Control {
 			return null;
 		}
 	}
-	
-	
-	
-	
+
+
+	public int getNumItems() {
+		return items.size();
+	}
+
+
+
+
 	/*
 	 * Listeners
 	 */
-	
-	
-	protected static final int ITEM_SELECTED_EVENT = Frame.numberMouseListeners;
+
+
+	protected EventListener selectListener;
+	protected EventListener childSelectListener;
 
 	/**
-	 * Add a listener for the item selected event.
+	 * Add a listener for the item selected event (called when this item has been
+	 * selected).
 	 * 
-	 * @param methodName
-	 * @param target
+	 * @param methodName method name
+	 * @param target     target
 	 */
-	public void addItemSelectedListener(String methodName, Object target) {
-		registerEventRMethod(ITEM_SELECTED_EVENT, methodName, target, MenuItem.class);
+	public void addSelectListener(String methodName, Object target) {
+		selectListener = createEventListener(methodName, target, MenuItem.class);
 	}
 
-	public void addItemSelectedListener(String methodName) {
-		addItemSelectedListener(methodName, Frame.frame0.papplet);
+
+	public void addSelectListener(String methodName) {
+		addSelectListener(methodName, getPApplet());
 	}
 
-	public void removeItemSelectedListener() {
-		deregisterEventRMethod(ITEM_SELECTED_EVENT);
+	public void removeSelectListener() {
+		selectListener = null;
+	}
+
+	/**
+	 * Add a listener for when a child of this header has been selected.
+	 * 
+	 * @param methodName method name
+	 * @param target     target
+	 */
+	public void addChildSelectedListener(String methodName, Object target) {
+		addChildSelectListener(methodName, target);
+	}
+
+	/**
+	 * Add a listener for when a child of this header has been selected.
+	 * 
+	 * @param methodName method name
+	 * @param target     target
+	 */
+	public void addChildSelectListener(String methodName, Object target) {
+		childSelectListener = createEventListener(methodName, target, MenuItem.class);
+	}
+
+	public void addChildSelectListener(String methodName) {
+		addChildSelectListener(methodName, getPApplet());
+	}
+
+	public void removeChildSelectListener() {
+		childSelectListener = null;
 	}
 
 
@@ -640,34 +794,49 @@ public class MenuItem extends Control {
 	 * When closing the entire strip the timer is discarded and recreated when the
 	 * strip is opened again.
 	 */
-	private static Timer timer = new Timer();
-	private static TimerTaskk tt;
+	private static Timer hoverTimer = new Timer();
+	private static HoverTimerTask hoverTimerTask;
 
 	/*
 	 * Special TimerTask version that keeps track of the item that has summoned the
 	 * timer
 	 */
-	private static class TimerTaskk extends TimerTask {
-		MenuItem control;
+	private static class HoverTimerTask extends TimerTask {
+		MenuItem item;
 
-		public TimerTaskk(MenuItem control) {
+		public HoverTimerTask(MenuItem item) {
 			super();
-			this.control = control;
+			this.item = item;
 		}
 
 		@Override
 		public void run() {
-			if (control.pHovered && !control.open) {
-				if (control.items.size() > 0)
-					control.open();
-				else {
+			// if still hovered over after time, then open this strip
+
+			if (item.pHovered && !item.open) {
+
+				// if has items, then open. If not then dont call open as this will call
+				// itemSelected and close all
+				if (item.items.size() > 0) {
+					item.open();
+				} else {
 					// close all siblings
-					for (Control i : ((ToolStrip) control.parent).content) {
-						((MenuItem) i).close();
+					for (Control c : ((MenuStrip) item.parent).items) {
+						((MenuItem) c).close();
 					}
 				}
 			}
 		}
+	}
+
+	protected void startHoverTimer() {
+		// cancel task when having left another item in under 0.4s
+		if (hoverTimerTask != null)
+			hoverTimerTask.cancel();
+
+		// create task new
+		hoverTimerTask = new HoverTimerTask(this);
+		hoverTimer.schedule(hoverTimerTask, 400);
 	}
 
 	/*
@@ -681,15 +850,7 @@ public class MenuItem extends Control {
 		visualBackgroundColor = hoverColor;
 
 		if (type == MENU_ITEM) {
-
-			// cancel task when having left another item in under 0.4s
-			if (tt != null)
-				tt.cancel();
-
-			// create task new
-			tt = new TimerTaskk(this);
-			timer.schedule(tt, 400);
-
+			startHoverTimer();
 		} else if (type == MENU_HEADER) {
 			// check if another header is open, if so then close it and open this one
 			// immediately (doesn't apply if this header is the open one)
@@ -708,12 +869,6 @@ public class MenuItem extends Control {
 	}
 
 
-	@Override
-	protected void exit(MouseEvent e) {
-		visualBackgroundColor = backgroundColor;
-		update();
-	}
-
 
 	@Override
 	protected void press(MouseEvent e) {
@@ -728,32 +883,128 @@ public class MenuItem extends Control {
 			update();
 		}
 
-		Frame.stopPropagation();
+		stopPropagation();
 	}
 
 	@Override
 	protected void release(MouseEvent e) {
-
-		// if item is subitem open and close on release
+		// if item is subitem, open and close on release
 		if (type == MENU_ITEM) {
 			open();
 		}
-
 		update();
-		Frame.stopPropagation();
+		stopPropagation();
+	}
+
+
+}
+
+
+
+/**
+ * Container for MenuItems 
+ *
+ */
+
+class MenuStrip extends Container {
+
+	public MenuStrip() {
+		super();
+		setBackgroundColor(240);
+		borderColor = -5592406; // color(170)
+		borderWidth = 1;
+		visible = false;
 	}
 
 
 	@Override
-	protected void mouseEvent(MouseEvent e) {
-		super.mouseEvent(e);
+	protected void render() {
+		// obtain needed width (maximum of item minWidth)
+		int w = 100;
+		for (int i = 0; i < items.size(); i++) {
+			w = Math.max(w, items.get(i).minWidth);
+		}
+		setWidth(w);
 
-		// make the entire strip disappear when clicked elsewhere
-		if (!Frame.isPropagationStopped()) {
-			if (e.getAction() == MouseEvent.PRESS && type == MENU_HEADER) {
-				close();
+		// obtain needed height (sum of item heights), also set items width
+		int h = 1;
+		for (int i = 0; i < items.size(); i++) {
+			h += items.get(i).getHeight();
+			items.get(i).setWidthImpl(width);
+		}
+		setHeight(h);
+
+		// we cheat here and give some extra size for shadow
+		pg = Frame.frame0.papplet.createGraphics(width + 5, height + 5);
+		pg.beginDraw();
+
+		drawShadow(width, height, 5);
+
+		drawDefaultBackground();
+
+		// draw the thin vertical line
+		pg.strokeWeight(1);
+		pg.stroke(220);
+		pg.line(22, 0 + 3, 22, height - 3);
+		pg.stroke(255);
+		pg.line(23, 0 + 3, 23, height - 3);
+
+		int usedSpace = paddingTop;
+
+		for (Control c : items) {
+			if (c.visible) {
+				renderItem(c, c.marginLeft + paddingLeft, usedSpace + c.marginTop);
+				usedSpace += (c.height + c.marginTop + c.marginBottom);
 			}
 		}
 	}
-}
 
+	protected void drawShadow(int w, int h, int offset) {
+		pg.noFill();
+		int[] cl = { 115, 85, 41, 15, 5 };
+		for (int i = 0; i < 5; i++) {
+			pg.stroke(Color.create(0, cl[i]));
+			pg.rect((offset - 1) * 2 - i, (offset - 1) * 2 - i, w - 2 * (4 - i), h - 2 * (4 - i));
+		}
+	}
+
+
+	// also used internally by MenuItem
+	/**
+	 * Show this ToolStrip.
+	 */
+	public void show() {
+		MenuSurface.openMenu();
+		setVisible(true);
+	}
+
+
+	// also used internally by MenuItem
+	/**
+	 * Hide this ToolStrip.
+	 */
+	public void hide() {
+		setVisible(false); // not sure if the update() is necessary here
+	}
+
+	/**
+	 * Add menu items by passing their text.
+	 * 
+	 * @param strings arbitrary number of text Strings
+	 */
+	public void add(String... strings) {
+		for (String s : strings) {
+			MenuItem newItem = new MenuItem();
+			newItem.setText(s);
+			addItem(items.size(), newItem);
+		}
+		update();
+	}
+
+	// called by MenuItem and only used by free ToolStrips unbound to a menu
+	protected void itemSelected(MenuItem item) {
+		item.close();
+		hide();
+		
+	}
+}
