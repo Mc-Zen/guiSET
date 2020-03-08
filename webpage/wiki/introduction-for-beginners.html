@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<title>guiSET</title>
+	<link rel="stylesheet" href="../css/main.css">
+	<link rel="stylesheet" href="../css/examples.css">
+	<link rel="stylesheet" href="../css/wiki.css">
+	<script src="https://cdn.jsdelivr.net/gh/google/code-prettify@master/loader/run_prettify.js"></script>
+
+	<style>
+		.wiki_main_container {
+			background-color: rgb(255, 255, 255);
+		}
+	</style>
+</head>
+
+<body>
+	<nav>
+		<li><a class="mlink" href="../../index.html">Home</a></li>
+        <li><a class="mlink sel" href="wiki.html"> Wiki</a></li>
+		<li><a class="mlink" href="../examples.html">Examples</a></li>
+		<li><a class="mlink" href="guiSET/reference/index.html">Documentation</a>
+		<li><a class="mlink" href="https://github.com/Mc-Zen/guiSET">Source Code</a>
+	</nav>
+
+	<div class="main_container wiki_main_container">
+<h1 id="header">Introduction for beginners</h1>
+
+		Outline:
+		<ul>
+			<li><a href="#first-lines">First lines</a></li>
+			<li><a href="#listeners">Listeners</a></li>
+			<li><a href="#about-trees">About Trees</a></li>
+		</ul>
+		<p>
+			To start off you first need to import the library
+		</p>
+		<p>
+			Write:
+		</p>
+		<pre class="prettyprint">
+import guiSET.classes.*;
+import guiSET.core.*;</pre>
+		<p>
+			at the top of your sketch.
+		</p>
+		<p>
+			Or easier: choose Sketch/Import Library/guiSET in the Processing IDE.
+		</p>
+
+
+
+
+
+
+
+		<h1 id="first-lines">First lines</h1>
+		<p>
+			First we need a <code>Frame</code> object. The <code>Frame</code> is basically the "Master" to which all
+			other GUI elements need to
+			be added to. By default it fills out the entire sketch window. You need to pass the sketch itself to
+			<code>Frame</code>
+			and that is not possible as global variable. The best (really only) way to do this is in
+			<code>setup()</code>:
+		</p>
+		<p>
+			Write:
+		</p>
+		<pre class="prettyprint">
+Frame f;
+
+void setup(){
+    f = new Frame(this);
+}</pre>
+		<p>
+			and not:
+		</p>
+		<pre class="prettyprint">
+Frame f = new Frame(this);
+
+void setup(){
+}</pre>
+
+		<p>
+			Also it is necessary to implement the draw() method (even if it is empty) for otherwise the code will just
+			freeze after setup().
+		</p>
+		<p>
+			If you run your program now, you should see a blank window which is rather less exciting - so let's add some
+			stuff! For example you might want a button and a textbox but beware! - they should better be intialized
+			after <code>Frame f = new Frame(this);</code>. You can then start to set properties and modify the look of
+			button and
+			textbox. At last they need to be added to the <code>Frame</code> (but you could also do that right at the
+			start).
+		</p>
+		<pre class="prettyprint">
+Frame f;
+Button myButton;
+Textbox myTextbox;
+
+void setup(){
+    size(300, 200);     // set window size to width=300, height=200
+
+    f = new Frame(this);
+    myButton = new Button();
+    myTextbox = new Textbox();
+
+    f.add(myButton, myTextbox); // adds both components to the Frame
+
+    myButton.setText("This is a button");    // set the displayed text - this will automatically resize the button
+    myButton.setBackgroundColor(color(200, 150, 200)); // set the background color of the button to some purple tone
+    myButton.setPosition(20, 20);             // set the position of the button on the sketch in pixel
+
+    myTextbox.setPosition(20, 70);            // set the position of the textbox on the sketch in pixel
+}
+
+void draw(){
+}</pre>
+		<p>
+			The result should now look somewhat like this:
+		</p>
+		<img src="../media/First_guiSET_sketch.png">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+		<h1 id="listeners">Listeners</h1>
+		<p>
+			What would a program be without listeners? Let us see how to create some with guiSET. Wait, what is a
+			listener? An (event) listener is something that "listens" all the time for something specific to happen and
+			then notifies you. For example a key (to be more precise for example a keydown) listener "listens" all the
+			time if the user presses a key on the keyboard and tells you so if he does and also which key is being
+			pressed down and more information.
+		</p>
+		<p>
+			In our example we would probably want to do something when the button is clicked i.e. print a message. In
+			<code>setup()</code> we write: <code>myButton.addMouseListener("press", "myButton_pressed");</code> and
+			create a suitable method
+			somewhere:
+		</p>
+		<pre class="prettyprint">
+void myButton_pressed(){
+    println("I've been pressed"); 
+}</pre>
+		<p>
+			"press" means the listener will listen for a downpress of the mouse. Alternatives are
+			<code>myButton.addMouseListener("release", "myButton_pressed");</code> or "drag", "wheel" and some more, and
+			of course
+			you could call the method <code>myButton_pressed()</code> just like you wish.
+		</p>
+		<p>
+			If you need details about the mouse event (say you need the x-coordinate) then re-write your so-called
+			callback method to:
+		</p>
+		<pre class="prettyprint">
+void myButton_pressed(MouseEvent e){
+    println(e.getX());
+}</pre>
+
+		<p>
+			The <code>MouseEvent</code> object works just like when using the
+			<code>void mousePressed(MouseEvent e)</code> or similar methods from
+			Processing.
+		</p>
+		<p>
+			Let's try something new:
+		</p>
+		<pre class="prettyprint">
+Frame f;
+Button myButton;
+Textbox myTextbox;
+
+void setup() {
+  size(300, 200);
+  f = new Frame(this);
+  myButton = new Button();
+  myTextbox = new Textbox();
+
+    f.add(myButton, myTextbox); 
+
+    myButton.setText("This is a button"); 
+    myButton.setBackgroundColor(color(200, 150, 200));
+    myButton.setPosition(20, 20);
+    myButton.addMouseListener("press", "myButton_pressed");
+
+    myTextbox.setPosition(20, 70);
+
+    /*
+     * New Part
+     */
+    myTextbox.addTextChangedListener("myTextbox_textChanged");
+}
+
+void myButton_pressed(){
+  
+}
+
+void myTextbox_textChanged(){
+    myButton.setText(myTextbox.getText());
+}
+void draw() {
+}</pre>
+		<p>
+			Now every time you change the text of the textbox by entering or deleting stuff the text of the button is
+			changed.
+		</p>
+		<hr>
+		<p>
+			There is a lot more to say about listeners but for now just be aware that the standard listeners implemented
+			in each component of this library are
+		</p>
+		<ul>
+			<li>press</li>
+			<li>release</li>
+			<li>enter (mouse enters this element)</li>
+			<li>exit (mouse leaves this element)</li>
+			<li>drag (mouse is pressed down and dragged somewhere)</li>
+			<li>move (happens all the time when mouse is moved over this element - called VERY often)</li>
+			<li>wheel (mouse scroll wheel)</li>
+			<li>focus (fires when this element gets focus (i.e. a textbox gets focus when you click it so you can enter
+				text)</li>
+			<li>resize (don't bother for now)</li>
+		</ul>
+		<p>
+			While all mouse events are added with <code>addMouseListener(String type, String methodname)</code> focus
+			and resize
+			listener are added with <code>addFocusListener(String methodname)</code> and
+			<code>addResizeListener(String methodname)</code>.
+		</p>
+		<p>
+			Other Components have further listeners, like the Textbox which features:
+		</p>
+		<ul>
+			<li>textChanged - <code>addTextChangeListener(String methodName)</code>>/li>
+			<li>submit - <code>addSubmitListener(String methodName)</code> (called when you press enter while textbox
+				has focus)
+			</li>
+			<li> keyPress - <code>addKeyPressListener(String methodName)</code></li>
+		</ul>
+		<p>
+			Oh, and each type of listener can be added only once to each object.
+		</p>
+
+
+
+
+
+
+
+
+
+		<h1 id="about-trees">About Trees</h1>
+		<p>
+			In programming, a tree is an important data structure which starts off with one element (called root) that
+			has one or more children which in turn can have children etc. The same idea is used here. Our root is the
+			<code>Frame</code> and all the other elements need to be children. I'll explain that with an example:
+		</p>
+		<pre class="prettyprint">
+import guiSET.classes.*;
+import guiSET.core.*;
+
+
+Frame f;
+Container outerContainer;
+Container innerContainer;
+VFlowContainer vfc;
+Button button1;
+Button button2;
+
+Label label;
+Switch mySwitch;
+
+
+void setup() {
+    size(350, 200);
+
+    f = new Frame(this);
+    button1 = new Button("Button 1");
+    button2 = new Button("Button 2");
+    label = new Label("I am a label");
+    outerContainer = new Container(100, 100);
+    innerContainer = new Container(90, 70);
+    vfc = new VFlowContainer(70, 100);
+    mySwitch = new Switch("", true);
+
+    outerContainer.setPosition(10, 10);
+    outerContainer.setBackgroundColor(color(200));
+    innerContainer.setPosition(5, 5);
+    innerContainer.setBackgroundColor(color(170));
+
+    vfc.setPosition(outerContainer.getWidth() + outerContainer.getX() + 5, 10);
+    vfc.setBackgroundColor(color(200));
+    vfc.setPadding(5);
+    mySwitch.setPosition(vfc.getX() + vfc.getWidth() + 5, 40);
+  
+    label.setPadding(10);
+
+    // interesting part comes here
+    f.add(outerContainer, vfc, mySwitch);
+    vfc.add(button1, button2);
+    outerContainer.add(innerContainer);
+    innerContainer.add(label);
+}
+
+void draw() {
+}</pre>
+
+		<p>
+			Running this sketch gives following surface:
+		</p>
+		<img src="../media/Tree_example_screenshot.png">
+		<p>
+			The <code>outerContainer</code>, the <code>vfc</code> and <code>mySwitch</code> are added to <code>f</code>.
+			<code>innerContainer</code> is added to
+			<code>outerContainer</code> and
+			<code>label</code> to that one. The buttons are children of <code>vfc</code>. Alltogether, the structure of
+			all elements looks like
+			this:
+		</p>
+		<img src="../media/tree_schematic.jpg" style="max-width: 400px;">
+		<p>
+			This way we can create arbitrarily complex structures - and the good thing: if you move a container, all the
+			children go with it (same if you set the visiblity or enabled to false). This comes in handy if you need to
+			position/move a lot of elements.
+		</p>
+
+	</div> <!-- .main_container -->
+</body>
+
+</html>

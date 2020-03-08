@@ -1,0 +1,19 @@
+.style_example_section {
+    width: 100%;
+    border: 1px solid gray;
+}
+
+
+
+.examplebox{
+}
+
+/*
+.popup {
+    display: none;
+    position: absolute
+}
+
+.examplebox:hover .popup {
+    display: block;
+}*/
