@@ -67,7 +67,73 @@ nav li {
 }
 
 
+#sidebar {
+    width: 38px;
+    height: 500px;
+    position: static;
+    background: #c0cad6;
+    position: absolute;
+    right: 0;
+    margin-top: 2em;
+    transition: max-width ease-in-out .3s, box-shadow .3s, opacity .3s;
+    overflow-x: hidden; /*hide lable when it slides out to the right*/
+    max-width: 38px;
+    box-shadow: 2px 4px 10px 0 rgba(0, 0, 0, 0.3);
+    opacity: 0.8;
+}
+#sidebar_label{
+    writing-mode: vertical-rl;
+    font-weight: bolder;
+    padding: 9px;
+    transition: right ease-in-out .2s; 
+    position: absolute;
+    right: 0;
+}
 
+#sidebar_content {
+    padding: 10px;
+    opacity: 0;
+    transition: opacity .3s;
+    width: max-content;
+}
+
+#sidebar_content ul {
+    padding: 0; 
+}
+
+#sidebar_content li {
+    list-style-type: none;
+    padding: 3px 2px;
+    background: #f5f7ff;
+    border: 1px solid #8c8c8c;
+}
+
+#sidebar_content li:hover {
+    background: #e5e7ee;
+}
+
+#sidebar_content li:active {
+    background: #d9dbe2;
+}
+
+#sidebar_content li a{
+    text-decoration: none;
+    color:black;
+    display: block; /*make link fill li*/
+}
+
+#sidebar:hover {
+    max-width: 200px;
+    width: auto;
+    box-shadow: 2px 4px 10px 0 rgba(0, 0, 0, 0.5);
+    opacity: 1;
+}
+#sidebar:hover #sidebar_label {
+    right: -40px;
+}
+#sidebar:hover #sidebar_content {
+    opacity: 1;
+}
 
 code {
     padding: .2em .4em;
@@ -87,11 +153,44 @@ code {
     border: none;
 }
 
+
+@media screen and (max-width: 650px) {
+    
+    #sidebar {
+        position: relative;
+        max-width: 100%;
+        width: 100%;
+        transition: none;
+        opacity: 1;
+        text-align: center;
+        overflow: hidden;
+        height: 40px;
+    }
+    #sidebar:target {
+        height:auto;
+    }
+    #sidebar:hover{
+        max-width: 100%;
+        height:auto;
+
+    }
+    #sidebar_label{
+        writing-mode: initial;
+        position: initial;
+    }
+    #sidebar_content{
+        opacity: 1;
+        width: auto;
+    }
+}
+
 @media screen and (max-width: 500px) {
     nav{
         flex-direction: column;
+        position: relative;
     }
     .main_container {
         width: 90%;
     }
+
 }
