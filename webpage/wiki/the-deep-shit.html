@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>The deep shit</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="../css/main.css">
+    <link rel="stylesheet" href="../css/examples.css">
+    <link rel="stylesheet" href="../css/wiki.css">
+    <script src="https://cdn.jsdelivr.net/gh/google/code-prettify@master/loader/run_prettify.js"></script>
+    <script src="main.js"></script>
+</head>
+
+<body>
+    <nav>
+        <li><a class="mlink" href="../../index.html">Home</a></li>
+        <li><a class="mlink sel" href="wiki.html">Wiki</a></li>
+        <li><a class="mlink" href="../examples.html">Examples</a></li>
+        <li><a class="mlink" href="guiSET/reference/index.html">Documentation</a>
+        <li><a class="mlink" href="https://github.com/Mc-Zen/guiSET">Source Code</a>
+    </nav>
+
+    <div id="sidebar">
+        <div id="sidebar_label">Wiki Content</div>
+        <div id="sidebar_content">
+            <p>Wiki Pages</p>
+            <ul>
+                <li><a href="wiki.html">Wiki Start</a></li>
+                <li><a href="installing-guiset.html">Installing guiSET</a></li>
+                <li><a href="introduction-for-beginners.html">Introduction for Beginners</a></li>
+                <li><a href="list-of-components.html">List of components</a></li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="main_container wiki_main_container">
+        <h1 id="header">The deep shit</h1>
+        <p>
+            So you made it here. Congratulations!
+        </p>
+        <p>
+            In this part I'll explain the deeper mechanics of the library. Maybe you're interested in contributing to
+            the library; or want to create highly customized compontents; or you are just interested in how such a
+            <code>Frame</code>work works. Then you're right here. Or perhaps you just came here by accidents or because
+            of the
+            obscure title ;). Nevermind.
+        </p>
+        <p>
+            Let's get serious.
+        </p>
+        <p>
+            Basically, the only thing Processing does for this library is drawing the stuff and provide some functions
+            to draw text, rects, lines etc. How everything is arranged, which items come on top of others, when to
+            render what, HOW the stuff should look like is what <b>guiSET</b> deals with. Processing also tells us when
+            the
+            user pressed a key or did something with the mouse. But we need to decide which items are allowed to process
+            the mouse events and how it is determined if the mouse is over a specific element.
+        </p>
+        <hr>
+        <p>
+            Outline
+        </p>
+        <ul>
+            <li><a href="#s1">Inheritance of the component classes</a></li>
+            <li><a href="#s2">Graphics and updating</a>: In this part the concept of storing and applying the look of an
+                item as well as the communication between elements about changes is layed out.</li>
+            <li><a href="#s3">More details about render procedure</a>: Implementation of the stuff that happens around
+                the actual rendering.</li>
+            <li><a href="#s4">Mouse events</a>: Handling and passing of mouse events. Determining if mouse is over a
+                certain item.</li>
+            <li><a href="#s5">Events in general</a>: About the way event callbacks are registered, stored and executed.
+                Also something about creating new events.</li>
+        </ul>
+        <hr>
+
+
+
+
+        
+        <h1 id="s1">Short summary about the inheritance of the component classes</h1>
+        <p>
+            Control is the (abstract) base class for all visual components. Container subclasses Control. As do Button,
+            Label, Checkbox, MenuItem, ListItem and Slider.
+        </p>
+        <p>
+            <code>Frame</code>, VFlowContainer, HFlowContainer, ScrollArea, ListView and FlowContainer all extend
+            Container.
+        </p>
+        <p>
+            V- and HScrollContainer subclass the according FlowContainers and MultilineTextbox and Textbox are
+            extensions of these two.
+        </p>
+
+
+
+
+
+        <h1 id="s2">Graphics and updating</h1>
+        <p>
+            Each instance of a component has a <code>PGraphics</code> object that stores the current look as pixel
+            image. Its content
+            is only changed within the <code>render()</code> method. Containers draw the <code>PGraphics</code> of their
+            children onto their own
+            <code>PGraphics</code> and so on. The <code>Frame</code> instance finally draws itself onto the sketch (the
+            <code>PApplet</code>).
+        </p>
+        <p>
+            This way of rendering and storing is chosen to keep the number of drawing processes as low as possible. If
+            an element is changed visually, <code>render()</code> will be called and thus the graphics updated. But any
+            siblings or
+            children do not need to be re-rendered as their look is still stored in their own <code>PGraphics</code>
+            object. However,
+            this comes at a prize of memory. This is not a problem with modern computers and moderate or even generous
+            numbers of elements. If, nevertheless, you aspire to have a list with a few thousand items displayed on the
+            screen, this technique can get expensive. I'm thinking about adding functionalty to enable rendering every
+            time the graphics are required, without storing the image. This descision could be per-item.
+        </p>
+        <p>
+            Each time the user of the library sets the state of a property that changes the look of the element, the
+            setter will call the <code>update()</code> method which sets a <code>dirty</code> flag and also initiates a
+            propagation through the
+            tree structure way up to <code>Frame</code>, setting the <code>dirty</code> flag for every parent,
+            'grand'-parent etc.
+        </p>
+        <p>
+            At render time, <code>Frame</code> checks if it needs to redraw itself and if so, proceeds to render all
+            changed children
+            in the described way.
+        </p>
+        <p>
+            A container is always responsible for drawing its content items. For that purpose, in its own
+            <code>render()</code>
+            method it calls the function <code><b>renderItem(Control c, int x, int y)</b></code> for each item,
+            specifying with <code>x</code> and <code>y</code> where the item shall be placed on the containers own
+            <code>PGraphics</code>. <code>renderItem(Control
+            c, int x, int y)</code> takes care of checking if the item is '<code>dirty</code>' or (semi-) transparent
+            (but does not check
+            for visibility). Here is also where i.e. flow or scroll containers give their items a new location.
+        </p>
+        <p>
+            For example this is what the implementation of <code>render()</code> in <code>Container</code> looks like.
+        </p>
+        <pre class="prettyprint">
+@Override
+protected void render() {
+  drawDefaultBackground();
+
+  for (Control c : content) {
+    if (c.visible) {
+      renderItem(c, c.x, c.y);
+    }
+  }
+  drawDefaultDisabled();
+}</pre>
+        <p>
+            In <code<VFlowContainer> the <code>x</code> and <code>y</code> properties of the item are ignored and
+                replaced by other rules:
+        </p>
+        <pre class="prettyprint">
+@Override
+protected void render() {
+  drawDefaultBackground();
+
+  int usedSpace = paddingTop;
+
+  for (Control c : items) {
+    if (c.visible) {
+      renderItem(c, c.marginLeft + paddingLeft, usedSpace + c.marginTop);
+      usedSpace += (c.height + c.marginTop + c.marginBottom);
+    }
+  }
+  drawDefaultDisabled();
+}</pre>
+
+
+
+
+
+        <h1 id="s3">More details about the render procedure</h1>
+        <p>
+            The actual rendering takes place like this: the container usually draws its own background and then calls
+            <code>renderItem(Control c, int x ,int y)</code>. This method sets the offsetX/offsetY properties of <cdoe>c
+            </cdoe> according to given
+            coordinates and sets them outside the container if the opacity is 0. This is not necessary if visibility is
+            set to false because mouseEvent(int, int) already checks for visiblity. If the graphics of <code>c</code>
+            are
+            "<code>dirty</code>",
+            pre<code>render()</code> is called which creates the <code>PGraphics</code> instance (only if size has
+            changed) and calls
+            <code>pg.beginDraw()</code>. Then the items custom <code>render()</code> method is executed and finally tint
+            applied for
+            opacity.
+        </p>
+
+
+
+
+        <h1 id="s4">Mouse Events</h1>
+        <p>
+            <b>guiSET</b> uses relative coordinates (relative to parent) to make mouse event checks.
+        </p>
+        <p>
+            Generally, mouse events are received by <code>Frame</code> from the sketch (<code>PApplet</code>). As a
+            container it checks if the
+            mouse is currently locally within the space it takes up and if so, passes the event on to all children which
+            in turn do the same.
+        </p>
+        <p>
+            In fact, it is sort of the other way round: After checking if mouse coordinates are within the containers
+            bounds rectangle, it first gives the children the chance to process the event as they are always on top of
+            and not below the container. Afterwards the container calls its own event routine.
+        </p>
+        <p>
+            This way the topmost elements (high z-coordinate) in the application get the event first. They can then call
+            <code>stopPropagation()</code> which sets a flag that no more mouse events should be processed. This way you
+            can click on
+            a menu item without firing a button beneath the menu strip. PRESS, RELEASE and DRAG always stop the
+            propagation.
+        </p>
+        <p>
+            Still, containers can override the method boolean <code>containerPreItemsMouseEvent(int x, int y)</code>
+            which is called
+            before the event is passed on to the children and if returns false, will prevent the children from receiving
+            the event. Scroll containers i.e. use this to implement a scroll bar.
+        </p>
+        <p>
+            As mentioned above, containers use the method <code>renderItem(Control c, int x, int y)</code>. This method
+            also stores
+            the given x and y in the elements properties <code>offsetX</code> and <code>offsetY</code>. These are the
+            actual coordinates relative
+            to the parent and they are the ones that are checked when this element receives a mouse event and it needs
+            to decide whether the mouse is within itself or not.
+        </p>
+        <p>
+            When a container receives a mouse event (parent calls <code>mouseEvent(int x, int y)</code>), it passes x
+            and y on to the
+            children but subtracting the own offset coordinates. During setup <code>Frame</code> registers a
+            <code>mouseEvent(MouseEvent)</code>
+            method at Processings <code>PApplet</code>. This is called by <code>PApplet</code> before draw() each time
+            there is a new mouse event.
+            <code>Frame</code> then starts the mouse event propagation within <b>guiSET</b>. The <code>MouseEvent</code>
+            object is stored in
+            the static
+            field <code>Control.currentMouseEvent</code>, is not passed around while the event is recursively handled
+            but every
+            element can access it.
+        </p>
+
+
+
+
+
+
+
+
+
+        <h1 id="s5">Events in general</h1>
+        <p>
+            The programmer can add certain listeners to his objects. Mouse listeners are available for all classes. They
+            can be assigned and given a callback method
+            with the <code>addMouseListener()</code> method, specifying the type with a string
+            ("press", "release"...). If no target is specified with the overloaded
+            <code>addMouseListener() </code>method, papplet will be assumed.
+        </p>
+        <p>
+            How MouseListener works: <code>Frame</code> registers a <code>mouseEvent()</code> method at
+            <code>PApplet</code>.
+            Every container (also <code>Frame</code>) calls the mouseEvent for all its items. When an
+            element gets a mouseEvent, it can decide to stop the propagation by calling
+            <code>stopPropagation()</code>. This way elements with high z-index, which will be checked
+            first and can prevent lower elements from getting the mouseEvent. This is
+            needed for example with menus, spinners, popups etc.
+        </p>
+
+        <p>
+            Moreover classes like <code>Frame</code> and <code>Textbox</code> feature key listeners or an
+            itemchanged-listener (<code>ListView</code>, <code>MenuItem</code>). These listeners are usually
+            assigned with extra methods like <code>addItemChangeListener()</code> etc.
+        </p>
+
+        <h2>
+            How to make an event listener in a new class
+        </h2>
+        <ul>
+            <li>In the class, create an EventListener with an appropriate name (don't initialize it)</li>
+            <li>Provide adding and removing methods</li>
+            <li>Also provide a simple adding method that defaults target to papplet (the sketch)</li>
+        </ul>
+
+
+        An example with no arguments.
+
+        <pre class="prettyprint">
+protected EventListener myListener;
+public void addMyListener(String methodName, Object target) {
+    myListener = createEventListener(methodName, target, null);
+}
+public void addMyListener(String methodName) {
+    addMyListener(methodName, getPApplet());
+}
+public void removeMyListener(){
+    myListener = null; // setting listener to null is the way to do it
+}
+protected void someFunctionThatChangesObervedState(){
+    // do stuff
+    handleEvent(myListener, null);
+}</pre>
+
+
+        <p>
+            If arguments shall be passed to the callback function, then pass their
+            class to the <code>createEventListener()</code> method as third argument. When handling
+            the event, pass the argument here.
+        </p>
+
+
+    </div>
+    <div id="footer"><a href="https://github.com/Mc-Zen/guiSET"><img
+                src="../media/GitHub-Mark-32px.png"><span>GitHub</span></a></div>
+
+</body>
+
+</html>

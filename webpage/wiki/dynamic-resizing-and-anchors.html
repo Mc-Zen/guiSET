@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Dynamic resizing and anchors</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="../css/main.css">
+    <link rel="stylesheet" href="../css/examples.css">
+    <link rel="stylesheet" href="../css/wiki.css">
+    <script src="https://cdn.jsdelivr.net/gh/google/code-prettify@master/loader/run_prettify.js"></script>
+    <script src="main.js"></script>
+</head>
+
+<body>
+    <nav>
+        <li><a class="mlink" href="../../index.html">Home</a></li>
+        <li><a class="mlink sel" href="wiki.html">Wiki</a></li>
+        <li><a class="mlink" href="../examples.html">Examples</a></li>
+        <li><a class="mlink" href="guiSET/reference/index.html">Documentation</a>
+        <li><a class="mlink" href="https://github.com/Mc-Zen/guiSET">Source Code</a>
+    </nav>
+
+    <div id="sidebar">
+        <div id="sidebar_label">Wiki Content</div>
+        <div id="sidebar_content">
+            <p>Wiki Pages</p>
+            <ul>
+                <li><a href="wiki.html">Wiki Start</a></li>
+                <li><a href="installing-guiset.html">Installing guiSET</a></li>
+                <li><a href="introduction-for-beginners.html">Introduction for Beginners</a></li>
+                <li><a href="list-of-components.html">List of components</a></li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="main_container wiki_main_container">
+        <h1 id="header">Dynamic resizing and anchors</h1>
+        <p>
+            Often you'll want a program with no fixed window size. By default, sketch windows in Processing are not
+            resizable but they can be made.
+        </p>
+        <p>
+            Call <code>f.setResizable(true)</code> (Processing also provides a method for this, but better call this one
+            when using <b>guiSET</b>). Now the user can resize and maximize the window! Generally, this is not enough
+            because now making the window bigger will just add extra empty space at the right and bottom. Worse: when
+            making the window smaller, content becomes inaccessible.
+        </p>
+        <p>
+            You need to adjust the content to fit the window and for that purpose <b>guiSET</b> provides so-called
+            anchors.
+            Each element can have up to four <i>anchors</i>, one for each edge (called <code>TOP</code>,
+            <code>BOTTOM</code>, <code>LEFT</code>, <code>RIGHT</code>). Once
+            an
+            anchor is set for one edge (let's say <code>RIGHT</code>), then the distance from the right side of the
+            element to the
+            right side of the parent is maintained when the parent is resized (of course this does and should not work
+            for flow containers). This way you can create a right-alignment. If you set for example a <code>RIGHT</code>
+            and a <code>LEFT</code> anchor, then the width of this element will be changed and it will grow or shrink
+            with its
+            parent. Same applies for <code>TOP</code> and <code>BOTTOM</code>.
+        </p>
+        <p>
+            So how to create an anchor? The method <code>addAutoAnchor(int...newAnchors)</code> (you can add multiple
+            anchors at
+            once) will take a 'snapshot' of the current distances <b>(does not work if the element has no parent
+                yet)</b>. If
+            afterwards you change the position or size (or x, y, width, height) of the element programmatically, the
+            anchors will be recalculated!
+        </p>
+        <p>
+            <code>removeAnchor(int anchor)</code> clears given anchor.
+        </p>
+        <p>
+            I'll give an example here.
+        </p>
+        <pre class="prettyprint">
+import guiSET.classes.*;
+import guiSET.core.*;
+
+Frame f;
+Container header;
+Container sideBar;
+Container footer;
+Container mainArea;
+
+int headerHeight = 25;
+int footerHeight = 30;
+int sidebarWidth = 50;
+
+
+void setup() {
+    size(500, 400); // choose any size
+    f = new Frame(this);
+    header = new Container(width, headerHeight);
+    footer = new Container(width, footerHeight);
+    sideBar = new Container(sidebarWidth, height - headerHeight - footerHeight);
+    mainArea = new Container(width - sidebarWidth, height - headerHeight - footerHeight);
+    f.add(header, footer, sideBar, mainArea);  // add them all to Frame before creating any anchors !
+    f.setResizable(true);
+
+    footer.setY(height - footerHeight);
+    mainArea.setY(headerHeight);
+    sideBar.setPosition(width - sidebarWidth, headerHeight);
+
+
+    header.addAutoAnchor(LEFT, RIGHT);
+    sideBar.addAutoAnchor(TOP, RIGHT, BOTTOM);
+    footer.addAutoAnchor(LEFT, RIGHT, BOTTOM);
+    mainArea.addAutoAnchor(LEFT, RIGHT, TOP, BOTTOM);
+    
+    // Styling
+    
+    sideBar.setBackgroundColor(color(200, 83, 67));
+    sideBar.add(new Label("Side bar"));
+    header.setBackgroundColor(color(200));
+    header.add(new Label("Header"));
+    footer.setBackgroundColor(color(150));
+    footer.add(new Label("Footer"));
+    mainArea.setBackgroundColor(color(255, 252, 229));
+    mainArea.add(new Label("Main Area"));
+}
+
+void draw() {
+}</pre>
+        <p>
+            This is called a <i>border layout</i>: each side has a container (often named by the four compass
+            directions) with either fixed width (<i>east</i> and <i>west</i> area) or fixed height (<i>north</i> and
+            <i>south</i> area). The center container resizes to fit all the remaining space.
+        </p>
+        <hr>
+        <p>
+            Another option to achieve this is to use <code>setAnchor(int type, int value)</code> which sets one anchor to the
+            given value. This will
+            probably change the position and/or size of your element. If we have a button that we want to place in the
+            right bottom corner (i.e. with a spacing of 10px), we use:
+        </p>
+        <pre class="prettyprint">
+myButton.setAnchor(RIGHT, 10);
+myButton.setAnchor(BOTTOM, 10);</pre>
+        <p>
+            And without setting the position of <code>myButton</code> manually, it will be moved to the right bottom
+            corner. This also
+            makes the above example easier - you do not need to think to much about the size and sometimes on the
+            positioning:
+        </p>
+        <pre class="prettyprint">
+import guiSET.classes.*;
+import guiSET.core.*;
+
+Frame f;
+Container header;
+Container sideBar;
+Container footer;
+Container mainArea;
+
+
+int headerHeight = 25;
+int footerHeight = 30;
+int sidebarWidth = 50;
+
+
+
+void setup() {
+    size(500, 400); // choose any size
+    f = new Frame(this);
+    header = new Container(width, headerHeight); // I left this one the same
+    footer = new Container();
+    sideBar = new Container();
+    mainArea = new Container();
+    f.add(header, footer, sideBar, mainArea); // add them all to Frame before creating any anchors !
+    f.setResizable(true);
+
+    footer.setHeight(footerHeight);
+    sideBar.setWidth(sidebarWidth);
+
+    header.addAutoAnchor(LEFT, RIGHT);
+    sideBar.setAnchor(RIGHT, 0);
+    sideBar.setAnchor(TOP, headerHeight);
+    sideBar.setAnchor(BOTTOM, footerHeight);
+
+    footer.setAnchor(LEFT, 0);
+    footer.setAnchor(RIGHT, 0);
+    footer.setAnchor(BOTTOM, 0);
+
+    mainArea.setAnchor(TOP, headerHeight);
+    mainArea.setAnchor(LEFT, 0);
+    mainArea.setAnchor(RIGHT, sidebarWidth);
+    mainArea.setAnchor(BOTTOM, footerHeight);  
+    
+    // Styling
+    
+    sideBar.setBackgroundColor(color(200, 83, 67));
+    sideBar.add(new Label("Side bar"));
+    header.setBackgroundColor(color(200));
+    header.add(new Label("Header"));
+    footer.setBackgroundColor(color(150));
+    footer.add(new Label("Footer"));
+    mainArea.setBackgroundColor(color(255, 252, 229));
+    mainArea.add(new Label("Main Area"));
+}
+
+void draw() {
+}</pre>
+        <p>
+            By the way, <code>Frame</code> does not need anchors as it always follows the size of the window.
+        </p>
+        <p>
+            Also the window does not need to be resizable for anchors to come in useful. Maybe you have a container you
+            want to change in size dynamically and make its content follow...
+        </p>
+        <p>
+            Warning! Resizing does not work together with the <code>NO_LOOP</code> <a href="draw-modes">draw mode</a>.
+            If you try to combine
+            these two, you will also get a warning.
+        </p>
+
+    </div>
+    <div id="footer"><a href="https://github.com/Mc-Zen/guiSET"><img
+                src="../media/GitHub-Mark-32px.png"><span>GitHub</span></a></div>
+
+</body>
+
+</html>
