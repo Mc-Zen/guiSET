@@ -50,6 +50,7 @@ nav li {
 
 
 .main_container {
+    box-sizing: border-box;
     margin: 2em auto;
     /*background: rgb(255, 234, 234);*/
     background: rgb(234, 255, 240);
@@ -64,6 +65,10 @@ nav li {
 
 .main_container a {
     color: #1493b9;
+}
+
+.main_container ul{
+    text-align: left;
 }
 
 
@@ -121,7 +126,7 @@ nav li {
 }
 
 #sidebar:hover {
-    width: 200px;
+    width: 220px;
     box-shadow: 2px 4px 10px 0 rgba(0, 0, 0, 0.5);
     opacity: 1;
 }
@@ -148,6 +153,7 @@ pre.prettyprint{
     padding: 6px 5px !important;
     max-height: 300px;
     border-radius: 3px;
+    font-size: 93%;
 }
 
 
@@ -189,7 +195,6 @@ pre.prettyprint{
 
 
 
-
 @media screen and (max-width: 650px) {
     
     #sidebar {
@@ -213,10 +218,20 @@ pre.prettyprint{
         opacity: 1;
         width: auto;
     }
+    #sidebar_content p{
+        display: none;
+    }
+    .main_container {
+        width: 90%;
+    }
 }
 
 
-
+@media screen and (max-width: 550px) {
+    .main_container {
+        width: 95%;
+    }
+}    
 
 @media screen and (max-width: 500px) {
     nav{
@@ -224,7 +239,7 @@ pre.prettyprint{
         position: relative;
     }
     .main_container {
-        width: 90%;
+        width: 100%;
     }
 
 }
