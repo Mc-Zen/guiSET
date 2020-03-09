@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Global Keyboard Shortcuts</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="../css/main.css">
+    <link rel="stylesheet" href="../css/examples.css">
+    <link rel="stylesheet" href="../css/wiki.css">
+    <script src="https://cdn.jsdelivr.net/gh/google/code-prettify@master/loader/run_prettify.js"></script>
+    <script src="main.js"></script>
+</head>
+
+<body>
+    <nav>
+        <li><a class="mlink" href="../../index.html">Home</a></li>
+        <li><a class="mlink sel" href="wiki.html"> Wiki</a></li>
+        <li><a class="mlink" href="../examples.html">Examples</a></li>
+        <li><a class="mlink" href="guiSET/reference/index.html">Documentation</a>
+        <li><a class="mlink" href="https://github.com/Mc-Zen/guiSET">Source Code</a>
+    </nav>
+
+    <div id="sidebar">
+        <div id="sidebar_label">Wiki Content</div>
+        <div id="sidebar_content">
+            <p>Wiki Pages</p>
+            <ul>
+                <li><a href="wiki.html">Wiki Start</a></li>
+                <li><a href="installing-guiset.html">Installing guiSET</a></li>
+                <li><a href="introduction-for-beginners.html">Introduction for Beginners</a></li>
+                <li><a href="list-of-components.html">List of components</a></li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="main_container wiki_main_container">
+        <h1 id="header">Global Keyboard Shortcuts</h1>
+        <p>
+            In <b>guiSET</b> you can tell <code>Frame</code> to call your method when a certain keyboard combination is
+            pressed by the user. A shortcut consists of a number of so-called <i>modifiers</i> (<kbd>Ctrl</kbd>,
+            <kbd>Shift</kbd>,<kbd>Alt</kbd>) and a key, for example <kbd>A</kbd>.
+        </p>
+        <p>
+            To represent shortcuts in <b>guiSET</b> there is a <code>Shortcut</code> class (also see
+            <a href="https://mc-zen.github.io/guiSET/guiSET/reference/guiSET/classes/Shortcut.html">Reference</a>).
+            The constructor takes either a char as key and three booleans for Ctrl/Shift/Alt or a char as key and an
+            arbitrary number of modifiers.
+        </p>
+        <p>
+            Examples for first version:
+        </p>
+        <ul>
+            <li><code>new Shortcut('A', true, false, true)</code> - <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>A</kbd></li>
+            <li><code>new Shortcut('+', false, true, false)</code> - <kbd>Shift</kbd>+<kbd>+</kbd></li>
+            <li><code>new Shortcut('k', true, false, false)</code> - <kbd>Ctrl</kbd>+<kbd>K</kbd></li>
+            <li><code>new Shortcut('E', false, false, false)</code> - <kbd>E</kbd></li>
+        </ul>
+        <p>
+            Examples for second version:
+        </p>
+        <ul>
+            <li><code>new Shortcut('A', CONTROL, ALT)</code> - <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>A</kbd></li>
+            <li><code>new Shortcut('+', SHIFT)</code> - <kbd>Shift</kbd>+<kbd>+</kbd></li>
+            <li><code>new Shortcut('P', CONTROL, SHIFT, ALT)</code> -
+                <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Alt</kbd>+<kbd>P</kbd></li>
+            <li><code>new Shortcut(' ')</code> - <kbd>Space</kbd></li>
+        </ul>
+        <hr>
+        <p>
+            Now we can create a shortcut and register it to <code>Frame</code>.
+        </p>
+        <pre class="prettyprint">
+Frame f;
+
+void setup() {
+    f = new Frame(this);
+    f.registerShortcut(new Shortcut('M', CONTROL), "printStuff");
+}
+void draw() {}
+void printStuff() {
+    println("User has pressed Ctrl+M");
+}</pre>
+        <p>
+            Every time you press <kbd>Ctrl</kbd>+<kbd>M</kbd> now, <code>printStuff()</code> is called. There is one
+            exception though:
+        </p>
+
+        <h1>Strong Shortcuts</h1>
+        <p>
+            If you have a textbox in your sketch and the user has focused it (cursor blinks and you can enter input),
+            then shortcuts will not be checked for by default. All input goes solely to the textbox. This makes sense if
+            you have a shortcut for <kbd>E</kbd> that triggers for example saving a file. But in a bigger sketch you
+            probably don't want to save the file every time the user hits 'e' while typing. Moreover, textboxes have
+            their own <kbd>Ctrl</kbd>+<kbd>C</kbd>, <kbd>Ctrl</kbd>+<kbd>A</kbd>, <kbd>Ctrl</kbd>+<kbd>V</kbd> and
+            <kbd>Ctrl</kbd>+<kbd>X</kbd> shortcuts which might conflict with shortcuts you want to implement.
+        </p>
+        <p>
+            If you need the shortcut to be triggered anyway, you can tell <code>Frame</code> it should be <i>strong</i>
+            by calling
+            <code>f.registerShortcut(new Shortcut('M', CONTROL), "printStuff", this, true);</code>.
+            The third parameter is just for specifying the object that implements you callback method "printStuff"
+            (mostly that is the sketch itself, so write <code>this</code>). The fourth parameter is a boolean for the
+            <i>strong</i>
+            property we just discussed. Default is false.
+        </p>
+
+
+
+
+    </div>
+    <div id="footer"><a href="https://github.com/Mc-Zen/guiSET"><img
+                src="../media/GitHub-Mark-32px.png"><span>GitHub</span></a></div>
+
+</body>
+
+</html>

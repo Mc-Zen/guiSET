@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Help, something doesn't work</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="../css/main.css">
+    <link rel="stylesheet" href="../css/examples.css">
+    <link rel="stylesheet" href="../css/wiki.css">
+    <script src="https://cdn.jsdelivr.net/gh/google/code-prettify@master/loader/run_prettify.js"></script>
+    <script src="main.js"></script>
+</head>
+
+<body>
+    <nav>
+        <li><a class="mlink" href="../../index.html">Home</a></li>
+        <li><a class="mlink sel" href="wiki.html"> Wiki</a></li>
+        <li><a class="mlink" href="../examples.html">Examples</a></li>
+        <li><a class="mlink" href="guiSET/reference/index.html">Documentation</a>
+        <li><a class="mlink" href="https://github.com/Mc-Zen/guiSET">Source Code</a>
+    </nav>
+
+    <div id="sidebar">
+        <div id="sidebar_label">Wiki Content</div>
+        <div id="sidebar_content">
+            <p>Wiki Pages</p>
+            <ul>
+                <li><a href="wiki.html">Wiki Start</a></li>
+                <li><a href="installing-guiset.html">Installing guiSET</a></li>
+                <li><a href="introduction-for-beginners.html">Introduction for Beginners</a></li>
+                <li><a href="list-of-components.html">List of components</a></li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="main_container wiki_main_container">
+        <h1 id="header">Help, something doesn't work</h1>
+
+        <p>
+            Hopefully, if you encounter any errors, you will find a quick solution here. The list will be updated.
+        </p>
+        <ul>
+            <li><a href="#i1">The Application seems stuck from beginning</a></li>
+            <li><a href="#i2">NullPointerException</a></li>
+            <li><a href="#i3">InvocationTargetException</a></li>
+            <li><a href="#i4">Element is created but does not show up on application</a></li>
+        </ul>
+
+
+
+        <h1 id="i1">
+            The application seems stuck from beginning
+        </h1>
+        <p>
+            No errors, when you hit run everything looks okay but the gui does not react to clicking or moving the
+            mouse? Probably you forgot the <code>void draw(){}</code> method in the sketch. If you don't put it there
+            the sketch won't loop (general behavior in Processing). Or you have some blocking code in <code>draw</code>
+            that is stuck.
+            Oh yes, or you have some <code>noLoop()</code> called somewhere in your code.
+        </p>
+
+
+
+
+
+        <h1 id="i2">
+            NullPointerException
+        </h1>
+        <p>
+            Okay, so that can have lots of reasons and many of them would not have to do with the library. In general, a
+            <code>NullPointerException</code> happens when you access an object (variable) but have not initialized it.
+            Look at the
+            line of code that's highlighted when the error occurs. If it is some piece of code that creates a new
+            instance of a Component from <b>guiSET</b> then maybe you forgot to create an instance of
+            <code>Frame before(!)</code>. Code like this would create such an error:
+        </p>
+
+        <pre class="prettyprint">
+void setup() {
+    // need to initialize Frame first
+    button = new Button();
+}</pre>
+        <p>
+            And no you can't intialize <code>Frame</code> when declaring as global variable (passing this cannot work then).
+        </p>
+        <pre class="prettyprint">
+Frame f = new Frame(this); //does not work
+
+void setup() {
+}</pre>
+
+
+
+        <h1 id="i3">
+            InvocationTargetException
+        </h1>
+        <p>Looks like you're trying to create an element as global variable. While you can have elements as global
+            variables you cannot (for most components at least) initialize them there. What I mean is:
+        </p>
+        <pre class="prettyprint">
+Button b = new Button(); // this will fail
+
+void setup(){
+    f = new Frame(this);
+    b = new Button();   // here is where you should use "new"
+}</pre>
+        <p>
+            Reasons for this are quite complex and include needing <code>Frame</code> to be intialized first. This might
+            not change in the near future.
+        </p>
+        <p>
+            Of course this error can have also different reasons I can't think of right now.
+        </p>
+
+
+
+
+        <h1 id="i4">
+            Element is created but does not show up on application
+        </h1>
+        <p>
+            Sounds silly but maybe you forgot to add it to <code>Frame</code> or to another <code>Container</code>?
+            That's a common mistake. Or the position is outside the window. Or there is another element above hiding it.
+        </p>
+
+
+
+    </div>
+    <div id="footer"><a href="https://github.com/Mc-Zen/guiSET"><img
+                src="../media/GitHub-Mark-32px.png"><span>GitHub</span></a></div>
+
+</body>
+
+</html>
