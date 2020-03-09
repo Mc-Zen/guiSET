@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Draw modes</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="../css/main.css">
+    <link rel="stylesheet" href="../css/examples.css">
+    <link rel="stylesheet" href="../css/wiki.css">
+    <script src="https://cdn.jsdelivr.net/gh/google/code-prettify@master/loader/run_prettify.js"></script>
+    <script src="main.js"></script>
+</head>
+
+<body>
+    <nav>
+        <li><a class="mlink" href="../../index.html">Home</a></li>
+        <li><a class="mlink sel" href="wiki.html">Wiki</a></li>
+        <li><a class="mlink" href="../examples.html">Examples</a></li>
+        <li><a class="mlink" href="guiSET/reference/index.html">Documentation</a>
+        <li><a class="mlink" href="https://github.com/Mc-Zen/guiSET">Source Code</a>
+    </nav>
+
+    <div id="sidebar">
+        <div id="sidebar_label">Wiki Content</div>
+        <div id="sidebar_content">
+            <p>Wiki Pages</p>
+            <ul>
+                <li><a href="wiki.html">Wiki Start</a></li>
+                <li><a href="installing-guiset.html">Installing guiSET</a></li>
+                <li><a href="introduction-for-beginners.html">Introduction for Beginners</a></li>
+                <li><a href="list-of-components.html">List of components</a></li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="main_container wiki_main_container">
+        <h1 id="header">Draw modes</h1>
+        <p>
+            <b>guiSET</b> provides three different draw modes which affect how often the GUI will be drawn. The mode
+            mostly matters if you want to draw own things on top of the GUI in the famous <code>draw()</code> method. It
+            can be set using 
+        </p>
+        <ul>
+            <li><code>myFrame.setMode(Frame.EFFICIENT)</code>,</li>
+            <li><code>myFrame.setMode(Frame.CONTINOUS)</code> or</li>
+            <li><code>myFrame.setMode(Frame.NO_LOOP)</code>.</li>
+        </ul>
+        <p>
+            The default and for most use cases recommended mode is <code>Frame.EFFICIENT</code>. The GUI will be drawn
+            onto the application surface only when something changed (i.e. hovered over a button which then changes
+            color).
+            This is good but maybe you also use the standard draw methods at the same time in your sketch. Then, if you
+            draw things each frame (each time <code>draw()</code> runs), your drawings will only be cleared out when the
+            GUI updates. You could call <code>myFrame.forceRender()</code> each time - or choose the
+            <code>CONTINOUS</code> mode. It will draw the finished GUI image each frame onto the window.
+        </p>
+        <p>
+            <code>Frame.NO_LOOP</code> is the most efficient (or spartanic) mode. It turns off the <code>draw()</code>
+            loop and is only updated through mouse and key events.
+        </p>
+
+    </div>
+    <div id="footer"><a href="https://github.com/Mc-Zen/guiSET"><img
+                src="../media/GitHub-Mark-32px.png"><span>GitHub</span></a></div>
+
+</body>
+
+</html>
