@@ -39,7 +39,7 @@
         </div>
     </div>
 
-    <div class="main_container wiki_main_container">
+	<div class="main_container wiki_main_container">
 		<h1 id="header">Introduction for beginners</h1>
 
 		Outline:
@@ -49,13 +49,12 @@
 			<li><a href="#about-trees">About Trees</a></li>
 		</ul>
 		<p>
-			To start off you first need to import the library
+			To start off, you first need to import the library.
 		</p>
 		<p>
 			Write:
 		</p>
 		<pre class="prettyprint">
-import guiSET.classes.*;
 import guiSET.core.*;</pre>
 		<p>
 			at the top of your sketch.
@@ -74,9 +73,8 @@ import guiSET.core.*;</pre>
 		<p>
 			First we need a <code>Frame</code> object. The <code>Frame</code> is basically the "Master" to which all
 			other GUI elements need to
-			be added to. By default it fills out the entire sketch window. You need to pass the sketch itself to
-			<code>Frame</code>
-			and that is not possible as global variable. The best (really only) way to do this is in
+			be added to. By default, it fills out the entire sketch window. You need to pass the sketch itself to
+			<code>Frame</code>. The best (really only) way to do this is right at the start in
 			<code>setup()</code>:
 		</p>
 		<p>
@@ -98,15 +96,16 @@ void setup(){
 }</pre>
 
 		<p>
-			Also it is necessary to implement the draw() method (even if it is empty) for otherwise the code will just
-			freeze after setup().
+			Also, it is necessary to implement the <code>draw()</code> method (even if it is empty) for otherwise the
+			code will just
+			freeze after <code>setup()</code>.
 		</p>
 		<p>
 			If you run your program now, you should see a blank window which is rather less exciting - so let's add some
-			stuff! For example you might want a button and a textbox but beware! - they should better be intialized
-			after <code>Frame f = new Frame(this);</code>. You can then start to set properties and modify the look of
+			stuff! For example, you might want a button and a textbox, but beware! - they should better be intialized
+			after <code>f = new Frame(this);</code>. You can then start to set properties and modify the look of
 			button and
-			textbox. At last they need to be added to the <code>Frame</code> (but you could also do that right at the
+			textbox. At last, they need to be added to the <code>Frame</code> (but you could also do that right at the
 			start).
 		</p>
 		<pre class="prettyprint">
@@ -133,7 +132,7 @@ void setup(){
 void draw(){
 }</pre>
 		<p>
-			The result should now look somewhat like this:
+			The result should now look somewhat like this (at least if you input some random stuff into the textbox ^^):
 		</p>
 		<img src="../media/First_guiSET_sketch.png">
 
@@ -152,14 +151,14 @@ void draw(){
 
 		<h1 id="listeners">Listeners</h1>
 		<p>
-			What would a program be without listeners? Let us see how to create some with guiSET. Wait, what is a
+			What would a program be without listeners? Let us see how to create some with <b>guiSET</b>. Wait, what is a
 			listener? An (event) listener is something that "listens" all the time for something specific to happen and
-			then notifies you. For example a key (to be more precise for example a keydown) listener "listens" all the
-			time if the user presses a key on the keyboard and tells you so if he does and also which key is being
-			pressed down and more information.
+			then notifies you. For example a <i>key listener</i> (to be more precise for example a <i>keydown
+				listener</i>) "listens" for presses on the keyboard and tells you when it happens by calling a method
+			(so-called <i>callback method</i>) that you need to specify at the beginning.
 		</p>
 		<p>
-			In our example we would probably want to do something when the button is clicked i.e. print a message. In
+			In our example we would probably want to do something when the button is clicked, i.e. print a message. In
 			<code>setup()</code> we write: <code>myButton.addMouseListener("press", "myButton_pressed");</code> and
 			create a suitable method
 			somewhere:
@@ -172,10 +171,10 @@ void myButton_pressed(){
 			"press" means the listener will listen for a downpress of the mouse. Alternatives are
 			<code>myButton.addMouseListener("release", "myButton_pressed");</code> or "drag", "wheel" and some more, and
 			of course
-			you could call the method <code>myButton_pressed()</code> just like you wish.
+			you could name the method <code>myButton_pressed()</code> just like you wish.
 		</p>
 		<p>
-			If you need details about the mouse event (say you need the x-coordinate) then re-write your so-called
+			If you need details about the mouse event (say you need the x-coordinate), then re-write your so-called
 			callback method to:
 		</p>
 		<pre class="prettyprint">
@@ -197,10 +196,10 @@ Button myButton;
 Textbox myTextbox;
 
 void setup() {
-  size(300, 200);
-  f = new Frame(this);
-  myButton = new Button();
-  myTextbox = new Textbox();
+	size(300, 200);
+	f = new Frame(this);
+	myButton = new Button();
+	myTextbox = new Textbox();
 
     f.add(myButton, myTextbox); 
 
@@ -217,8 +216,8 @@ void setup() {
     myTextbox.addTextChangedListener("myTextbox_textChanged");
 }
 
-void myButton_pressed(){
-  
+void myButton_pressed(MouseEvent e){
+	println(e.getX());
 }
 
 void myTextbox_textChanged(){
@@ -227,7 +226,7 @@ void myTextbox_textChanged(){
 void draw() {
 }</pre>
 		<p>
-			Now every time you change the text of the textbox by entering or deleting stuff the text of the button is
+			Now every time you change the text of the textbox by entering or deleting stuff, the text of the button is
 			changed.
 		</p>
 		<hr>
@@ -240,31 +239,38 @@ void draw() {
 			<li>release</li>
 			<li>enter (mouse enters this element)</li>
 			<li>exit (mouse leaves this element)</li>
-			<li>drag (mouse is pressed down and dragged somewhere)</li>
+			<li>drag (mouse is pressed down on element and dragged somewhere)</li>
 			<li>move (happens all the time when mouse is moved over this element - called VERY often)</li>
-			<li>wheel (mouse scroll wheel)</li>
+			<li>wheel (mouse scroll wheel rotated)</li>
 			<li>focus (fires when this element gets focus (i.e. a textbox gets focus when you click it so you can enter
 				text)</li>
-			<li>resize (don't bother for now)</li>
+			<li>resize (width/height of this element has changed in any way except autosize)</li>
 		</ul>
 		<p>
-			While all mouse events are added with <code>addMouseListener(String type, String methodname)</code> focus
+			While all mouse events are added with <code>addMouseListener(String type, String methodname)</code>, focus
 			and resize
 			listener are added with <code>addFocusListener(String methodname)</code> and
 			<code>addResizeListener(String methodname)</code>.
 		</p>
 		<p>
-			Other Components have further listeners, like the Textbox which features:
+			Other components have further listeners, like the <code>Textbox</code> which features:
 		</p>
 		<ul>
-			<li>textChanged - <code>addTextChangeListener(String methodName)</code>>/li>
-			<li>submit - <code>addSubmitListener(String methodName)</code> (called when you press enter while textbox
+			<li>textChange - <code>addTextChangeListener(String methodName)</code></li>
+			<li>submit - <code>addSubmitListener(String methodName)</code> (called when you press <kb>ENTER</kb> while
+				textbox
 				has focus)
 			</li>
 			<li> keyPress - <code>addKeyPressListener(String methodName)</code></li>
 		</ul>
 		<p>
-			Oh, and each type of listener can be added only once to each object.
+			Oh, and each type of listener can be added only once to each individual object. For example, one button can
+			have a press, drag and move listener, another button also a (different) press listener but not the same
+			button two listeners.
+		</p>
+		<p>
+			Listeners can be removed by calling things like <code>myElement.removeMouseListener("press")</code> or
+			<code>myElement.removeFocusListener()</code>.
 		</p>
 
 
@@ -282,9 +288,7 @@ void draw() {
 			<code>Frame</code> and all the other elements need to be children. I'll explain that with an example:
 		</p>
 		<pre class="prettyprint">
-import guiSET.classes.*;
 import guiSET.core.*;
-
 
 Frame f;
 Container outerContainer;
@@ -309,6 +313,13 @@ void setup() {
     vfc = new VFlowContainer(70, 100);
     mySwitch = new Switch("", true);
 
+    // interesting part comes here
+    f.add(outerContainer, vfc, mySwitch);
+    vfc.add(button1, button2);
+    outerContainer.add(innerContainer);
+	innerContainer.add(label);
+	
+
     outerContainer.setPosition(10, 10);
     outerContainer.setBackgroundColor(color(200));
     innerContainer.setPosition(5, 5);
@@ -316,16 +327,11 @@ void setup() {
 
     vfc.setPosition(outerContainer.getWidth() + outerContainer.getX() + 5, 10);
     vfc.setBackgroundColor(color(200));
-    vfc.setPadding(5);
+	vfc.setPadding(5);
+	
     mySwitch.setPosition(vfc.getX() + vfc.getWidth() + 5, 40);
   
     label.setPadding(10);
-
-    // interesting part comes here
-    f.add(outerContainer, vfc, mySwitch);
-    vfc.add(button1, button2);
-    outerContainer.add(innerContainer);
-    innerContainer.add(label);
 }
 
 void draw() {
@@ -343,7 +349,7 @@ void draw() {
 			all elements looks like
 			this:
 		</p>
-		<img src="../media/tree_schematic.jpg" style="width: 400px;">
+		<img src="../media/tree_schematic.jpg" style="max-width: 400px;">
 		<p>
 			This way we can create arbitrarily complex structures - and the good thing: if you move a container, all the
 			children go with it (same if you set the visiblity or enabled to false). This comes in handy if you need to
@@ -352,7 +358,8 @@ void draw() {
 
 	</div> <!-- .main_container -->
 
-	<div id="footer"><a href="https://github.com/Mc-Zen/guiSET"><img src="../media/GitHub-Mark-32px.png"><span>GitHub</span></a></div>
+	<div id="footer"><a href="https://github.com/Mc-Zen/guiSET"><img
+				src="../media/GitHub-Mark-32px.png"><span>GitHub</span></a></div>
 </body>
 
 </html>

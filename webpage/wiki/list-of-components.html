@@ -58,14 +58,18 @@
             </li>
 
         </ul>
-
+        <style>
+            span.events {
+                color: #a22525
+            }
+        </style>
         <h4 id="Control">Control&nbsp; &nbsp; (<a
                 href="https://mc-zen.github.io/guiSET/guiSET/reference/guiSET/core/Control.html">reference</a>)</h4>
         <ul>
             <li>Base Component from which you can't create an instance itself (maybe you're familiar with "abstract"
-                classes) but every other Component inherits from Control. </li>
+                classes) but every other component inherits from Control. </li>
             <li>Provides most of the event and rendering functionality.</li>
-            <li>Events: press, release, move, drag, enter, exit, wheel, focus, resize</li>
+            <li><span class="events">Events: press, release, move, drag, enter, exit, wheel, focus, resize</span></li>
         </ul>
 
 
@@ -73,9 +77,9 @@
         <h4 id="Container">Container &nbsp; &nbsp; (<a
                 href="https://mc-zen.github.io/guiSET/guiSET/reference/guiSET/core/Container.html">reference</a>)</h4>
         <ul>
-            <li>A Component for grouping other Components.</li>
+            <li>A component for grouping elements.</li>
             <li>Containers can be arbitrarily nested.</li>
-            <li>This is the simplest container which will place its content items to the x- and y-position specified for
+            <li>This is the simplest container which will place its content items at the x- and y-position specified for
                 the individual items (relative to top left corner of the container).</li>
             <li>Content items may overlap depending on how you set their position. You have control on which
                 items to place above others through the <code>z</code> property.</li>
@@ -97,7 +101,7 @@
                 Both <code>hoverColor</code> and <code>pressedColor</code> can be set manually. </li>
             <li>Has a constructor for setting text and pressEvent method immediately: <code>Button(String text, String
                 methodname)</code>.</li>
-            <li>Provides constructor for initializing with background image</li>
+            <li>Provides constructor for initializing with background image.</li>
         </ul>
 
         <h4 id="Label">Label &nbsp; &nbsp; (<a
@@ -112,7 +116,7 @@
                 href="https://mc-zen.github.io/guiSET/guiSET/reference/guiSET/core/VFlowContainer.html">reference</a>)
         </h4>
         <ul>
-            <li>Added items are automatically placed one below the other. Ignores coordinates of items. </li>
+            <li>Added items are automatically placed one below the other. Ignores coordinates of items. Paddings and margins are honoured, </li>
         </ul>
 
         <h4 id="VScrollContainer">VScrollContainer &nbsp; &nbsp; (<a
@@ -152,7 +156,7 @@
                 href="https://mc-zen.github.io/guiSET/guiSET/reference/guiSET/core/ScrollArea.html">reference</a>)</h4>
         <ul>
             <li>More like the plain <a href="#Container">Container</a>, relative positioning according to the items x
-                and y coordinate but allows scrolling vertically and horizontally if dimensions are exceeded. /li>
+                and y coordinate but allows scrolling vertically and horizontally if dimensions are exceeded. </li>
         </ul>
 
         <h4 id="Checkbox">Checkbox &nbsp; &nbsp; (<a
@@ -160,7 +164,7 @@
         <ul>
             <li>A simple checkbox that can be ticked and unticked. The <code>text</code> (if set) is drawn to the right
                 of the checkbox. </li>
-            <li>Events: checkChange</li>
+            <li><span class="events">Events: checkChange</span></li>
         </ul>
 
         <h4 id="Switch">Switch &nbsp; &nbsp; (<a
@@ -168,7 +172,7 @@
         <ul>
             <li>Version of <a href="#Checkbox">Checkbox</a> with different graphics: looks like an android switch and
                 toggeling between on/off is animated. </li>
-            <li>Events: checkChange</li>
+            <li><span class="events">Events: checkChange</span></li>
 
         </ul>
 
@@ -178,14 +182,14 @@
             <li>A floating point value slider. User can set value by clicking, pulling or scrolling. Minimum and maximum
                 can be set freely. Orientation can be set to <code>Slider.HORIZONTAL</code> or
                 <code>Slider.VERTICAL</code> with <code>slider.setOrientation(int orientation)</code>. </li>
-            <li>Events: valueChange</li>
+            <li><span class="events">Events: valueChange</span></li>
         </ul>
 
         <h4 id="Textbox">Textbox &nbsp; &nbsp; (<a
                 href="https://mc-zen.github.io/guiSET/guiSET/reference/guiSET/core/Textbox.html">reference</a>)</h4>
         <ul>
             <li>Single-line text input field. Scrollable. Features text selection and copy/cut/paste. </li>
-            <li>Events: textChange, keyPress, submit</li>
+            <li><span class="events">Events: textChange, keyPress, submit</span></li>
         </ul>
 
         <h4 id="PasswordTextbox">PasswordTextbox &nbsp; &nbsp; (<a
@@ -202,7 +206,7 @@
         <ul>
             <li>Textbox that breaks overflowing lines and allows multi-line input. Scrollable. Features text selection
                 and copy/cut/paste.</li>
-            <li>Events: textChange, keyPress</li>
+            <li><span class="events">Events: textChange, keyPress</span></li>
         </ul>
 
         <h4 id="ListView">ListView &nbsp; &nbsp; (<a
@@ -215,9 +219,9 @@
                 text)</code>. This creates a new <a href="#ListItem">ListItem</a> and appends it to the view. You can
                 also create and style your own
                 list items (or subclass <a href="#ListItem">ListItem</a>) and even add other controls like checkboxes
-                although they will not fire the <code>itemSelected</code> event and might not look "selected" if they
+                although they will not fire the <code>itemSelect</code> event and might not look "selected" if they
                 are. </li>
-            <li>Events: itemSelect</li>
+            <li><span class="events">Events: itemSelect</span></li>
         </ul>
 
         <h4 id="ListItem">ListItem &nbsp; &nbsp; (<a
@@ -237,6 +241,7 @@
                 href="https://mc-zen.github.io/guiSET/guiSET/reference/guiSET/core/MenuItem.html">reference</a>)</h4>
         <ul>
             <li>More info about creating menus in wiki article about menus.</li>
+            <li><span class="events">Events: select, itemSelect</span></li>
         </ul>
 
         <h4 id="ToolStrip">ToolStrip &nbsp; &nbsp; (<a

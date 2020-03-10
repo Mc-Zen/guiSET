@@ -26,14 +26,14 @@
             <p>Wiki Pages</p>
             <ul>
                 <li><a href="wiki.html">Wiki Start</a></li>
-                <li><a href="animations.html">Animations</a></li>    
+                <li><a href="animations.html">Animations</a></li>
                 <li><a href="help,-something-doesn't-work.html">Common errors</a></li>
                 <li><a href="draw-modes.html">Draw modes</a></li>
                 <li><a href="dynamic-resizing-and-anchors.html">Dynamic resizing and anchors</a></li>
                 <li><a href="global-keyboard-shortcuts.html">Global keyboard shortcuts</a></li>
                 <li><a href="installing-guiset.html">Installing guiSET</a></li>
                 <li><a href="introduction-for-beginners.html">Introduction for Beginners</a></li>
-                <li><a href="list-of-components.html">List of components</a></li>        
+                <li><a href="list-of-components.html">List of components</a></li>
                 <li><a href="the-deep-shit.html">The deep shit</a></li>
             </ul>
         </div>
@@ -82,7 +82,7 @@
 
 
 
-        
+
         <h1 id="s1">Short summary about the inheritance of the component classes</h1>
         <p>
             Control is the (abstract) base class for all visual components. Container subclasses Control. As do Button,
@@ -293,8 +293,9 @@ protected void render() {
             <li>Also provide a simple adding method that defaults target to papplet (the sketch)</li>
         </ul>
 
-
-        An example with no arguments.
+        <p>
+            An example with no arguments.
+        </p>
 
         <pre class="prettyprint">
 protected EventListener myListener;
@@ -311,7 +312,26 @@ protected void someFunctionThatChangesObervedState(){
     // do stuff
     handleEvent(myListener, null);
 }</pre>
+        <p>
+            An example with arguments (in this case a <code>MouseEvent</code>)
+        </p>
 
+        <pre class="prettyprint">
+protected EventListener myListener;
+public void addMyListener(String methodName, Object target) {
+myListener = createEventListener(methodName, target, MouseEvent.class);
+}
+public void addMyListener(String methodName) {
+addMyListener(methodName, getPApplet());
+}
+public void removeMyListener(){
+myListener = null; // setting listener to null is the way to do it
+}
+protected void someFunctionThatChangesObervedState(){
+// do stuff
+MouseEvent eventThatWeGotFromSomewhere;
+handleEvent(myListener, eventThatWeGotFromSomewhere);
+}</pre>
 
         <p>
             If arguments shall be passed to the callback function, then pass their

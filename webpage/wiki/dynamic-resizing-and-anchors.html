@@ -26,14 +26,14 @@
             <p>Wiki Pages</p>
             <ul>
                 <li><a href="wiki.html">Wiki Start</a></li>
-                <li><a href="animations.html">Animations</a></li>    
+                <li><a href="animations.html">Animations</a></li>
                 <li><a href="help,-something-doesn't-work.html">Common errors</a></li>
                 <li><a href="draw-modes.html">Draw modes</a></li>
                 <li><a href="dynamic-resizing-and-anchors.html">Dynamic resizing and anchors</a></li>
                 <li><a href="global-keyboard-shortcuts.html">Global keyboard shortcuts</a></li>
                 <li><a href="installing-guiset.html">Installing guiSET</a></li>
                 <li><a href="introduction-for-beginners.html">Introduction for Beginners</a></li>
-                <li><a href="list-of-components.html">List of components</a></li>        
+                <li><a href="list-of-components.html">List of components</a></li>
                 <li><a href="the-deep-shit.html">The deep shit</a></li>
             </ul>
         </div>
@@ -66,7 +66,7 @@
             parent. Same applies for <code>TOP</code> and <code>BOTTOM</code>.
         </p>
         <p>
-            So how to create an anchor? The method <code>addAutoAnchor(int...newAnchors)</code> (you can add multiple
+            So how to create an anchor? The method <code>addAutoAnchors(int...newAnchors)</code> (you can add multiple
             anchors at
             once) will take a 'snapshot' of the current distances <b>(does not work if the element has no parent
                 yet)</b>. If
@@ -77,53 +77,69 @@
             <code>removeAnchor(int anchor)</code> clears given anchor.
         </p>
         <p>
-            I'll give an example here.
+            I'll give an example here (also part of the library examples).
         </p>
         <pre class="prettyprint">
-import guiSET.classes.*;
 import guiSET.core.*;
 
+/*
+ * Example for a border layout. 
+ * The window is split into a header, footer, two sidebars and the main area - a.k.a. 
+ * north, south, west, east, and center.
+ *
+ * Their size is adjusted automatically when the window is resized. 
+ */
+
 Frame f;
-Container header;
-Container sideBar;
-Container footer;
-Container mainArea;
+Container north;
+Container west;
+Container east;
+Container south;
+Container center;
 
-int headerHeight = 25;
-int footerHeight = 30;
-int sidebarWidth = 50;
-
+int northHeight = 25; // (fixed) height of header ("north" section)
+int southHeight = 30; // (fixed) height of footer ("south" section)
+int eastWidth = 50;   // (fixed) width of left sidebar ("west" section)
+int westWidth = 50;   // (fixed) width of right sidebar ("east" section)
 
 void setup() {
-    size(500, 400); // choose any size
+    size(400, 300);       // choose any size
     f = new Frame(this);
-    header = new Container(width, headerHeight);
-    footer = new Container(width, footerHeight);
-    sideBar = new Container(sidebarWidth, height - headerHeight - footerHeight);
-    mainArea = new Container(width - sidebarWidth, height - headerHeight - footerHeight);
-    f.add(header, footer, sideBar, mainArea);  // add them all to Frame before creating any anchors !
-    f.setResizable(true);
+    f.setResizable(true); // enable window resizing (default is off)
 
-    footer.setY(height - footerHeight);
-    mainArea.setY(headerHeight);
-    sideBar.setPosition(width - sidebarWidth, headerHeight);
+    north = new Container(width, northHeight);
+    south = new Container(width, southHeight);
+    east = new Container(eastWidth, height - northHeight - southHeight);
+    west = new Container(westWidth, height - northHeight - southHeight);
+    center = new Container(width - eastWidth - westWidth, height - northHeight - southHeight);
+    f.add(north, south, west, east, center);  // add them all to f before creating any anchors !
 
 
-    header.addAutoAnchor(LEFT, RIGHT);
-    sideBar.addAutoAnchor(TOP, RIGHT, BOTTOM);
-    footer.addAutoAnchor(LEFT, RIGHT, BOTTOM);
-    mainArea.addAutoAnchor(LEFT, RIGHT, TOP, BOTTOM);
-    
-    // Styling
-    
-    sideBar.setBackgroundColor(color(200, 83, 67));
-    sideBar.add(new Label("Side bar"));
-    header.setBackgroundColor(color(200));
-    header.add(new Label("Header"));
-    footer.setBackgroundColor(color(150));
-    footer.add(new Label("Footer"));
-    mainArea.setBackgroundColor(color(255, 252, 229));
-    mainArea.add(new Label("Main Area"));
+    south.setY(height - southHeight);
+    west.setY(northHeight);
+    center.setPosition(westWidth, northHeight);
+    east.setPosition(width - eastWidth, northHeight);
+
+
+    north.addAutoAnchors(LEFT, RIGHT);
+    west.addAutoAnchors(TOP, BOTTOM);
+    east.addAutoAnchors(TOP, RIGHT, BOTTOM);
+    south.addAutoAnchors(LEFT, RIGHT, BOTTOM);
+    center.addAutoAnchors(LEFT, RIGHT, TOP, BOTTOM);
+
+
+    // Set background colors and add labels for demonstration purposes
+ 
+    north.setBackgroundColor(color(200));
+    north.add(new Label("North"));
+    west.setBackgroundColor(color(220, 50, 67));
+    west.add(new Label("West"));
+    east.setBackgroundColor(color(200, 83, 67));
+    east.add(new Label("East"));
+    south.setBackgroundColor(color(150));
+    south.add(new Label("South"));
+    center.setBackgroundColor(color(255, 252, 229));
+    center.add(new Label("Center"));
 }
 
 void draw() {
@@ -131,11 +147,13 @@ void draw() {
         <p>
             This is called a <i>border layout</i>: each side has a container (often named by the four compass
             directions) with either fixed width (<i>east</i> and <i>west</i> area) or fixed height (<i>north</i> and
-            <i>south</i> area). The center container resizes to fit all the remaining space.
+            <i>south</i> area). The center containers size is set to fit all the remaining space. When resizing the
+            window, all containers adjust accordingly to fill the space.
         </p>
         <hr>
         <p>
-            Another option to achieve this is to use <code>setAnchor(int type, int value)</code> which sets one anchor to the
+            Another option to achieve this is to use <code>setAnchor(int type, int value)</code> which sets one anchor
+            to the
             given value. This will
             probably change the position and/or size of your element. If we have a button that we want to place in the
             right bottom corner (i.e. with a spacing of 10px), we use:
@@ -150,59 +168,67 @@ myButton.setAnchor(BOTTOM, 10);</pre>
             positioning:
         </p>
         <pre class="prettyprint">
-import guiSET.classes.*;
 import guiSET.core.*;
 
 Frame f;
-Container header;
-Container sideBar;
-Container footer;
-Container mainArea;
+Container north;
+Container west;
+Container east;
+Container south;
+Container center;
 
-
-int headerHeight = 25;
-int footerHeight = 30;
-int sidebarWidth = 50;
-
+int northHeight = 25; // (fixed) height of header ("north" section)
+int southHeight = 30; // (fixed) height of footer ("south" section)
+int eastWidth = 50;   // (fixed) width of left sidebar ("west" section)
+int westWidth = 50;   // (fixed) width of right sidebar ("east" section)
 
 
 void setup() {
     size(500, 400); // choose any size
     f = new Frame(this);
-    header = new Container(width, headerHeight); // I left this one the same
-    footer = new Container();
-    sideBar = new Container();
-    mainArea = new Container();
-    f.add(header, footer, sideBar, mainArea); // add them all to Frame before creating any anchors !
     f.setResizable(true);
 
-    footer.setHeight(footerHeight);
-    sideBar.setWidth(sidebarWidth);
+    north = new Container(width, northHeight); // I left this one the same
+    south = new Container();
+    west = new Container();
+    east = new Container();
+    center = new Container();
+    f.add(north, south, west, east, center); // add them all to f before creating any anchors !
 
-    header.addAutoAnchor(LEFT, RIGHT);
-    sideBar.setAnchor(RIGHT, 0);
-    sideBar.setAnchor(TOP, headerHeight);
-    sideBar.setAnchor(BOTTOM, footerHeight);
 
-    footer.setAnchor(LEFT, 0);
-    footer.setAnchor(RIGHT, 0);
-    footer.setAnchor(BOTTOM, 0);
+    north.addAutoAnchors(LEFT, RIGHT);
 
-    mainArea.setAnchor(TOP, headerHeight);
-    mainArea.setAnchor(LEFT, 0);
-    mainArea.setAnchor(RIGHT, sidebarWidth);
-    mainArea.setAnchor(BOTTOM, footerHeight);  
-    
-    // Styling
-    
-    sideBar.setBackgroundColor(color(200, 83, 67));
-    sideBar.add(new Label("Side bar"));
-    header.setBackgroundColor(color(200));
-    header.add(new Label("Header"));
-    footer.setBackgroundColor(color(150));
-    footer.add(new Label("Footer"));
-    mainArea.setBackgroundColor(color(255, 252, 229));
-    mainArea.add(new Label("Main Area"));
+    west.setWidth(westWidth);
+    west.setAnchor(TOP, northHeight);
+    west.setAnchor(BOTTOM, southHeight);
+
+    east.setWidth(eastWidth);
+    east.setAnchor(RIGHT, 0);
+    east.setAnchor(TOP, northHeight);
+    east.setAnchor(BOTTOM, southHeight);
+
+    south.setHeight(southHeight);
+    south.setAnchor(LEFT, 0);
+    south.setAnchor(RIGHT, 0);
+    south.setAnchor(BOTTOM, 0);
+
+    center.setAnchor(TOP, northHeight);
+    center.setAnchor(LEFT, westWidth);
+    center.setAnchor(RIGHT, eastWidth);
+    center.setAnchor(BOTTOM, southHeight);  
+
+    // Set background colors and add labels for demonstration purposes
+ 
+    north.setBackgroundColor(color(200));
+    north.add(new Label("North"));
+    west.setBackgroundColor(color(220, 50, 67));
+    west.add(new Label("West"));
+    east.setBackgroundColor(color(200, 83, 67));
+    east.add(new Label("East"));
+    south.setBackgroundColor(color(150));
+    south.add(new Label("South"));
+    center.setBackgroundColor(color(255, 252, 229));
+    center.add(new Label("Center"));
 }
 
 void draw() {
@@ -213,11 +239,6 @@ void draw() {
         <p>
             Also the window does not need to be resizable for anchors to come in useful. Maybe you have a container you
             want to change in size dynamically and make its content follow...
-        </p>
-        <p>
-            Warning! Resizing does not work together with the <code>NO_LOOP</code> <a href="draw-modes">draw mode</a>.
-            If you try to combine
-            these two, you will also get a warning.
         </p>
 
     </div>
