@@ -133,7 +133,7 @@ public class HScrollContainer extends HFlowContainer {
 
 	// get width of handle (of the horizontal scrollbar)
 	protected int scrollhandle_width() {
-		return width * scrollbar_width() / fullScrollWidth;
+		return Math.max(minScrollHandleLength, width * scrollbar_width() / fullScrollWidth);
 	}
 
 	// get position of handle (of the horizontal scrollbar)
@@ -315,10 +315,9 @@ public class HScrollContainer extends HFlowContainer {
 	 */
 	@Override
 	protected boolean containerPreItemsMouseEvent(int x, int y) {
-		boolean mouseIsOverScrollBar = y > height - scrollHandleStrength - 3 && y < height && x > 0 && x < width;
+		boolean mouseIsOverScrollBar = needsScrollbarH() && y > height - scrollHandleStrength - 3 && y < height && x > 0 && x < width;
 
 		if (currentMouseEvent.getAction() == MouseEvent.PRESS && mouseIsOverScrollBar) {
-
 			int scrollhandle_posX = scrollhandle_posX();
 
 			// if clicked on scrollhandle itself (instead of entire scroll area) the

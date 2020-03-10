@@ -1,6 +1,6 @@
 package guiSET.core;
 
-import guiSET.classes.Color;
+
 import processing.core.*;
 import processing.event.MouseEvent;
 

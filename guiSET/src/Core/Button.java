@@ -22,7 +22,7 @@ public class Button extends Control {
 	/**
 	 * Constructor for specifying button text.
 	 * 
-	 * @param text
+	 * @param text text
 	 */
 	public Button(String text) {
 		this();
@@ -32,7 +32,8 @@ public class Button extends Control {
 	/**
 	 * Constructor for specifying button text and font size.
 	 * 
-	 * @param text
+	 * @param text     text
+	 * @param fontSize font size
 	 */
 	public Button(String text, int fontSize) {
 		this(text);
@@ -42,7 +43,8 @@ public class Button extends Control {
 	/**
 	 * Constructor for specifying button text and press callback method name.
 	 * 
-	 * @param text
+	 * @param text        text
+	 * @param pressMethod callback for press event
 	 */
 	public Button(String text, String pressMethod) {
 		this(text);

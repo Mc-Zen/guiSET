@@ -1,8 +1,9 @@
 package guiSET.core;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 
-import guiSET.classes.*;
 
 
 /**
@@ -11,7 +12,7 @@ import guiSET.classes.*;
  * 
  * Just call the animate(String attribute, int aimedValue, double milliseconds
  */
-public class Animation {
+class Animation2 {
 
 	protected Control target;
 	protected Field field;
@@ -63,12 +64,12 @@ public class Animation {
 	 * sketch.
 	 * 
 	 * 
-	 * @param attribute    Attribute to animate as String
-	 * @param target       Object on which to perform the animation
-	 * @param aimedValue   Final value
-	 * @param milliseconds Time to perform the animation in.
+	 * @param attributeName Attribute to animate as String
+	 * @param target        Object on which to perform the animation
+	 * @param aimedValue    Final value
+	 * @param milliseconds  Time to perform the animation in.
 	 */
-	public Animation(String attribute, Control target, float aimedValue, double milliseconds) {
+	public Animation2(String attributeName, Control target, float aimedValue, double milliseconds) {
 
 		this.target = target;
 
@@ -76,7 +77,7 @@ public class Animation {
 
 			try {
 				// try to find the field in the object.
-				field = getField(target.getClass(), attribute);
+				field = getField(target.getClass(), attributeName);
 				fieldType = field.getType().toString();
 
 				if (fieldType.equals("class java.lang.String") || fieldType.equals("boolean")) {
@@ -88,18 +89,18 @@ public class Animation {
 				// Make it accessible even if its private or protected.
 				field.setAccessible(true);
 
-				this.attributeName = attribute;
+				this.attributeName = attributeName;
 
 
 				// get initial value of this attribute
 				currentValue = field.getDouble(target);
 
 				// calculate needed number of frames to complete animation, never less than 1!
-				numberOfSteps = (int) Math.max(1, (Frame.frame0.papplet.frameRate * milliseconds / 1000));
+				numberOfSteps = (int) Math.max(1, (Control.getPApplet().frameRate * milliseconds / 1000));
 
 
 				// colors need to be animate differently than ordinary numerics
-				if (attribute.contains("Color")) { // all color attributes actually have the substring "Color" in them (:
+				if (attributeName.contains("Color")) { // all color attributes actually have the substring "Color" in them (:
 					animationType = COLOR;
 					a1 = ((int) currentValue >> 24) & 0xff;
 					r1 = ((int) currentValue >> 16) & 0xff;
@@ -116,7 +117,7 @@ public class Animation {
 					this.valueStart = currentValue;
 					this.valueEnd = aimedValue;
 
-					switch (attribute) {
+					switch (attributeName) {
 					case "minHeight":
 					case "maxheight":
 					case "minWidth":
@@ -133,7 +134,7 @@ public class Animation {
 
 				}
 			} catch (NoSuchFieldException nsfe) {
-				System.out.println("Animation error: The attribute \"" + attribute + "\" does not exist for this object");
+				System.out.println("Animation error: The attribute \"" + attributeName + "\" does not exist for this object");
 				cancel = true;
 			} catch (IllegalAccessException iae) {
 				iae.printStackTrace();
@@ -230,6 +231,227 @@ public class Animation {
 			}
 		}
 	}
+
+
+	/*
+	 * comparing function, returns true if it's the same attribute on the sameobject
+	 * (we don't want more than one animation at a time with equal target and
+	 * attribute
+	 */
+
+	/*public boolean compare(Animation other) {
+		if (this.attributeName.equals(other.attributeName) && this.target == other.target)
+			return true;
+		else
+			return false;
+	}*/
+}
+
+
+public class Animation {
+
+	private Control target;
+	private Field field;
+	private String attributeName;
+	private String fieldType;   // "int", "double", "float" etc.
+
+	private int animationType;  // enable i.e. color animations
+	private static final int NUMBER = 0;
+	private static final int COLOR = 1;
+
+	// number animation steps (frames) the animations needs to complete
+	private int numberOfSteps;
+	private int counter = 0;
+
+
+	private double currentValue;
+
+	// for numbers
+	private double valueStart;
+	private double valueEnd;
+
+	// for colors
+	private int a1, r1, g1, b1;
+	private int a2, r2, g2, b2;
+
+	/*
+	 * Animations access fields of components directly! That means no setter is used
+	 * and stuff usually done in setters is omitted.
+	 * 
+	 * Animations call target.animated() instead of target.update() so the target
+	 * will know.
+	 * 
+	 * Also Animations call target.autosize() if field to animate is
+	 * minHeight/maxHeight/height/fontSize/text(?)/paddings
+	 * 
+	 * Might need some adjustments here.
+	 * 
+	 * Also a checker should be implemented checking. that the attribute has an
+	 * allowed type.
+	 */
+
+	private Method setter;
+
+	/**
+	 * Create a new animation. The time in milliseconds will not be precise though.
+	 * At the moment this is only estimated through the current framerate of the
+	 * sketch.
+	 * 
+	 * 
+	 * @param attributeName Attribute to animate as String
+	 * @param target        Object on which to perform the animation
+	 * @param aimedValue    Final value
+	 * @param milliseconds  Time to perform the animation in.
+	 */
+	public Animation(String attributeName, Control target, float aimedValue, double milliseconds) {
+
+		this.target = target;
+
+		if (milliseconds < 100000 && milliseconds >= 0) { // prevent very long animations, or negative ones
+
+			try {
+				// try to find the field in the object.
+
+				field = getField(target.getClass(), attributeName);
+				fieldType = field.getType().toString();
+
+				if (fieldType.equals("class java.lang.String") || fieldType.equals("boolean")) {
+					System.out.println("Strings and booleans cannot be animated for obvious reasons.");
+					cancel();
+					return;
+				}
+				// get setter
+				setter = target.getClass().getMethod("set" + java.lang.Character.toUpperCase(attributeName.charAt(0)) + attributeName.substring(1),
+						field.getType());
+
+
+				this.attributeName = attributeName;
+
+
+				// get initial value of this attribute
+				currentValue = field.getDouble(target);
+
+				// calculate needed number of frames to complete animation, never less than 1!
+				numberOfSteps = (int) Math.max(1, (Control.getPApplet().frameRate * milliseconds / 1000));
+
+
+				// colors need to be animate differently than ordinary numerics
+				if (attributeName.contains("Color")) { // all color attributes actually have the substring "Color" in them (:
+					animationType = COLOR;
+					a1 = ((int) currentValue >> 24) & 0xff;
+					r1 = ((int) currentValue >> 16) & 0xff;
+					g1 = ((int) currentValue >> 8) & 0xff;
+					b1 = ((int) currentValue) & 0xff;
+
+					a2 = ((int) aimedValue >> 24) & 0xff;
+					r2 = ((int) aimedValue >> 16) & 0xff;
+					g2 = ((int) aimedValue >> 8) & 0xff;
+					b2 = ((int) aimedValue) & 0xff;
+					//
+				} else {
+					animationType = NUMBER;
+					this.valueStart = currentValue;
+					this.valueEnd = aimedValue;
+
+				}
+			} catch (NoSuchFieldException nsfe) {
+				System.out.println("Animation error: The attribute \"" + attributeName + "\" does not exist for this object");
+				cancel = true;
+			} catch (IllegalAccessException iae) {
+				iae.printStackTrace();
+				cancel = true;
+			} catch (NoSuchMethodException e) {
+				System.out.println("Animation error: The attribute \"" + attributeName + "\" is not accessible");
+				cancel = true;
+			}
+		}
+	}
+
+	/**
+	 * Cancel the animation next frame.
+	 */
+	public void cancel() {
+		cancel = true;
+	}
+
+	private boolean cancel = false;
+
+
+	/**
+	 * Animation process, called by {@link Frame}
+	 * 
+	 * @return false if animation finished
+	 */
+
+	protected boolean animate() {
+		if (cancel)
+			return false;
+
+		// check if there's still work to do
+		if (counter <= numberOfSteps) {
+			switch (animationType) {
+			case NUMBER:
+				currentValue = valueStart + (valueEnd - valueStart) / (float) numberOfSteps * counter;
+				break;
+
+			case COLOR:
+				double ac = (a1 + (a2 - a1) / (float) numberOfSteps * counter);
+				double rc = (r1 + (r2 - r1) / (float) numberOfSteps * counter);
+				double gc = (g1 + (g2 - g1) / (float) numberOfSteps * counter);
+				double bc = (b1 + (b2 - b1) / (float) numberOfSteps * counter);
+
+				currentValue = Color.create((int) rc, (int) gc, (int) bc, (int) ac);
+				break;
+			}
+		} else {
+			return false;      // end animation with false, which clears it off animation queue (in Frame)
+		}
+
+		counter++;
+
+		// set value
+		try {
+			switch (fieldType) {
+			case "int":
+				setter.invoke(target, (int) currentValue);
+				break;
+			case "float":
+				setter.invoke(target, (float) currentValue);
+				break;
+			case "double":
+				setter.invoke(target, currentValue);
+				break;
+			case "long":
+				setter.invoke(target, (long) currentValue);
+				break;
+			}
+		} catch (IllegalAccessException ie) {
+			ie.printStackTrace();
+		} catch (InvocationTargetException te) {
+			te.printStackTrace();
+		}
+		return true;
+	}
+
+
+	// get even protected fields
+	private Field getField(Class<?> class_, String fieldName) throws NoSuchFieldException {
+		try {
+
+			return class_.getDeclaredField(fieldName);
+
+		} catch (NoSuchFieldException nsfe) {
+
+			Class<?> superClass = class_.getSuperclass();
+
+			if (superClass == null) {
+				throw nsfe;
+			} else {
+				return getField(superClass, fieldName);
+			}
+		}
+	}
+
 
 
 	/*

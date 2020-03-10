@@ -125,9 +125,10 @@ public class VScrollContainer extends VFlowContainer {
 		return height;
 	}
 
+
 	// get height of handle
 	protected int scrollhandle_height() {
-		return height * scrollbar_height() / fullScrollHeight;
+		return Math.max(minScrollHandleLength, height * scrollbar_height() / fullScrollHeight);
 	}
 
 	// get position of handle
@@ -229,8 +230,8 @@ public class VScrollContainer extends VFlowContainer {
 		update();
 	}
 
-	
-	
+
+
 	/*
 	 * GETTER
 	 */
@@ -329,10 +330,9 @@ public class VScrollContainer extends VFlowContainer {
 	 */
 	@Override
 	protected boolean containerPreItemsMouseEvent(int x, int y) {
-		boolean mouseIsOverScrollBar = x > width - scrollHandleStrength - 3 && x < width && y > 0 && y < height;
+		boolean mouseIsOverScrollBar = needsScrollbarV() && x > width - scrollHandleStrength - 3 && x < width && y > 0 && y < height;
 
 		if (MouseEvent.PRESS == currentMouseEvent.getAction() && mouseIsOverScrollBar) {
-
 			int scrollhandle_posY = scrollhandle_posY();
 
 			// if clicked on scrollhandle itself (instead of entire scroll area) the

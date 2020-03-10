@@ -1,7 +1,6 @@
 package guiSET.core;
 
 
-import guiSET.classes.*;
 import processing.core.PApplet;
 import processing.event.MouseEvent;
 
@@ -42,8 +41,16 @@ public class Switch extends Checkbox {
 
 	}
 
-
-
+	/**
+	 * Do not call this function - it is just used internally for the switch
+	 * animation.
+	 * 
+	 * @param c c
+	 */
+	public void setCurrentPosition(float c) {
+		this.currentPosition = c;
+		update();
+	}
 
 	protected void render() {
 
@@ -58,22 +65,23 @@ public class Switch extends Checkbox {
 		// create smooth animation from one to the other position
 		// call update() if animation isn't finished yet
 		//
-		/*
-		 * int aimedPosition = (int) (checked ? (1.75 * checkboxSize - (checkboxSize -
-		 * checkboxSize / 4) / 2 - (checkboxSize / 4) + 1) : ((checkboxSize -
-		 * checkboxSize / 4) / 2 + (checkboxSize / 4) - 1));
-		 * 
-		 * if (Frame.frame0.drawMode == Frame.SUPER_EFF) { // no animation with
-		 * super_eco-mode currentPosition = aimedPosition; } else {
-		 * 
-		 * if (currentPosition < aimedPosition && checked) { currentPosition =
-		 * Math.min(currentPosition + checkboxSize / 20f, aimedPosition); update(); }
-		 * else if (currentPosition > aimedPosition && !checked) { currentPosition =
-		 * Math.max(currentPosition - checkboxSize / 20f, aimedPosition); update(); //
-		 * update again next frame }
-		 * 
-		 * }
-		 */
+
+//		int aimedPosition = (int) (checked ? (1.75 * checkboxSize - (checkboxSize - checkboxSize / 4) / 2 - (checkboxSize / 4) + 1)
+//				: ((checkboxSize - checkboxSize / 4) / 2 + (checkboxSize / 4) - 1));
+//
+//		if (Frame.frame0.drawMode == Frame.NO_LOOP) { // no animation with super_eco-mode currentPosition = aimedPosition;
+//		} else {
+//
+//			if (currentPosition < aimedPosition && checked) {
+//				currentPosition = Math.min(currentPosition + checkboxSize / 20f, aimedPosition);
+//				update();
+//			} else if (currentPosition > aimedPosition && !checked) {
+//				currentPosition = Math.max(currentPosition - checkboxSize / 20f, aimedPosition);
+//				update(); // update again next frame
+//			}
+//
+//		}
+
 
 		// draw shadow of switch "ball"
 		pg.fill(0);
@@ -99,7 +107,7 @@ public class Switch extends Checkbox {
 
 	// used for animating the switch movement
 	// stores the position of the switch "ball" for one frame while animating
-	private float currentPosition;
+	protected float currentPosition;
 
 	@Override
 	public void setChecked(boolean checked) {

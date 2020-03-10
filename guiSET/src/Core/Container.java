@@ -72,6 +72,8 @@ public class Container extends Control {
 	 */
 	protected boolean containerMakesAutoLayout = false;
 
+	// for scroll container sub classes
+	protected final static int minScrollHandleLength = 15;
 
 	/**
 	 * Default constructor sets width and height to 100
@@ -224,6 +226,7 @@ public class Container extends Control {
 	 * Remove a specific item from item list.
 	 * 
 	 * @param item item to remove.
+	 * @return true if the item has actually been removed
 	 */
 	public boolean remove(Control item) {
 		boolean result = items.remove(item);
@@ -467,7 +470,6 @@ public class Container extends Control {
 	public ArrayList<Control> traceAbsoluteCoordinates(int x, int y) {
 		coordinateTrace.clear();
 		traceCoordsImpl(x - getOffsetXWindow(), y - getOffsetYWindow());
-		print(x - getOffsetXWindow(), y - getOffsetYWindow());
 		return coordinateTrace;
 	}
 

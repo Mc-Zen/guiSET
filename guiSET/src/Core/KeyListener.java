@@ -2,7 +2,6 @@
 
 package guiSET.core;
 
-import guiSET.classes.*;
 import processing.core.*;
 import processing.event.*;
 

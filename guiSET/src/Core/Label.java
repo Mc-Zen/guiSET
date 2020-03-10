@@ -19,7 +19,7 @@ public class Label extends Control {
 	 * Constructor for specifying text to display. Default font size is 12 and
 	 * background is transparent.
 	 * 
-	 * @param text
+	 * @param text text for label
 	 */
 	public Label(String text) {
 		this(text, 12);

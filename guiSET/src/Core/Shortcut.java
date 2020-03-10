@@ -1,4 +1,4 @@
-package guiSET.classes;
+package guiSET.core;
 
 import processing.core.*;
 
@@ -22,21 +22,19 @@ public class Shortcut {
 
 	}
 
-
 	public Shortcut(char key, boolean control, boolean shift, boolean alt) {
 		this.keyCode = sun.awt.ExtendedKeyCodes.getExtendedKeyCodeForChar(key);
 		setShift(shift);
 		setControl(control);
 		setAlt(alt);
-
 	}
 
 	/**
 	 * Constructor for creating a shortcut with a key and some modifiers (order of
 	 * modifiers is not important).
 	 * 
-	 * @param key
-	 * @param modifiers
+	 * @param key       key
+	 * @param modifiers modifiers
 	 */
 	public Shortcut(char key, int... modifiers) {
 		this.keyCode = sun.awt.ExtendedKeyCodes.getExtendedKeyCodeForChar(key);
@@ -68,7 +66,7 @@ public class Shortcut {
 	 * much. This is only used by {@link KeyListener} as a performance-optimal
 	 * constructor.
 	 * 
-	 * @param keyCode key code
+	 * @param keyCode   key code
 	 * @param modifiers modifiers
 	 * @return created shortcut
 	 */
@@ -196,65 +194,8 @@ public class Shortcut {
 		default:
 			s = String.valueOf(c);
 		}
-		if (c >= 112 && c <= 123) // F!-F12
+		if (c >= 112 && c <= 123) // F1-F12
 			s = "F" + (char) (c - 111);
 		return (getControl() ? "Ctrl+" : "") + (getShift() ? "Shift+" : "") + (getAlt() ? "Alt+" : "") + s;
 	}
-
 }
-
-
-/*
- * public class Shortcut {
- * 
- * public char key;
- * 
- * private int modifiers = 0;
- * 
- * public Shortcut(char key, boolean control, boolean shift, boolean alt) {
- * this.key = key; setShift(shift); setControl(control); setAlt(alt);
- * 
- * }
- * 
- * public Shortcut(char Key, int... Modifiers) { this.key =
- * java.lang.Character.toUpperCase(Key); for (int modifier : Modifiers) { switch
- * (modifier) { case 17: setControl(true); break; case 16: setShift(true);
- * break; case 18: setAlt(true); break; } } }
- * 
- * public Shortcut(int modifiers, char key) { this.key =
- * java.lang.Character.toUpperCase(key); this.modifiers = modifiers; }
- * 
- * @Override public boolean equals(Object other) { if (this == other) return
- * true; if (getClass() != other.getClass()) return false;
- * 
- * Shortcut shortcut = (Shortcut) other;
- * 
- * if (modifiers == shortcut.modifiers && key == shortcut.key) { return true; }
- * return false; }
- * 
- * @Override public int hashCode() { return (modifiers) | (key >> 4); }
- * 
- * 
- * public void setShift(boolean state) { if (state) modifiers |=
- * processing.event.Event.SHIFT; else modifiers &=
- * ~processing.event.Event.SHIFT; }
- * 
- * public void setControl(boolean state) { if (state) modifiers |=
- * processing.event.Event.CTRL; else modifiers &= ~processing.event.Event.CTRL;
- * }
- * 
- * public void setAlt(boolean state) { if (state) modifiers |=
- * processing.event.Event.ALT; else modifiers &= ~processing.event.Event.ALT; }
- * 
- * public boolean getShift() { return (modifiers & processing.event.Event.SHIFT)
- * != 0; }
- * 
- * public boolean getControl() { return (modifiers &
- * processing.event.Event.CTRL) != 0; }
- * 
- * public boolean getAlt() { return (modifiers & processing.event.Event.ALT) !=
- * 0; } public String toString() { return (getControl() ? "Ctrl+" : "") +
- * (getShift() ? "Shift+" : "") + (getAlt() ? "Alt+" : "") + this.key; }
- * 
- * }
- */

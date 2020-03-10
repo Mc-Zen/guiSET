@@ -61,16 +61,17 @@ public class Textbox extends HScrollContainer {
 	 */
 	public boolean submitOnEnter = true;
 
+	// if false, then user can select text and copy but not insert or type
+	protected boolean inputEnabled = true;
 
 
 
 	public Textbox() {
 		this(100, 13);
-
 	}
 
 	public Textbox(int width) {
-		this(width, 12);
+		this(width, 13);
 	}
 
 	public Textbox(int width, int fontSize) {
@@ -79,18 +80,15 @@ public class Textbox extends HScrollContainer {
 		foregroundColor = -16777216;
 		setBackgroundColor(-2302756);
 
-		this.fontSize = fontSize;
+		setFontSize(fontSize);
 		cursor = PApplet.TEXT;
 		setPadding(5);
 		setSlimScrollHandle(true);
 
-
-		autosize();
-
 		overridesFrameShortcuts = true;
 
 		// cursor animation:
-		Frame.frame0.papplet.registerMethod("pre", this);
+		getPApplet().registerMethod("pre", this);
 	}
 
 
@@ -126,14 +124,14 @@ public class Textbox extends HScrollContainer {
 		/*
 		 * draw cursor if textbox is focused and animation currently is in display cycle
 		 */
-		if (this.focused && currentDisplayCurs) {
+		if (focused && currentDisplayCurs) {
 			drawCursor();
 		}
 
 		/*
 		 * draw selection
 		 */
-		if (selectionStart < selectionEnd && focused) {
+		if (focused && selectionStart < selectionEnd) {
 			if (selectionStart <= text.length() && selectionEnd <= text.length()) {
 				int selectionX = (int) pg.textWidth(text.substring(0, selectionStart));
 				int selectionWidth = (int) pg.textWidth(text.substring(selectionStart, selectionEnd));
@@ -160,7 +158,6 @@ public class Textbox extends HScrollContainer {
 		 */
 		drawScrollbar();
 
-
 		drawDefaultDisabled();
 	}
 
@@ -178,7 +175,7 @@ public class Textbox extends HScrollContainer {
 	 */
 	public void pre() {
 		if (this.focused) {
-			int t = Frame.frame0.papplet.millis();
+			int t = getPApplet().millis();
 			if (t - cursorTime > 500) {
 				currentDisplayCurs = !currentDisplayCurs;
 				cursorTime = t;
@@ -213,7 +210,7 @@ public class Textbox extends HScrollContainer {
 	@Override
 	public void focus() {
 		super.focus();
-		cursorTime = Frame.frame0.papplet.millis();
+		cursorTime = getPApplet().millis();
 		currentDisplayCurs = true;
 	}
 
@@ -226,6 +223,8 @@ public class Textbox extends HScrollContainer {
 
 	// append character at cursorPosition
 	protected void append(char c) {
+		if (!inputEnabled)
+			return;
 		if (c != '\n' && c != '\r') { // don't allow line breaks
 			text = text.substring(0, cursorPosition) + c + text.substring(cursorPosition);
 			cursorPosition += 1;
@@ -235,6 +234,8 @@ public class Textbox extends HScrollContainer {
 
 	// append string at cursorPosition
 	protected void append(String s) {
+		if (!inputEnabled)
+			return;
 		s = s.replaceAll("\\r\\n|\\r|\\n", " ");
 		text = text.substring(0, cursorPosition) + s + text.substring(cursorPosition);
 		cursorPosition += s.length();
@@ -283,7 +284,7 @@ public class Textbox extends HScrollContainer {
 	// called whenether the cursor position changed due to user interaction or text
 	// edits
 	protected void cursorPositionChanged() {
-		cursorTime = Frame.frame0.papplet.millis();
+		cursorTime = getPApplet().millis();
 		currentDisplayCurs = true;
 		selectionStart = cursorPosition;
 		selectionEnd = cursorPosition;
@@ -323,7 +324,7 @@ public class Textbox extends HScrollContainer {
 	/**
 	 * Set the cursor to a specific index position in the text.
 	 * 
-	 * @param cursorPosition
+	 * @param cursorPosition cusor position
 	 */
 	public void setCursorPosition(int cursorPosition) {
 		moveCursorTo(cursorPosition);
@@ -378,7 +379,20 @@ public class Textbox extends HScrollContainer {
 		update();
 	}
 
+	/**
+	 * Prevent user from typing or pasting text while maintaining the ability of
+	 * selecting and copying.
+	 */
+	public void disableInput() {
+		inputEnabled = false;
+	}
 
+	/**
+	 * Undo {@link #disableInput()}
+	 */
+	public void enableInput() {
+		inputEnabled = true;
+	}
 
 
 
@@ -410,11 +424,11 @@ public class Textbox extends HScrollContainer {
 
 
 	protected static final String wordDelimiters = " \n+-()[] {}().,:;_*\"\'$%&/=?!";
+
 	/*
 	 * start at cursorPosition and iterate over the text to find the next
 	 * space/bracket/comma etc...
 	 */
-
 	protected int findNextStop() {
 		// in first phase search for next space, in second search for first letter
 		int phase = 0;
@@ -628,19 +642,15 @@ public class Textbox extends HScrollContainer {
 
 		if (ctrl && !shft && !alt) {
 			switch ((char) code) {
-
 			case 'C':
 				copy();
 				break;
-
 			case 'V':
 				paste();
 				break;
-
 			case 'X':
 				cut();
 				break;
-
 			case 'A':
 				selectionStart = 0;
 				selectionEnd = text.length();
@@ -728,9 +738,8 @@ public class Textbox extends HScrollContainer {
 			case PApplet.RETURN: // for macinthosh
 			case PApplet.ENTER:
 				if (submitOnEnter) {
+					blur(); // this first, in case the event callback wants to focus this again 
 					handleEvent(submitListener, null);
-					this.blur();
-					update();
 				}
 				break;
 
@@ -748,8 +757,6 @@ public class Textbox extends HScrollContainer {
 			int xx = findPreviousStop();
 			deleteRange(xx, selectionEnd);
 			moveCursorTo(xx);
-
-
 		}
 		handleEvent(keyPressListener, e);
 	}

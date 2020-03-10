@@ -21,12 +21,11 @@ package guiSET.core;
 import processing.core.*;
 import processing.event.*;
 
+import java.awt.Dimension;
 //import java.awt.Font;
 import java.lang.Exception;
 import java.lang.reflect.Method;
 import java.util.HashMap;
-
-import guiSET.classes.*;
 
 import java.util.ArrayList;
 
@@ -113,7 +112,7 @@ public class Frame extends Container {
 	 */
 	protected Control focusedElement = this;
 
-
+	java.awt.Frame awtFrame;
 
 
 
@@ -160,12 +159,8 @@ public class Frame extends Container {
 		// default size fills out entire sketch window
 		width = papplet.width;
 		height = papplet.height;
-		bounds.X = papplet.width;
-		bounds.Y = papplet.height;
 		offsetX = 0;
 		offsetY = 0;
-		currentWidth = width;
-		currentHeight = height;
 
 		keyListener = new KeyListener(this);
 
@@ -174,6 +169,28 @@ public class Frame extends Container {
 		init_pfont();		// initialize a pfont for getting textWidth/textDescent...
 
 		new Protected_Frame(timeToDraw);
+
+
+		// jframe = (javax.swing.JFrame)((processing.awt.PSurfaceAWT.SmoothCanvas)getSurface().getNative()).getFrame();
+		awtFrame = ((processing.awt.PSurfaceAWT.SmoothCanvas) papplet.getSurface().getNative()).getFrame();
+
+
+		awtFrame.addWindowFocusListener(new java.awt.event.WindowFocusListener() {
+			@Override
+			public void windowLostFocus(java.awt.event.WindowEvent e) {
+
+			}
+
+			@Override
+			public void windowGainedFocus(java.awt.event.WindowEvent e) {
+			}
+		});
+
+		awtFrame.addComponentListener(new java.awt.event.ComponentAdapter() {
+			public void componentResized(java.awt.event.ComponentEvent evt) {
+				resize();
+			}
+		});
 	}
 
 
@@ -269,20 +286,10 @@ public class Frame extends Container {
 		if (mode == NO_LOOP) {
 			papplet.noLoop();
 			papplet.redraw();
-			if (resizable) {
-				System.out.println("Resizable windows doesn't really work together with NO_LOOP drawing mode");
-			}
 		} else {
 			papplet.loop();
 		}
-
 	}
-
-
-
-	// size copies for resize checking
-	protected int currentWidth;
-	protected int currentHeight;
 
 
 
@@ -315,30 +322,28 @@ public class Frame extends Container {
 		/*
 		 * check if window has been resized
 		 */
-		if (currentWidth != papplet.width || currentHeight != papplet.height) { // window resized
+		/*if (currentWidth != papplet.width || currentHeight != papplet.height) { // window resized
 			currentWidth = papplet.width;
 			currentHeight = papplet.height;
-
+		
 			handleEvent(windowResizeListener, null);
-
+		
 			// always resize frame to window size
 			this.width = papplet.width;
 			this.height = papplet.height;
-			bounds.X = papplet.width;
-			bounds.Y = papplet.height;
-
+		
 			// perform own and childrens internal resize event
 			resize();
-
+		
 			// frame resize event (need to call this because in resize no anchors are set
 			// usually
 			// yes, this is basically redundant to the WINDOW_RESIZE_EVENT (for the Frame
 			// class) but it's easier for users.
 			handleEvent(resizeListener, null);
-
+		
 			update();
 		}
-
+		*/
 		/*
 		 * handle animations
 		 */
@@ -355,12 +360,6 @@ public class Frame extends Container {
 		if (visible) {
 			render();
 		}
-
-
-
-
-
-
 	}
 
 
@@ -368,16 +367,12 @@ public class Frame extends Container {
 	protected void render() {
 		if (dirty) {
 
-//				calcBoundsCount = 0;
-//				renderCount = 0;
-//				renderedObjects = "";
+			// calcBoundsCount = 0;
+			// renderCount = 0;
+			// renderedObjects = "";
 
 			dirty = false;
 			// long t0 = System.nanoTime();
-
-
-			// removing this soon !!
-			// calcBounds();
 
 			preRender(); // for frame
 			super.render();    // render everything
@@ -413,6 +408,30 @@ public class Frame extends Container {
 		}
 	}
 
+	@Override
+	protected void resize() {
+		handleEvent(windowResizeListener, null);
+
+		// always resize frame to window size
+		this.width = papplet.width;
+		this.height = papplet.height;
+
+		// perform own and childrens internal resize event
+		super.resize();
+
+		// frame resize event (need to call this because in resize no anchors are set
+		// usually
+		// yes, this is basically redundant to the WINDOW_RESIZE_EVENT (for the Frame
+		// class) but it's easier for users.
+		handleEvent(resizeListener, null);
+
+		update();
+	}
+
+
+	protected boolean setupFinished() {
+		return initialized;
+	}
 
 
 
@@ -484,7 +503,7 @@ public class Frame extends Container {
 	 * THE exact same as the registered one. It can be a new one with the same
 	 * attributes.
 	 * 
-	 * @param shortcut
+	 * @param shortcut shortcut to deregister
 	 * @return true if deregistering has been successful.
 	 */
 	public boolean deregisterShortcut(Shortcut shortcut) {
@@ -663,9 +682,6 @@ public class Frame extends Container {
 	 * @param resizable resizable
 	 */
 	public void setResizable(boolean resizable) {
-		if (resizable && drawMode == NO_LOOP) {
-			System.out.println("Window resizing doesn't work properly with SUPER_EFF drawing mode");
-		}
 		this.resizable = resizable;
 		papplet.getSurface().setResizable(resizable);
 	}
@@ -697,8 +713,33 @@ public class Frame extends Container {
 	 */
 	public void setWindowSize(int width, int height) {
 		papplet.getSurface().setSize(width, height);
+		setSize(width, height);
 	}
 
+	/**
+	 * Set the minimum size of the application window
+	 * 
+	 * @param minWidth minimum width
+	 * @param minHeight minimum height
+	 */
+	public void setMinimumWindowSize(int minWidth, int minHeight) {
+		awtFrame.setMinimumSize(new Dimension(minWidth, minHeight));
+	}
+
+	/**
+	 * Set the maximum size of the application window+
+	 * 
+	 * @param maxWidth maximum width
+	 * @param maxHeight maximum height
+	 */
+	public void setMaximumWindowSize(int maxWidth, int maxHeight) {
+		awtFrame.setMaximumSize(new Dimension(minWidth, minHeight));
+
+	}
+
+	protected void setAlwaysOnTop(boolean alwaysOnTop) {
+		awtFrame.setAlwaysOnTop(alwaysOnTop);
+	}
 
 
 	// Dont allow setting these attributes for Frame
@@ -881,11 +922,14 @@ public class Frame extends Container {
 				// now we need to check if mouse is still over the element
 				ArrayList<Control> trace = traceAbsoluteCoordinates(mousex, mousey);
 
-				if (trace.get(0) == draggedElement) {
-					hoveredElement = draggedElement; // hoveredElement not set, because not calling mouseEvent
-				} else {
-					print("drop on ", trace.get(0));
+				if (trace.size() > 0) {
+					if (trace.get(0) == draggedElement) {
+						hoveredElement = draggedElement; // hoveredElement not set, because not calling mouseEvent
+					} else {
+						//print("drop on ", trace.get(0));
+					}
 				}
+
 				draggedElement = null;
 			} else {
 				mouseEvent(mousex, mousey);
@@ -975,7 +1019,7 @@ public class Frame extends Container {
 	/**
 	 * Check if the CONTROL key is currently being hold down
 	 * 
-	 * @return
+	 * @return true if control key is down
 	 */
 	public boolean isControlDown() {
 		return keyListener.isControlDown();
@@ -984,7 +1028,7 @@ public class Frame extends Container {
 	/**
 	 * Check if the SHIFT key is currently being hold down
 	 * 
-	 * @return
+	 * @return true if shift key is down
 	 */
 	public boolean isShiftDown() {
 		return keyListener.isShiftDown();
@@ -993,7 +1037,7 @@ public class Frame extends Container {
 	/**
 	 * Check if the ALT key is currently being hold down
 	 * 
-	 * @return
+	 * @return true if alt key is down
 	 */
 	public boolean isAltDown() {
 		return keyListener.isAltDown();
@@ -1002,7 +1046,7 @@ public class Frame extends Container {
 	/**
 	 * Check if the META key is currently being hold down
 	 * 
-	 * @return
+	 * @return true if meta key is down
 	 */
 	public boolean isMetaDown() {
 		return keyListener.isMetaDown();

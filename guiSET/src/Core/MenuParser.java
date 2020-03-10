@@ -2,7 +2,6 @@ package guiSET.core;
 
 import java.util.ArrayList;
 
-import guiSET.classes.Shortcut;
 import processing.core.PApplet;
 
 /**

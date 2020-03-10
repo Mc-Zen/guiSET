@@ -1,6 +1,5 @@
 package guiSET.core;
 
-import guiSET.classes.Color;
 import processing.event.*;
 
 /**
@@ -54,7 +53,7 @@ public class ListItem extends Control {
 		updateAnchors(); // not really necessary or elegant but for now (just in case listitem has children)
 		resize();        // ...
 
-		pg = Frame.frame0.papplet.createGraphics(width, height);
+		pg = getPApplet().createGraphics(width, height);
 		pg.beginDraw();
 
 		if (selected) {
@@ -112,11 +111,11 @@ public class ListItem extends Control {
 	 */
 	public void setSelectionColor(int selectionColor) {
 		this.selectionColor = selectionColor;
-		int r = (int) Frame.frame0.papplet.red(selectionColor);
-		int g = (int) Frame.frame0.papplet.green(selectionColor);
-		int b = (int) Frame.frame0.papplet.blue(selectionColor);
+		int r = (int) getPApplet().red(selectionColor);
+		int g = (int) getPApplet().green(selectionColor);
+		int b = (int) getPApplet().blue(selectionColor);
 
-		if (Frame.frame0.papplet.brightness(selectionColor) > 40) {
+		if (getPApplet().brightness(selectionColor) > 40) {
 			// darken color for selectionHoverColor when color is bright enough
 			selectionHoverColor = Color.create(r - 20, g - 20, b - 20);
 		} else {

@@ -8,84 +8,42 @@ import java.util.ArrayList;
 import java.util.Timer;
 import java.util.TimerTask;
 
-import guiSET.classes.*;
+
+
 
 
 /**
- * Basic brick for creating menus. Just take a {@link MenuBar}and add MenuItems
- * to it.
- * 
- * You can add other MenuItems to them and so on to create any structure of menu
- * items. Also take a look at the {@link MenuSeparator} which provides a
- * non-clickable and slim line for separating parts of the menu strip.
- * 
- * There is only this one class for every position in the menu tree.
- * 
- * 
  * The MenuItems aren't displayed and rendered at the position of the hierachy
- * they are added to. Instead they create a {@link MenuStrip} (called
- * "dropdown") Object (if they have children/subitems at all) which then is
- * added to an instance of MenuSurface. This is necessary to be able to display
- * it at any place. MenuSurface is created automatically once if it does not
- * exist yet and adds itself to {@link Frame}. Clicking on anywhere on the
+ * they are added to. Instead they create (if they have children/subitems at
+ * all) a MenuStrip instance (called "dropDown") which then is added to an
+ * instance of MenuSurface. This is necessary to be able to display it at any
+ * location on the window. MenuSurface is created automatically once if it does
+ * not exist yet and adds itself to Frame. Clicking on anywhere on the
  * MenuSurface which is not a MenuItem will close all open strips.
  * 
  * 
- * By default the ToolStrips are invisible and are only set to visible when
+ * By default the MenuStrips are invisible and are only set to visible when
  * opening a strip by clicking on it. When removing all subitems from an item,
- * the ToolStrip will be removed too.
- * 
- * MenuItems and ToolStrips can also be used to create menus that pop up when
- * i.e. right-clicking on something.
- * 
+ * the MenuStrip will be removed too.
  */
 
-
-
-/*class A {
-
-	static int num;
-
-	static final int L1 = getListener();
-	static final int L2 = getListener();
-
-	static int getListener() {
-		return num++;
-	}
-}
-
-class B extends A {
-	static int num = A.num;
-
-	static final int LB = getListener();
-
-	static int getListener() {
-		return num++;
-	}
-}
-
-class D extends A {
-	static int num = A.num;
-
-	static final int LR = getListener();
-	static final int LT = getListener();
-
-	static int getListener() {
-		return num++;
-	}
-}
-
-
-class C extends B {
-	static int num = B.num;
-
-	static final int L3 = getListener();
-
-	static int getListener() {
-		return num++;
-	}
-}*/
-
+/**
+ * Basic brick for creating menus. Just add a new {@link MenuBar} to your
+ * {@link Frame} instance and add MenuItems to it.
+ * 
+ * You can add other MenuItems to theses and so on to create any structure of
+ * menu items. Also take a look at the {@link MenuSeparator} which provides a
+ * non-clickable and slim line for separating parts of the menu strip.
+ * 
+ * There is only this one class for every position in the menu tree.
+ *
+ * MenuItems and MenuStrips can also be used to create menus that pop up when
+ * i.e. right-clicking on something. This is accomplished by creating a
+ * ToolStrip and adding items to it. The ToolStrip can be be shown by calling
+ * myToolStrip.show().
+ * 
+ * 
+ */
 
 class MenuSurface extends Container {
 	protected static MenuSurface staticMS;
@@ -102,11 +60,6 @@ class MenuSurface extends Container {
 			setZ(MenuItem.MenuZIndex);
 			setBackgroundColor(0);
 		}
-
-
-
-		// print(A.L1, A.L2, B.LB, C.L3, D.LR, D.LT,"num",A.num,B.num, C.num, D.num);
-		// lol
 	}
 
 
@@ -117,7 +70,7 @@ class MenuSurface extends Container {
 	}
 
 
-	protected static void addToolStrip(MenuStrip t) {
+	protected static void addMenuStrip(MenuStrip t) {
 		if (staticMS == null)
 			new MenuSurface();
 
@@ -157,11 +110,11 @@ public class MenuItem extends Control {
 
 	/*
 	 * sub items (a menuitem is not really the parent of its subitems. Instead it
-	 * references a Toolstrip that is placed in the Frame with high z-index and that
+	 * references a MenuStrip that is placed in the Frame with high z-index and that
 	 * is the real parent of all subitems.
 	 * 
 	 * It's easier to keep this list a Control-list and not a MenuItem-list because
-	 * the ToolStrip extends Container which has a Control-list and the lists are
+	 * the MenuStrip extends Container which has a Control-list and the lists are
 	 * synchronized.
 	 */
 	protected ArrayList<Control> items;
@@ -196,7 +149,7 @@ public class MenuItem extends Control {
 	protected MenuItem headerStrip;
 
 	/*
-	 * subitems of this item are visible
+	 * Are subitems of this item visible at the moment?
 	 */
 	protected boolean open = false;
 
@@ -247,16 +200,11 @@ public class MenuItem extends Control {
 	 */
 	public MenuItem(String text, String methodName) {
 		this(text);
-
 		addSelectListener(methodName);
-		// specified method will be executed on mouse release
-		// addMouseListener("release", methodName);
 	}
 
 	public MenuItem(String text, String methodName, Shortcut shortcut) {
 		this(text, methodName);
-
-		// specified method will be executed on mouse release
 		setShortcut(shortcut);
 		Frame.frame0.registerShortcut(shortcut, methodName);
 		addSelectListener(methodName);
@@ -356,7 +304,7 @@ public class MenuItem extends Control {
 			// If this whole strip (that this item just has been added to) is already added
 			// to a MenuBar or similar, we need to add the dropDown for this item separately
 			if (headerStrip != null && headerStrip.parent != null) {
-				addToolStrips(); // add all toolstrips recursively (preserve right z-order)
+				addMenuStrips(); // add all menustrips recursively (preserve right z-order)
 			}
 		} else {
 			type = MENU_HEADER;
@@ -365,7 +313,7 @@ public class MenuItem extends Control {
 			// necessary for headers as it is already included in the add() method when
 			// adding MenuItems.
 			setHeader(this);
-			addToolStrips(); // add all toolstrips recursively (preserve right z-order)
+			addMenuStrips(); // add all menustrips recursively (preserve right z-order)
 
 			// add this item to static headers array
 			MenuItem headersTemp[] = new MenuItem[headers.length + 1];
@@ -379,11 +327,11 @@ public class MenuItem extends Control {
 	}
 
 
-	protected void addToolStrips() {
+	protected void addMenuStrips() {
 		if (dropDown != null) {
-			MenuSurface.addToolStrip(dropDown);
+			MenuSurface.addMenuStrip(dropDown);
 			for (Control c : items) {
-				((MenuItem) c).addToolStrips();
+				((MenuItem) c).addMenuStrips();
 			}
 		}
 	}
@@ -446,9 +394,6 @@ public class MenuItem extends Control {
 
 			open = true;
 
-
-
-			// MenuSurface.openMenu();
 			/*
 			 * Draw first layer items BENEATH this item and all other layers always NEXT to
 			 * this item
@@ -466,7 +411,7 @@ public class MenuItem extends Control {
 
 
 
-			// make toolstrip (dropdown) visible
+			// make dropdown (menustrip) visible
 			dropDown.show();
 
 
@@ -480,7 +425,7 @@ public class MenuItem extends Control {
 				headerStrip.childSelected(this);
 			} else {
 
-				// only used for free ToolStrips unbound to a menu
+				// only used for free MenuStrip unbound to a menu
 				((MenuStrip) parent).itemSelected(this);
 			}
 		}
@@ -604,7 +549,7 @@ public class MenuItem extends Control {
 
 	protected void addItem(int position, MenuItem item) {
 		items.add(position, item); // update called here
-		// need to create the toolstrip if not already existent
+		// need to create the dropdown if not already existent
 		if (dropDown == null) {
 			dropDown = new MenuStrip();
 			// sync DropDown content with items
@@ -612,12 +557,12 @@ public class MenuItem extends Control {
 
 			// unschön aber nötig
 			if (item.items.size() == 0)
-				MenuSurface.addToolStrip(dropDown);
+				MenuSurface.addMenuStrip(dropDown);
 
 			// The dropdowns parent will be the static MenuSurface staticMS.
 			// a dropdown is added to staticMS when a menu-header is added to its container
-			// (usually a MenuBar) by calling addToolStrips().
-			// This method recursively adds the ToolStrips for all (sub...-) items that have
+			// (usually a MenuBar) by calling addMenuStrips().
+			// This method recursively adds the MenuStrips for all (sub...-) items that have
 			// one.
 		}
 
@@ -902,7 +847,7 @@ public class MenuItem extends Control {
 
 
 /**
- * Container for MenuItems 
+ * Container for MenuItems
  *
  */
 
@@ -935,7 +880,7 @@ class MenuStrip extends Container {
 		setHeight(h);
 
 		// we cheat here and give some extra size for shadow
-		pg = Frame.frame0.papplet.createGraphics(width + 5, height + 5);
+		pg = getPApplet().createGraphics(width + 5, height + 5);
 		pg.beginDraw();
 
 		drawShadow(width, height, 5);
@@ -971,7 +916,7 @@ class MenuStrip extends Container {
 
 	// also used internally by MenuItem
 	/**
-	 * Show this ToolStrip.
+	 * Show this MenuStrip.
 	 */
 	public void show() {
 		MenuSurface.openMenu();
@@ -981,7 +926,7 @@ class MenuStrip extends Container {
 
 	// also used internally by MenuItem
 	/**
-	 * Hide this ToolStrip.
+	 * Hide this MenuStrip.
 	 */
 	public void hide() {
 		setVisible(false); // not sure if the update() is necessary here
@@ -1001,10 +946,11 @@ class MenuStrip extends Container {
 		update();
 	}
 
-	// called by MenuItem and only used by free ToolStrips unbound to a menu
+	// called by MenuItem and only used by free MenuStrips that are unbound to a
+	// menu
 	protected void itemSelected(MenuItem item) {
 		item.close();
 		hide();
-		
+
 	}
 }

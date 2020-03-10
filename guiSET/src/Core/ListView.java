@@ -5,7 +5,6 @@ import processing.event.*;
 
 import java.util.ArrayList;
 
-import guiSET.classes.*;
 
 /**
  * The list view allows to display easily a lot of items in a vertical list.
@@ -268,7 +267,7 @@ public class ListView extends VScrollContainer {
 	 * Simple adding method just giving the text as String will create automatically
 	 * new ListItems.
 	 * 
-	 * @param newItems item text
+	 * @param newItem item text
 	 */
 	public void add(String newItem) {
 		ListItem newListItem = new ListItem();
@@ -351,11 +350,11 @@ public class ListView extends VScrollContainer {
 	 */
 	public void setSelectionColor(int selectionColor) {
 		this.selectionColor = selectionColor;
-		int r = (int) Frame.frame0.papplet.red(selectionColor);
-		int g = (int) Frame.frame0.papplet.green(selectionColor);
-		int b = (int) Frame.frame0.papplet.blue(selectionColor);
+		int r = (int) getPApplet().red(selectionColor);
+		int g = (int) getPApplet().green(selectionColor);
+		int b = (int) getPApplet().blue(selectionColor);
 
-		if (Frame.frame0.papplet.brightness(selectionColor) > 40) {
+		if (getPApplet().brightness(selectionColor) > 40) {
 			// darken color for HoverColor and PressedColor whencolor is bright enough
 			selectionHoverColor = Color.create(r - 20, g - 20, b - 20);
 		} else {

@@ -5,7 +5,6 @@ import processing.event.*;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 
-import guiSET.classes.*;
 
 import java.lang.reflect.InvocationTargetException;
 import java.awt.Font;
@@ -117,8 +116,8 @@ public abstract class Control {
 	 * them manually!
 	 */
 
-	@Deprecated
-	protected Bounds bounds = new Bounds(0, 0, 0, 0);
+	//@Deprecated
+	//protected Bounds bounds = new Bounds(0, 0, 0, 0);
 
 
 	/*
@@ -162,11 +161,11 @@ public abstract class Control {
 	protected int pressedColor; 		// first set automatically with backgroundColor, can be changed programatically
 
 	/*
-	 * visual background color is the actually displayed bg-color, while
+	 * Visual background color is the actually displayed bg-color, while
 	 * backgroundColor is only the color in normal state (neither hovered on or
-	 * pressed). When entering/pressing the control visualBackgroundColor is set to
+	 * pressed). When entering/pressing the elements visualBackgroundColor is set to
 	 * hoverColor/pressedColor and back to backgroundColor when exiting/releasing
-	 * the control
+	 * the element.
 	 */
 	protected int visualBackgroundColor;
 
@@ -418,13 +417,6 @@ public abstract class Control {
 		Frame.frame0.requestBlur(this);
 	}
 
-	// just a useful debugging function
-	@Deprecated
-	protected void drawBounds() {
-		Frame.frame0.papplet.rect(bounds.X0, bounds.Y0, bounds.X - bounds.X0, bounds.Y - bounds.Y0);
-	}
-
-
 
 
 
@@ -565,7 +557,7 @@ public abstract class Control {
 
 			// is there is a border radius we need to mask the image
 			if (borderRadius > 0) {
-				PGraphics maskImage = Frame.frame0.papplet.createGraphics(width, height);
+				PGraphics maskImage = getPApplet().createGraphics(width, height);
 				maskImage.beginDraw();
 				maskImage.noStroke();
 				maskImage.rect(borderWidth / 2, borderWidth / 2, width - borderWidth, height - borderWidth, borderRadius);
@@ -612,9 +604,9 @@ public abstract class Control {
 	// called by Frame at constructor
 	protected static void init_pfont() {
 
-		textInfo_graphics = Frame.frame0.papplet.createGraphics(1, 1);
-		textInfo_graphics.beginDraw();
-		textInfo_graphics.textSize(12);
+//		textInfo_graphics = Frame.frame0.papplet.createGraphics(1, 1);
+//		textInfo_graphics.beginDraw();
+//		textInfo_graphics.textSize(12);
 		// System.out.println(textInfo_graphics.textFont);
 		// textInfo_graphics.textFont = createDefaultFont(12f);
 		// textInfo_graphics.endDraw();
@@ -630,7 +622,7 @@ public abstract class Control {
 
 	// copied from PGraphics - need this here but cant access
 	private static PFont createFont(Font baseFont, float size, boolean smooth, char[] charset, boolean stream) {
-		return new PFont(baseFont.deriveFont(size * Frame.frame0.papplet.pixelDensity), smooth, charset, stream, Frame.frame0.papplet.pixelDensity);
+		return new PFont(baseFont.deriveFont(size * getPApplet().pixelDensity), smooth, charset, stream, getPApplet().pixelDensity);
 	}
 
 
@@ -1120,10 +1112,11 @@ public abstract class Control {
 	 * @param width width in pixel
 	 */
 	public void setWidth(int width) {
-		if (width == this.width) // no unnecessary resize event calling when setting min/max
+		int temp = this.width;
+		setWidthImpl(width);
+		if (temp == this.width) // no unnecessary resize event calling when setting min/max
 			return;
 		// call the resize event.
-		setWidthImpl(width);
 
 		updateAnchors();
 		resize();
@@ -1137,9 +1130,10 @@ public abstract class Control {
 	 * @param height height in pixel
 	 */
 	public void setHeight(int height) {
-		if (height == this.height) // no unnecessary resize event calling when setting min/max
-			return;
+		int temp = this.height;
 		setHeightImpl(height);
+		if (temp == this.height) // no unnecessary resize event calling when setting min/max
+			return;
 
 		updateAnchors();
 		resize();
@@ -1241,13 +1235,13 @@ public abstract class Control {
 		backgroundColor = clr;
 		visualBackgroundColor = clr;
 
-		int r = (int) Frame.frame0.papplet.red(clr);
-		int g = (int) Frame.frame0.papplet.green(clr);
-		int b = (int) Frame.frame0.papplet.blue(clr);
+		int r = (int) getPApplet().red(clr);
+		int g = (int) getPApplet().green(clr);
+		int b = (int) getPApplet().blue(clr);
 		// int a = (int) papplet.alpha(clr);
 
-		if (Frame.frame0.papplet.brightness(clr) > 40) { // darken color for HoverColor and PressedColor when color is
-														 // bright enough
+		if (getPApplet().brightness(clr) > 40) { // darken color for HoverColor and PressedColor when color is
+												 // bright enough
 			hoverColor = Color.create(r - 20, g - 20, b - 20);
 			pressedColor = Color.create(r - 40, g - 40, b - 40);
 		} else { // lighten color for HoverColor and PressedColor when color too dark
@@ -1404,11 +1398,11 @@ public abstract class Control {
 	 * @param clr2 bottom color
 	 */
 	public void setGradient(int clr1, int clr2) {
-		PGraphics gradient = Frame.frame0.papplet.createGraphics(width, height);
+		PGraphics gradient = getPApplet().createGraphics(width, height);
 		gradient.beginDraw();
 		for (int i = 0; i < height; i++) {
 			float inter = PApplet.map(i, 0, height, 0, 1);
-			int c = Frame.frame0.papplet.lerpColor(clr1, clr2, inter);
+			int c = PGraphics.lerpColor(clr1, clr2, inter, PGraphics.RGB);
 			gradient.stroke(c);
 			gradient.line(0, i, width, i);
 		}
@@ -1458,7 +1452,16 @@ public abstract class Control {
 	 * @param opacity opacity from 0 (transparent) to 1 (opaque).
 	 */
 	public void setOpacity(double opacity) {
-		this.opacity = (float) Math.max(0, Math.min(1, opacity));
+		setOpacity((float) opacity);
+	}
+
+	/**
+	 * Set opacity (opposite of transparency).
+	 * 
+	 * @param opacity opacity from 0 (transparent) to 1 (opaque).
+	 */
+	public void setOpacity(float opacity) {
+		this.opacity = Math.max(0, Math.min(1, opacity));
 		update();
 	}
 
@@ -2071,7 +2074,7 @@ public abstract class Control {
 
 
 	// not used
-	
+
 	// if zero do not process move events.
 	private static int moveListenersCount = 0;
 

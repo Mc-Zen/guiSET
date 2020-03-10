@@ -122,7 +122,8 @@ public class ScrollArea extends Container {
 			if (slim_scrollhandle) {
 				pg.rect(scrollhandle_posX(), height - 4, scrollhandle_width(), 3, 15);
 			} else {
-				pg.rect(0, height - 2 - scrollHandleStrength, scrollbar_width(), scrollHandleStrength + 3); // height is one more than necessary (just)																			 // a buffer)
+				pg.rect(0, height - 2 - scrollHandleStrength, scrollbar_width(), scrollHandleStrength + 3); // height is one more than necessary
+																											 // (just) // a buffer)
 				pg.fill((startHandleDragPos > -1 && whichScrollBar == H_SCROLLBAR) ? 170 : 190);
 				pg.rect(scrollhandle_posX(), height - 1 - scrollHandleStrength, scrollhandle_width(), scrollHandleStrength, 3);
 			}
@@ -158,12 +159,12 @@ public class ScrollArea extends Container {
 
 	// get height of handle (of the vertical scrollbar)
 	protected int scrollhandle_height() {
-		return height * scrollbar_height() / fullScrollHeight;
+		return Math.max(minScrollHandleLength, height * scrollbar_height() / fullScrollHeight);
 	}
 
 	// get width of handle (of the horizontal scrollbar)
 	protected int scrollhandle_width() {
-		return width * scrollbar_width() / fullScrollWidth;
+		return Math.max(minScrollHandleLength, width * scrollbar_width() / fullScrollWidth);
 	}
 
 	// get position of handle (of the vertical scrollbar)
@@ -365,14 +366,13 @@ public class ScrollArea extends Container {
 	 */
 	@Override
 	protected boolean containerPreItemsMouseEvent(int x, int y) {
-		boolean mouseIsOverScrollBarV = x > width - scrollHandleStrength - 3 && x < width && y > 0
+		boolean mouseIsOverScrollBarV = needsScrollbarV() && x > width - scrollHandleStrength - 3 && x < width && y > 0
 				&& y < height - (needsScrollbarV() ? scrollHandleStrength + 3 : 0);
-		boolean mouseIsOverScrollBarH = y > height - scrollHandleStrength - 3 && y < height && x > 0
+		boolean mouseIsOverScrollBarH = needsScrollbarH() && y > height - scrollHandleStrength - 3 && y < height && x > 0
 				&& x < width - (needsScrollbarH() ? scrollHandleStrength + 3 : 0);
 
 
 		if (currentMouseEvent.getAction() == MouseEvent.PRESS) {
-
 			if (mouseIsOverScrollBarH) {
 				whichScrollBar = H_SCROLLBAR;
 				int scrollhandle_posX = scrollhandle_posX();
