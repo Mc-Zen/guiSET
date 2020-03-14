@@ -17,7 +17,7 @@
         <li><a class="mlink sel" href="wiki.html">Wiki</a></li>
         <li><a class="mlink" href="../examples.html">Examples</a></li>
         <li><a class="mlink" href="../../guiSET/reference/index.html">Documentation</a>
-            <li><a class="mlink" href="https://github.com/Mc-Zen/guiSET">Source Code</a>
+        <li><a class="mlink" href="https://github.com/Mc-Zen/guiSET">Source Code</a>
     </nav>
 
     <div id="sidebar">
@@ -76,6 +76,7 @@
                 certain item.</li>
             <li><a href="#s5">Events in general</a>: About the way event callbacks are registered, stored and executed.
                 Also something about creating new events.</li>
+            <li><a href="#s6">PApplet and the static Frame</a></li>
         </ul>
         <hr>
 
@@ -159,8 +160,8 @@ protected void render() {
   drawDefaultDisabled();
 }</pre>
         <p>
-            In <code<VFlowContainer> the <code>x</code> and <code>y</code> properties of the item are ignored and
-                replaced by other rules:
+            In <code>VFlowContainer</code> the <code>x</code> and <code>y</code> properties of the item are ignored and
+            replaced by other rules:
         </p>
         <pre class="prettyprint">
 @Override
@@ -185,13 +186,14 @@ protected void render() {
         <h1 id="s3">More details about the render procedure</h1>
         <p>
             The actual rendering takes place like this: the container usually draws its own background and then calls
-            <code>renderItem(Control c, int x ,int y)</code>. This method sets the offsetX/offsetY properties of <cdoe>c
-            </cdoe> according to given
+            <code>renderItem(Control c, int x ,int y)</code>. This method sets the
+            <code>offsetX</code>/<code>offsetY</code> properties of
+            <code>c</code> according to given
             coordinates and sets them outside the container if the opacity is 0. This is not necessary if visibility is
-            set to false because mouseEvent(int, int) already checks for visiblity. If the graphics of <code>c</code>
-            are
-            "<code>dirty</code>",
-            pre<code>render()</code> is called which creates the <code>PGraphics</code> instance (only if size has
+            set to false because <code>mouseEvent(int, int)</code> already checks for visiblity. If the graphics of
+            <code>c</code>
+            are "dirty",
+            <code>preRender()</code> is called which creates the <code>PGraphics</code> instance (only if size has
             changed) and calls
             <code>pg.beginDraw()</code>. Then the items custom <code>render()</code> method is executed and finally tint
             applied for
@@ -340,9 +342,36 @@ handleEvent(myListener, eventThatWeGotFromSomewhere);
         </p>
 
 
+        <h1 id="s6">PApplet and the static Frame</h1>
+        <p>
+            No big deal: for creating the <code>PGraphics</code> instances we need to call <code>PApplet</code>s
+            <code>createGraphics(int, int)</code> method. Therefore we always need a reference to the sketch class which
+            is solved by passing <code>this</code> to the <code>Frame</code> constructor in the sketch code.
+        </p>
+        <p>
+            Big deal: for getting things like text-width or text-leading we also need the <code>PApplet</code> or at
+            least
+            a functioning <code>PGraphics</code> which can only be achieved properly by having the <code>PApplet</code>
+            (at least to my knowledge). Unfortunately, textWidth is needed for autosizing <i>before</i> the graphics are
+            created for the first time during rendering. Autosizing may be performed multiple times during setup when
+            setting text or padding of an element. In the current solution, a static <code>PFont</code> is created at
+            the time that <code>PApplet</code> is know and it can be used by every element. Somehow, though the values
+            differs just a little from the results of <code>pg.textWidth(String)</code> although I copied my
+            implementation from Processings source code. If anyone knows the solution, please tell me.
+        </p>
+        <p>
+            Now, as we only need one instance of <code>Frame</code> per sketch and as every element needs access to it,
+            it is stored in the static <code>Frame.frame0</code> variable. This one is never null as it is filled
+            by a dummy (called <i>nullFrame</i>) and replaced when using the <code>Frame(PApplet parent)</code>
+            constructor.
+        </p>
+
+
     </div>
     <div id="footer"><a href="https://github.com/Mc-Zen/guiSET"><img
                 src="../media/GitHub-Mark-32px.png"><span>GitHub</span></a></div>
+
+
 
 </body>
 
