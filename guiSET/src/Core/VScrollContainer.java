@@ -31,7 +31,7 @@ public class VScrollContainer extends VFlowContainer {
 	protected int scrollPosition;
 
 	// speed at which container will be scrolled, can be set externally
-	protected int scrollSpeed = 40;
+	protected int scrollSpeed = DEFAULT_SCROLL_SPEED;
 
 	// enable a thin version of scroll handle for small containers (i.e. smaller
 	// textboxes)

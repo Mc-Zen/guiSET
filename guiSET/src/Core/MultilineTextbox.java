@@ -44,8 +44,8 @@ public class MultilineTextbox extends VScrollContainer {
 
 
 
-	protected int cursorColor = 70;
-	protected int selectionColor = -13395457;
+	protected int selectionColor = SELECTION_BLUE;
+	protected int cursorColor = TEXT_CURSOR_COLOR;
 	protected String hint = "";
 
 	protected int cursorPosition = 0;
@@ -77,20 +77,19 @@ public class MultilineTextbox extends VScrollContainer {
 	public MultilineTextbox(int width, int height, int fontSize) {
 		super(width, height);
 
-		this.fontSize = fontSize;
 
 		lines = new StringList();
 		breakPositions = new IntList();
 
-		foregroundColor = 0;
+		setForegroundColor(BLACK);
 		setBackgroundColor(230);
 		setPadding(3);
-		textAlign = PApplet.LEFT;
-
+		setFontSize(fontSize);
+		setTextAlign(LEFT);
 		setLineHeight((int) (fontSize * 0.2f));
+		setCursor(TEXT);
 
 		overridesFrameShortcuts = true;
-		cursor = PApplet.TEXT;
 
 		setSlimScrollHandle(true);
 
@@ -115,7 +114,7 @@ public class MultilineTextbox extends VScrollContainer {
 		pg.textSize(fontSize);
 		drawDefaultBackground();
 
-		if (borderWidth == 0) {
+		if (borderWidth == 0 && borderRadius == 0) {
 			// draw 3D-Border
 			pg.strokeWeight(1);
 			pg.stroke(70);
@@ -178,7 +177,7 @@ public class MultilineTextbox extends VScrollContainer {
 
 			for (int i = i0; i < lines.size(); i++) {
 				float posY = i * (lineHeight + fontSize) + paddingTop - scrollPosition;
-				if (posY > height + fontSize) // all further lines not visible
+				if (posY > height) // all further lines not visible
 					break;
 				pg.text(lines.get(i), posX, posY);
 			}
@@ -192,6 +191,7 @@ public class MultilineTextbox extends VScrollContainer {
 			for (int i = 0; i < lines.size(); ++i) {
 				pg.text(lines.get(i), posX, i * (lineHeight + fontSize) + paddingTop - scrollPosition);
 			}
+			boxedText(""); // important
 		}
 
 		/*
@@ -241,7 +241,10 @@ public class MultilineTextbox extends VScrollContainer {
 	 * (including 0) At last (length of str + 1) is appended to breakPositions.
 	 * 
 	 * The result depends on: width , paddingLeft, paddingRight, slimScrollHandle, text, fontSize, 
-	 * Thus a change of these makes a call to boxedText() necessary
+	 * Thus a change of these makes a call to boxedText() necessary. 
+	 * 
+	 * We cant use Processings implementation of box text here because we need the break indices as we 
+	 * interact with the text afterwards. Also the standard implementation in PGraphics is not unbelievably fast.   
 	 */
 	protected void boxedText(String str) {
 
@@ -276,7 +279,6 @@ public class MultilineTextbox extends VScrollContainer {
 
 			// get width of this char
 			float charWidth = textWidth("" + c); // if we were using pg.textWidth(), we'd need to set pg.textSize()!
-
 			// check if this char is a word-breaking char. Do this before next step, so we
 			// can break when a space is at the end of the text
 			if (c == ' ') {
@@ -392,7 +394,6 @@ public class MultilineTextbox extends VScrollContainer {
 
 	protected void drawCursor() {
 		int lineNumber = getLineToCursor();
-
 		float posX = lineWidthUntilCursor() + lineStart(lines.get(lineNumber)) + fontSize / 40f;
 		// position of upper left corner of cursor relative to first character of text
 		int posY = (int) ((lineNumber) * (lineHeight + fontSize));
@@ -792,8 +793,7 @@ public class MultilineTextbox extends VScrollContainer {
 	public void setText(String text) {
 		this.text = text;
 		cursorPosition = PApplet.constrain(cursorPosition, 0, text.length());
-		boxedText(this.text);
-		update();
+		textChanged(); // calls boxedText and update
 	}
 
 	@Override
@@ -834,6 +834,18 @@ public class MultilineTextbox extends VScrollContainer {
 
 	public String getHint() {
 		return hint;
+	}
+
+	public int getSelectionStart() {
+		return selectionStart;
+	}
+
+	public int getSelectionEnd() {
+		return selectionEnd;
+	}
+
+	public String getSelection() {
+		return text.substring(selectionStart, selectionEnd);
 	}
 
 	public boolean getClickSetsCursor() {
@@ -1113,7 +1125,7 @@ public class MultilineTextbox extends VScrollContainer {
 	/**
 	 * Copy selection to clipboard
 	 */
-	protected void copy() {
+	public void copy() {
 		if (selectionStart < selectionEnd) {
 			StringSelection selection = new StringSelection(text.substring(selectionStart, selectionEnd));
 			Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
@@ -1124,7 +1136,7 @@ public class MultilineTextbox extends VScrollContainer {
 	/**
 	 * Paste from clipboard (and delete selection)
 	 */
-	protected void paste() {
+	public void paste() {
 		Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
 		Transferable contents = clipboard.getContents(null);
 		if (contents != null && contents.isDataFlavorSupported(DataFlavor.stringFlavor)) {
@@ -1149,7 +1161,7 @@ public class MultilineTextbox extends VScrollContainer {
 	/**
 	 * Cut selection and copy to clipboard
 	 */
-	protected void cut() {
+	public void cut() {
 		copy();
 
 		// store this because delete will call cursorChanged which resets selectionStart

@@ -31,7 +31,7 @@ public class HScrollContainer extends HFlowContainer {
 	protected int scrollPosition;
 
 	// speed at which container will be scrolled, can be set externally
-	protected int scrollSpeed = 40;
+	protected int scrollSpeed = DEFAULT_SCROLL_SPEED;
 
 
 

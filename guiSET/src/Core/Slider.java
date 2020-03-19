@@ -43,10 +43,11 @@ public class Slider extends Control {
 
 	public Slider() {
 		super();
-		backgroundColor = -2302756; // some gray
-		foregroundColor = -1926085; // orange
-		setWidthImpl(400);
+		setBackgroundColor(-2302756); // some gray
+		setForegroundColor(-1926085); // orange
+		setWidthImpl(150);
 		setHeightImpl((int) (ballSize * 1.3));
+		setPadding(3, 0);
 	}
 
 
@@ -307,10 +308,10 @@ public class Slider extends Control {
 		valueChangeListener = null;
 	}
 
-	
-	
-	
-	
+
+
+
+
 	/*
 	 * internal method for setting the actual position of the ball
 	 */

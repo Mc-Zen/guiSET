@@ -45,12 +45,21 @@ public class PasswordTextbox extends Textbox {
 	 */
 
 	@Override
-	protected void copy() {
+	public void copy() {
 		String placeholder = text;
 		text = "";
 		for (int i = 0; i < placeholder.length(); i++)
 			text += passwordChar;
 		super.copy();
+		text = placeholder;
+	}
+	@Override
+	public void cut() {
+		String placeholder = text;
+		text = "";
+		for (int i = 0; i < text.substring(selectionStart, selectionEnd).length(); i++)
+			text += passwordChar;
+		super.cut();
 		text = placeholder;
 	}
 }

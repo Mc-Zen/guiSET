@@ -68,14 +68,22 @@ public class Checkbox extends Control {
 		super();
 
 		setBackgroundColor(0); // tranparent
-		uncheckedBackgroundColor = -6250336; // grey
-		checkedBackgroundColor = -13732742; // greenish
-		checkmarkColor = -328966; // almost white
+		setUncheckedBackgroundColor(-6250336); // grey
+		setCheckedBackgroundColor(-13732742); // greenish
+		setCheckmarkColor(-328966); // almost white
 
 		setText(text);
 		this.checked = checked; // no setChecked()
 	}
-
+	
+	public Checkbox(String text, String toggleEventMethodName) {
+		this(text, false);
+		addToggleListener(toggleEventMethodName);
+	}
+	public Checkbox(String text, String toggleEventMethodName, boolean checked) {
+		this(text, checked);
+		addToggleListener(toggleEventMethodName);
+	}
 
 
 	@Override

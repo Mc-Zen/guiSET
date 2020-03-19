@@ -9,7 +9,7 @@ package guiSET.core;
  */
 public class MenuTextbox extends MenuItem {
 
-	Textbox t;
+	protected Textbox t;
 
 
 	public MenuTextbox() {

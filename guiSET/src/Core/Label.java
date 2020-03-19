@@ -38,8 +38,8 @@ public class Label extends Control {
 		super();
 		setText(text);
 		setFontSize(fontSize);
-		borderWidth = 0;
-		setBackgroundColor(0); // tranparent
+		setBorderWidth(0);
+		setBackgroundColor(TRANSPARENT); 
 		setPadding(2); // might cut off a tiny part of the text otherwise
 	}
 
@@ -75,7 +75,7 @@ public class Label extends Control {
 		setImage(image);
 		setWidthImpl(width);  // should be okay to set size without setter
 		setHeightImpl(height);
-		borderWidth = 0;
+		setBorderWidth(0);
 	}
 
 
@@ -91,9 +91,5 @@ public class Label extends Control {
 		setWidthImpl((int) (textWidth(text) + paddingLeft + paddingRight));
 		int numLines = text.split("\n").length;
 		setHeightImpl((int) (numLines * textLeading() + paddingTop + paddingBottom));
-	}
-	
-	@Override protected void mouseEvent(int x, int y) {
-		super.mouseEvent(x, y);
 	}
 }

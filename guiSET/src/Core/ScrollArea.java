@@ -33,8 +33,8 @@ public class ScrollArea extends Container {
 	protected int fullScrollWidth;
 	protected int fullScrollHeight;
 
-	protected int scrollSpeedX = 10;
-	protected int scrollSpeedY = 10;
+	protected int scrollSpeedX = DEFAULT_SCROLL_SPEED;
+	protected int scrollSpeedY = DEFAULT_SCROLL_SPEED;
 
 
 	protected boolean slim_scrollhandle = false;

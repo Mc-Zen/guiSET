@@ -5,7 +5,6 @@ import processing.event.*;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 
-
 import java.lang.reflect.InvocationTargetException;
 import java.awt.Font;
 
@@ -18,7 +17,7 @@ import java.awt.Font;
  */
 
 
-public abstract class Control {
+public abstract class Control implements PConstants {
 
 	/**
 	 * Name for the element can be specified manually, useful for distinguishing.
@@ -116,8 +115,8 @@ public abstract class Control {
 	 * them manually!
 	 */
 
-	//@Deprecated
-	//protected Bounds bounds = new Bounds(0, 0, 0, 0);
+	// @Deprecated
+	// protected Bounds bounds = new Bounds(0, 0, 0, 0);
 
 
 	/*
@@ -125,8 +124,8 @@ public abstract class Control {
 	 */
 	protected String text = ""; 			// multi-purpose text to display, e.g. button text, label text, textbox content
 	protected float fontSize = 13;
-	protected int textAlign = 3; 			// LEFT, CENTER, RIGHT (= 37, 3, 39) from PConstants
-	protected int textAlignY = 3; 			// vertical text align (TOP, CENTER, BOTTOM) (= 101, 3, 102)
+	protected int textAlign = CENTER; 			// LEFT, CENTER, RIGHT (= 37, 3, 39) from PConstants
+	protected int textAlignY = CENTER; 			// vertical text align (TOP, CENTER, BOTTOM) (= 101, 3, 102)
 
 	protected PImage image;
 	protected int imageMode = FILL;
@@ -196,8 +195,13 @@ public abstract class Control {
 	protected boolean overridesFrameShortcuts = false;
 
 
+	protected static final int BLACK = -16777216;
+	protected static final int WHITE = -1;
+	protected static final int TRANSPARENT = 0;
+	protected static final int SELECTION_BLUE = -13395457;
+	protected static final int TEXT_CURSOR_COLOR = -12171706; // color(70)
 
-
+	protected static final int DEFAULT_SCROLL_SPEED = 40;
 
 
 	public Control() {
@@ -205,13 +209,13 @@ public abstract class Control {
 		height = 50;
 		width = 50;
 
-		backgroundColor = -1;			// color(255)
-		visualBackgroundColor = -1;
-		foregroundColor = -16777216; 	// color(0)
-		borderColor = -15461356;		// color(20)
-		hoverColor = -1;				// color(255)
-		pressedColor = -1;				// color(255)
-
+		backgroundColor = WHITE;
+		visualBackgroundColor = WHITE;
+		foregroundColor = BLACK;
+		borderColor = -15461356;
+		hoverColor = WHITE;
+		pressedColor = WHITE;
+		
 	}
 
 
@@ -235,6 +239,28 @@ public abstract class Control {
 	 */
 
 	/*
+	 * Dimensions (width, height) from previous frame. Used to check if size
+	 * changed. If so, the PGraphics needs to be created new with updated size.
+	 */
+	protected int pWidth, pHeight = -1;
+
+	/*
+	 * Method to be executed before calling render(). It prepares the PGraphics for rendering. 
+	 */
+	protected final void preRender() {
+		// only create graphics when size changed
+		if (width != pWidth || height != pHeight) {
+			pg = Frame.frame0.papplet.createGraphics(width, height);
+			pWidth = width;
+			pHeight = height;
+			pg.beginDraw();
+		} else {
+			pg.beginDraw();
+			pg.clear();
+		}
+	}
+
+	/*
 	 * Main drawing method that determines the looks of the object.
 	 * 
 	 * It has to be implemented for each control individually. Just start with
@@ -256,89 +282,151 @@ public abstract class Control {
 	protected abstract void render();
 
 	protected final void renderItem(Control item, int x, int y) {
-		// check visiblity in render(), because some containers need to check it in
-		// render() anyway
+		// check visiblity in render(), some containers need to check it there anyway
 
-
-		// set new mousevent style bounds
-		/*
-		 * if (!(item.y0 > 0 || item.y0 + item.height < bounds.Y0)) { item.x0 = x;
-		 * item.y0 = y; }else
-		 */ {
-		}
-
-
-		if (item.opacity == 0) {
-
-			// make this thing inaccessible to mouse events
-			item.offsetX = width;
-			item.offsetY = height;
+		item.renderer.renderAll(x, y, pg);
+		if (true)
 			return;
-		}
-
-		item.offsetX = x;
-		item.offsetY = y;
-
-
-		if (item.dirty) {
-			item.dirty = false; // do this before render, so it can use animations by calling update again
-
-			item.preRender();
-			item.render();
-			item.pg.endDraw();
-
-//			Frame.renderCount++;
-//			Frame.renderedObjects += item.getClass();
-		}
-
-
-
-		// apply opacity (tinting carries out quite a lot of calculations in PGraphics,
-		// while noTint() doesn't)
-		if (item.opacity < 1) {
-			pg.tint(255, (int) (item.opacity * 256));
-		} else {
-			pg.tint = false;
-		}
-
-		pg.image(item.getGraphics(), x, y);
+		/*
+				if (item.opacity == 0) {
+		
+					// make this thing inaccessible to mouse events
+					item.offsetX = width;
+					item.offsetY = height;
+					return;
+				}
+		
+				item.offsetX = x;
+				item.offsetY = y;
+		
+		
+				if (item.dirty) {
+					item.dirty = false; // do this before render, so it can use animations by calling update again
+		
+					item.preRender();
+					item.render();
+					item.pg.endDraw();
+		
+		//			Frame.renderCount++;
+		//			Frame.renderedObjects += item.getClass();
+				}
+				// apply opacity (tinting carries out quite a lot of calculations in PGraphics,
+				// while noTint() doesn't)
+				if (item.opacity < 1) {
+					pg.tint(255, (int) (item.opacity * 256));
+				} else {
+					pg.tint = false;
+				}
+				pg.image(item.getGraphics(), x, y);
+				*/
 	}
 
-	protected PGraphics getGraphicsAndRenderIfDirty() {
-		if (dirty) {
-			dirty = false; // do this before render, so it can use animations by calling update again
+	protected Renderer renderer = new ExtendedRenderer();
 
-			preRender();
-			render();
-			pg.endDraw();
-		}
-		return pg;
-	}
-
-	/*
-	 * Dimensions (width, height) from previous frame. Used to check if size
-	 * changed. If so the PGraphics needs to be created new
-	 */
-
-	protected int pWidth, pHeight = -1;
-
-	/*
-	 * Method to executed by the parent container before calling render(). It
-	 * prepares the PGraphics for rendering
-	 */
-
-	protected final void preRender() {
-		// only create graphics when size changed
-		if (width != pWidth || height != pHeight) {
-			pg = Frame.frame0.papplet.createGraphics(width, height);
-			pWidth = width;
-			pHeight = height;
-			pg.beginDraw();
-		} else {
-			pg.beginDraw();
-			pg.clear();
+	// The standard renderer. Draw looks on own buffer graphics. Can get expensive
+	// with memory if using a lot of elements.
+	class Renderer {
+		void renderAll(int x, int y, PGraphics parentGraphics) {
+			if (dirty) {
+				dirty = false;
+				preRender();
+				render();
+				pg.endDraw();
+			}
+			offsetX = x;
+			offsetY = y;
+			parentGraphics.image(pg, x, y);
 		}
 	}
+
+	// Renderer that implements opacity and in future also box-shadows. Also draw
+	// looks on own buffer graphics.
+	class ExtendedRenderer extends Renderer {
+		@Override
+		void renderAll(int x, int y, PGraphics parentGraphics) {
+			if (dirty) {
+				dirty = false;
+				preRender();
+				render();
+				pg.endDraw();
+			}
+			if (opacity == 0) { // make this thing inaccessible to mouse events
+				offsetX = width;
+				offsetY = height;
+				return;
+			}
+			// TODO: draw shadow
+			if (opacity < 1) {
+				parentGraphics.tint(255, (int) (opacity * 256));
+			} else {
+				parentGraphics.tint = false;
+			}
+
+			offsetX = x;
+			offsetY = y;
+			parentGraphics.image(pg, x, y);
+		}
+	}
+
+	// This renderer doesn't use a buffer PGraphics -> save RAM
+	// Instead draw on parent graphics.
+	// Issues: Items can overflow parent and their own bounds
+	class ParentGraphicsRenderer extends Renderer {
+		@Override
+		void renderAll(int x, int y, PGraphics parentGraphics) {
+			parentGraphics.pushMatrix();
+			parentGraphics.translate(x, y);
+			parentGraphics.clip(0, 0, width, height);
+			pg = parentGraphics;
+			render(); // no preRender(), pg.endDraw() needed
+			offsetX = x;
+			offsetY = y;
+			parentGraphics.popMatrix();
+			parentGraphics.noClip();
+		}
+	}
+
+
+	// As ParentGraphicsRenderer but implementing opactiy and in future box-shadows.
+	class ParentGraphicsExtendedRenderer extends Renderer {
+		@Override
+		void renderAll(int x, int y, PGraphics parentGraphics) {
+			parentGraphics.pushMatrix();
+			parentGraphics.translate(x, y);
+			pg = parentGraphics;
+			// TODO: draw shadow
+			if (opacity == 0) { // make this thing inaccessible to mouse events
+				offsetX = width;
+				offsetY = height;
+				return;
+			}
+			if (opacity < 1) {
+				parentGraphics.tint(255, (int) (opacity * 256));
+			} else {
+				parentGraphics.tint = false;
+			}
+			render(); // no preRender()/pg.endDraw() needed
+			offsetX = x;
+			offsetY = y;
+			parentGraphics.popMatrix();
+		}
+	}
+
+
+
+
+//	protected PGraphics getGraphicsAndRenderIfDirty() {
+//		if (dirty) {
+//			dirty = false; // do this before render, so it can use animations by calling update again
+//
+//			preRender();
+//			render();
+//			pg.endDraw();
+//		}
+//		return pg;
+//	}
+
+
 
 	// just return the looks of this control, without drawing
 	protected PImage getGraphics() {
@@ -357,27 +445,10 @@ public abstract class Control {
 	 * appearance change, i.e. called in most setters.
 	 */
 	protected void update() {
+		dirty = true;
 		if (parent != null) {
-			dirty = true;
 			parent.update();
 		}
-	}
-
-
-
-	/*
-	 * Called by containers when they add this object to their content list.
-	 */
-	protected void addedToParent() {
-
-	}
-
-	/*
-	 * Called by animations after a change. Some components might need to adjust
-	 * stuff then as no setter is called.
-	 */
-	protected void animated() {
-		update();
 	}
 
 	/*
@@ -390,6 +461,758 @@ public abstract class Control {
 
 
 
+
+
+
+
+
+
+
+
+	/*	
+	void setBGColor(int e) {
+		cw = cw.setBackground(e);
+	}
+	
+	
+	ColorWrapper cw = new SingleColor();
+	
+	abstract class ColorWrapper {
+	
+		abstract int getBackground();
+	
+		abstract int getBackgroundHovered();
+	
+		abstract int getBackgroundPressed();
+	
+		abstract int getForeground();
+	
+		abstract int getForegroundHovered();
+	
+		abstract int getForegroundPressed();
+	
+		abstract int getBorder();
+	
+		abstract ColorWrapper setBackground(int e);
+	
+		abstract ColorWrapper setForeground(int e);
+	
+		abstract ColorWrapper setBorder(int e);
+	
+		abstract ColorWrapper setBackgroundHovered(int e);
+	
+		abstract ColorWrapper setBackgroundPressed(int e);
+	
+		abstract ColorWrapper setForegroundHovered(int e);
+	
+		abstract ColorWrapper setForegroundPressed(int e);
+	
+	}
+	
+	class SingleColor extends ColorWrapper {
+		int all;
+	
+		@Override
+		int getBackground() {
+			return all;
+		}
+	
+		@Override
+		int getBackgroundHovered() {
+			return all;
+		}
+	
+		@Override
+		int getBackgroundPressed() {
+			return all;
+		}
+	
+		@Override
+		int getForeground() {
+			return all;
+		}
+	
+		@Override
+		int getForegroundHovered() {
+			return all;
+		}
+	
+		@Override
+		int getForegroundPressed() {
+			return all;
+		}
+	
+		@Override
+		int getBorder() {
+			return all;
+		}
+	
+		@Override
+		ColorWrapper setBackground(int e) {
+			return new BasicColor(e, all, all);
+		}
+	
+		@Override
+		ColorWrapper setForeground(int e) {
+			return new BasicColor(all, e, all);
+		}
+	
+		@Override
+		ColorWrapper setBorder(int e) {
+			return new BasicColor(all, all, e);
+		}
+	
+		@Override
+		ColorWrapper setBackgroundHovered(int e) {
+			return new ResponsiveColor(all, all, all, e, all, all, all);
+		}
+	
+		@Override
+		ColorWrapper setBackgroundPressed(int e) {
+			return new ResponsiveColor(all, all, all, all, e, all, all);
+		}
+	
+		@Override
+		ColorWrapper setForegroundHovered(int e) {
+			return new ResponsiveColor(all, all, all, all, all, e, all);
+		}
+	
+		@Override
+		ColorWrapper setForegroundPressed(int e) {
+			return new ResponsiveColor(all, all, all, all, all, all, e);
+		}
+	
+	}
+	
+	class BasicColor extends ColorWrapper {
+		int background;
+		int foreground;
+		int border;
+	
+		BasicColor() {
+	
+		}
+	
+		BasicColor(int background, int foreground, int border) {
+			this.background = background;
+			this.foreground = foreground;
+			this.border = border;
+		}
+	
+		@Override
+		int getBackground() {
+			return background;
+		}
+	
+		@Override
+		int getBackgroundHovered() {
+			return background;
+		}
+	
+		@Override
+		int getBackgroundPressed() {
+			return background;
+		}
+	
+		@Override
+		int getForeground() {
+			return foreground;
+		}
+	
+		@Override
+		int getForegroundHovered() {
+			return foreground;
+		}
+	
+		@Override
+		int getForegroundPressed() {
+			return foreground;
+		}
+	
+		@Override
+		int getBorder() {
+			return border;
+		}
+	
+		@Override
+		ColorWrapper setBackground(int e) {
+			this.background = e;
+			return this;
+		}
+	
+		@Override
+		ColorWrapper setForeground(int e) {
+			this.foreground = e;
+			return this;
+		}
+	
+		@Override
+		ColorWrapper setBorder(int e) {
+			this.border = e;
+			return this;
+		}
+	
+		@Override
+		ColorWrapper setBackgroundHovered(int e) {
+			return new ResponsiveColor(background, foreground, border, e, background, foreground, foreground);
+		}
+	
+		@Override
+		ColorWrapper setBackgroundPressed(int e) {
+			return new ResponsiveColor(background, foreground, border, background, e, foreground, foreground);
+		}
+	
+		@Override
+		ColorWrapper setForegroundHovered(int e) {
+			return new ResponsiveColor(background, foreground, border, background, background, e, foreground);
+		}
+	
+		@Override
+		ColorWrapper setForegroundPressed(int e) {
+			return new ResponsiveColor(background, foreground, border, background, background, foreground, e);
+		}
+	}
+	
+	class ResponsiveColor extends BasicColor {
+		int backgroundHovered;
+		int backgroundPressed;
+		int foregroundHovered;
+		int foregroundPress;
+	
+		ResponsiveColor() {
+	
+		}
+	
+		ResponsiveColor(int bg, int fg, int b, int bg_h, int bg_p, int fg_h, int fg_p) {
+			super(bg, fg, b);
+			this.backgroundHovered = bg_h;
+			this.backgroundPressed = bg_p;
+			this.foregroundHovered = fg_h;
+			this.foregroundPress = fg_p;
+		}
+	
+		@Override
+		int getBackgroundHovered() {
+			return backgroundHovered;
+		}
+	
+		@Override
+		int getBackgroundPressed() {
+			return backgroundPressed;
+		}
+	
+		@Override
+		int getForegroundHovered() {
+			return foregroundHovered;
+		}
+	
+		@Override
+		int getForegroundPressed() {
+			return foregroundPress;
+		}
+	
+		@Override
+		ColorWrapper setBackgroundHovered(int e) {
+			this.backgroundHovered = e;
+			return this;
+		}
+	
+		@Override
+		ColorWrapper setBackgroundPressed(int e) {
+			this.backgroundPressed = e;
+			return this;
+		}
+	
+		@Override
+		ColorWrapper setForegroundHovered(int e) {
+			this.foregroundHovered = e;
+			return this;
+		}
+	
+		@Override
+		ColorWrapper setForegroundPressed(int e) {
+			this.foregroundPress = e;
+			return this;
+		}
+	
+	}
+	*/
+
+
+	/**
+	 * Standard background drawing method - this method can be used by any control
+	 * to draw its background. Features backgroundColors, borders, images and
+	 * transparency.
+	 */
+	protected void drawDefaultBackground() {
+		if (image == null) {
+			// int visualBackgroundColor = pPressed ? pressedColor : pHovered ? hoverColor :
+			// backgroundColor;
+
+			if (visualBackgroundColor != 0) {
+				pg.fill(visualBackgroundColor);
+			} else {
+				pg.noFill();
+			}
+			if (borderWidth > 0) {
+				pg.strokeWeight(borderWidth);
+				pg.stroke(borderColor);
+			} else {
+				pg.noStroke();
+			}
+			pg.rect(borderWidth / 2, borderWidth / 2, width - borderWidth, height - borderWidth, borderRadius);
+
+		} else {
+
+			// All this stuff does not work :( now using mask() instead
+			/*pg.beginShape(PApplet.QUADS);
+			pg.texture(image);
+			
+			if (borderRadius != 0) {
+				pg.vertex(width - borderRadius, 0);
+				pg.quadraticVertex(width, 0, width, 0 + borderRadius);
+			} else {
+				pg.vertex(width, 0);
+			}
+			if (borderRadius != 0) {
+				pg.vertex(width, height - borderRadius);
+				pg.quadraticVertex(width, height, width - borderRadius, height);
+			} else {
+			}
+			if (borderRadius != 0) {
+				pg.vertex(0 + borderRadius, height);
+				pg.quadraticVertex(0, height, 0, height - borderRadius);
+			} else {
+			}
+			if (borderRadius != 0) {
+				pg.vertex(0, 0 + borderRadius);
+				pg.quadraticVertex(0, 0, 0 + borderRadius, 0);
+			} else {
+			}
+			pg.endShape();*/
+
+			if (imageMode == FILL) {
+
+				pg.image(image, 0, 0, width, height);
+			} else if (imageMode == FIT) {
+
+				// mode FIT fills the entire background (without distortion) but without leaving
+				// any blank parts
+				if (image.width / image.height < width / height) {
+					int newHeight = (int) (image.height / (float) image.width * width);
+					pg.image(image, 0, -(newHeight - height) / 2, width, newHeight);
+				} else {
+					int newWidth = (int) (image.width / (float) image.height * height);
+					pg.image(image, -(newWidth - width) / 2, 0, newWidth, height);
+				}
+			} else if (imageMode == FIT_INSIDE) {
+
+				// mode FITINSIDE makes sure the entire image is visible without distortion;
+				// usually results in blank parts
+				if (image.width / image.height > width / height) {
+					int newHeight = (int) (image.height / (float) image.width * width);
+					pg.image(image, 0, -(newHeight - height) / 2, width, newHeight);
+				} else {
+					int newWidth = (int) (image.width / (float) image.height * height);
+					pg.image(image, -(newWidth - width) / 2, 0, newWidth, height);
+				}
+
+			}
+
+			// is there is a border radius we need to mask the image
+			if (borderRadius > 0) {
+				PGraphics maskImage = getPApplet().createGraphics(width, height);
+				maskImage.beginDraw();
+				maskImage.noStroke();
+				maskImage.rect(borderWidth / 2, borderWidth / 2, width - borderWidth, height - borderWidth, borderRadius);
+				maskImage.endDraw();
+				pg.mask(maskImage);
+			}
+
+			// still draw border
+			if (borderWidth > 0) {
+				if (pPressed) {
+					pg.fill(pressedColor);
+				} else if (pHovered) {
+					pg.fill(hoverColor);
+				} else {
+					pg.noFill();
+				}
+				pg.strokeWeight(borderWidth);
+				pg.stroke(borderColor);
+				pg.rect(borderWidth / 2, borderWidth / 2, width - borderWidth, height - borderWidth, borderRadius);
+			}
+
+		}
+	}
+
+
+	/**
+	 * Standard disabled-state drawing feature. If called at end of render() it will
+	 * draw a transparent grey rectangle upon the control to indicate its disabled
+	 * state.
+	 */
+	protected void drawDefaultDisabled() {
+		if (!enabled) {
+			pg.fill(200, 100);
+			pg.noStroke();
+			pg.rect(borderWidth / 2, borderWidth / 2, width - borderWidth, height - borderWidth, borderRadius);
+		}
+	}
+
+
+
+
+
+
+
+	/**
+	 * Standard text drawing method accounting padding, align, color etc. This
+	 * method can be used by any control for drawing its text.
+	 */
+
+	protected void drawDefaultText() {
+		textRenderer.draw(text);
+//		pg.fill(foregroundColor);
+//		pg.textSize(fontSize);
+//		pg.textAlign(textAlign, textAlignY);
+//		int x = 0;
+//		int y = 0;
+//
+//		switch (textAlign) {
+//		case 37:
+//			x = paddingLeft;
+//			break;
+//		case 3:
+//			x = (width - paddingRight - paddingLeft) / 2 + paddingLeft;
+//			break;
+//		case 39:
+//			x = width - paddingRight;
+//			break;
+//		}
+//		switch (textAlignY) {
+//		case 101:
+//			y = (int) (paddingTop - 0.2 * fontSize);
+//			break;
+//		case 3:
+//			y = (int) (height / 2 - 0.07 * fontSize); // somehow alignY center by processing is not quite exact in middle of fontSize
+//			break;
+//		case 102:
+//			y = height - paddingBottom;
+//			break;
+//		}
+//
+//		pg.text(text.toCharArray(), 0, text.length(), x, y);
+	}
+
+	protected TextRenderer textRenderer = new ExtendedTextRenderer();
+
+	protected interface TextRenderer {
+
+		void draw(String text);
+
+		int getTextColor();
+
+		float getFontSize();
+
+		int getTextAlign();
+
+		int getTextAlignY();
+
+		void setTextColor(int color);
+
+		void setFontSize(float fontSize);
+
+		void setTextAlign(int textAlign);
+
+		void setTextAlignY(int textAlignY);
+		
+		float textWidth(String text);
+		
+		float textAscent();
+		
+		float textDescent();
+
+	}
+
+	class StandardTextRenderer implements TextRenderer {
+		protected float fontSize = 13;
+		protected int color = BLACK;
+		protected int textAlign = CENTER;
+		protected int textAlignY = CENTER;
+		protected int lineHeight = 15;
+
+		public void draw(String text) {
+			pg.fill(color);
+			pg.textSize(fontSize);
+			pg.textAlign(textAlign, textAlignY);
+
+			String[] lines = text.split("\n");
+			float posY = paddingTop + textAscent();
+			float textHeight = lineHeight * (lines.length - 1) + fontSize;
+
+			switch (textAlignY) {
+			case CENTER:
+				posY += (height - paddingTop - paddingBottom - textHeight) / 2f;  // somehow alignY center by processing is not quite exact in middle
+				break;
+			case BOTTOM:
+				posY += height - paddingBottom - paddingTop - textHeight;
+				break;
+			}
+			for (int i = 0; i < lines.length; ++i) {
+				textLineAlignImpl(lines[i], 0, (int) posY + i * lineHeight);
+			}
+		}
+
+		// draw text to THIS position
+		// We could use all the implementation from PGraphics but we need to compute a
+		// lot of these values anyway
+		protected void textLineAlignImpl(String text, int posX, int posY) {
+			pg.textAlign(LEFT, BASELINE);
+			posX += paddingLeft;
+			switch (textAlign) {
+			case CENTER:
+				// posX = (width - paddingRight - paddingLeft) / 2 + paddingLeft;
+				posX += (width - paddingRight - paddingLeft - textWidth(text)) / 2f;
+				break;
+			case RIGHT:
+				posX += (width - paddingRight - paddingLeft) - textWidth(text);
+				break;
+			}
+			pg.text(text.toCharArray(), 0, text.length(), posX, posY);
+		}
+
+		public int getTextColor() {
+			return color;
+		}
+
+		public float getFontSize() {
+			return fontSize;
+		}
+
+		public void setTextColor(int color) {
+			this.color = color;
+		}
+
+		public void setFontSize(float fontSize) {
+			this.fontSize = fontSize;
+		}
+
+		public void setTextAlign(int textAlign) {
+			this.textAlign = textAlign;
+		}
+
+		public void setTextAlignY(int textAlignY) {
+			this.textAlignY = textAlignY;
+		}
+
+		public int getTextAlign() {
+			return textAlign;
+		}
+
+		public int getTextAlignY() {
+			return textAlignY;
+		}
+		
+		public float textWidth(String text) {
+			return textWidthStandardTextImpl(text);
+		}
+		
+		public float textAscent() {
+			return textAscentStandardTextImpl();
+		}
+		public float textDescent() {
+			return textDescentStandardTextImpl();
+		}
+	}
+
+	class ExtendedTextRenderer extends StandardTextRenderer {
+		static final int NONE = 0;
+		static final int BOLD = 1 << 0;
+		static final int ITALIC = 1 << 1;
+		static final int UNDERLINE = 1 << 2;
+		static final int STRIKE = 1 << 3;
+
+		protected int style = 0; // contains info for bold/italic/underline/strike
+		protected PFont font;
+
+		void setStyle(int type, boolean bool) {
+			if (bool)
+				style |= type;
+			else
+				style &= ~type;
+			switch(type) {
+			case BOLD:
+			case ITALIC:
+				if(font == null) {
+					font = createFont(new Font("Lucida Sans", Font.PLAIN, 12), 12, true, null, false);
+						
+				}
+				@SuppressWarnings("deprecation") 
+				Font formerFont = font.getFont();
+				int newStyle = formerFont.getStyle();
+				if(bool) 
+					newStyle |= type;
+				else
+					newStyle &= ~type;
+				
+				font.setNative(new Font(formerFont.getName(), newStyle, formerFont.getSize()));
+				break;
+				
+			}
+		}
+
+		boolean isStyle(int type) {
+			return (style & type) != 0;
+		}
+		void setFont(PFont font) {
+			this.font = font;
+		}
+
+		@Override
+		public void draw(String text) {
+			
+			if(font != null) {
+				pg.textFont(font);
+			}
+
+			pg.fill(color);
+			pg.textSize(fontSize);
+
+			String[] lines = text.split("\n");
+			float posY = paddingTop + textAscent();
+			float textHeight = lineHeight * (lines.length - 1) + fontSize;
+
+			switch (textAlignY) {
+			case CENTER:
+				posY += (height - paddingTop - paddingBottom - textHeight) / 2f;  // somehow alignY center by processing is not quite exact in middle
+				break;
+			case BOTTOM:
+				posY += height - paddingBottom - paddingTop - textHeight;
+				break;
+			}
+			for (int i = 0; i < lines.length; ++i) {
+				textLineAlignImpl(lines[i], 0, (int) posY + i * lineHeight);
+			}
+
+
+
+		}
+
+		@Override
+		protected void textLineAlignImpl(String text, int posX, int posY) {
+			float tw = textWidth(text);
+			pg.textAlign(LEFT, BASELINE);
+			posX += paddingLeft;
+			switch (textAlign) {
+			case CENTER:
+				// posX = (width - paddingRight - paddingLeft) / 2 + paddingLeft;
+				posX += (width - paddingRight - paddingLeft - tw) / 2f;
+				break;
+			case RIGHT:
+				posX += (width - paddingRight - paddingLeft) - tw;
+				break;
+			}
+			pg.text(text.toCharArray(), 0, text.length(), posX, posY);
+			if (isStyle(UNDERLINE)) {
+				pg.line(posX, posY + 2, posX + tw, posY + 2);
+			}
+			if (isStyle(STRIKE)) {
+				float posYY = posY - textAscent() / 3;
+				pg.line(posX, posYY, posX + tw, posYY);
+			}
+		}
+		
+		@Override 
+		public float textWidth(String text) {
+			if(font == null) // no specific font - use standardtext implementation 
+				return super.textWidth(text);
+			PFont temp = textInfo_graphics.textFont;
+			textInfo_graphics.textFont(font);
+			float width = textInfo_graphics.textWidth(text) / textInfo_graphics.textSize * fontSize;
+			textInfo_graphics.textFont = temp;
+			return width;
+		}
+	}
+
+
+
+
+	/**
+	 * A 1x1 dummy graphics is used for getting textwidth etc. without needing to
+	 * create the pgraphics before for each control method for getting width of text
+	 * making autoFit calculations easier and more independant.
+	 * 
+	 * It is intialized when a Frame is created first time and only then ready.
+	 * We can't just use a PFont as the different renderers (Java2D, OpenGL, ...) have different 
+	 * text implementations. 
+	 */
+	protected static PGraphics textInfo_graphics;
+	// called by Frame at constructor
+	protected static void init_pfont() {
+		textInfo_graphics = Frame.frame0.papplet.createGraphics(1, 1);
+		textInfo_graphics.beginDraw();
+		textInfo_graphics.textSize(12);
+	}
+
+	// copied from PGraphics - need this here but cant access
+	private static PFont createDefaultFont(float size) {
+		Font baseFont = new Font("Lucida Sans", Font.PLAIN, 1);
+		return createFont(baseFont, size, true, null, false);
+	}
+
+	// copied from PGraphics - need this here but cant access
+	private static PFont createFont(Font baseFont, float size, boolean smooth, char[] charset, boolean stream) {
+		return new PFont(baseFont.deriveFont(size * getPApplet().pixelDensity), smooth, charset, stream, getPApplet().pixelDensity);
+	}
+
+
+	/**
+	 * Width of text in pixel - no matter which font in the TextRenderer
+	 */
+	protected float textWidth(String text) {
+		return textRenderer.textWidth(text);
+	}
+	/**
+	 * Ascent of text for the set fontsize in pixel.
+	 */
+	protected float textAscent() {
+		return textRenderer.textAscent();
+	}
+	/**
+	 * Descent of text below baseline for the set fontsize in pixel.
+	 */
+	protected float textDescent() {
+		return textRenderer.textDescent();
+	}
+	
+	
+	
+	private float textWidthStandardTextImpl(String text) {
+		if (textInfo_graphics == null)
+			throw new RuntimeException("Frame needs to be intialized before any other guiSET element");
+		return textInfo_graphics.textWidth(text) / textInfo_graphics.textSize * fontSize;
+	}
+	
+	private float textAscentStandardTextImpl() {
+		if (textInfo_graphics == null)
+			throw new RuntimeException("Frame needs to be intialized before any other guiSET element");
+		return textInfo_graphics.textAscent() * fontSize / textInfo_graphics.textSize;
+	}
+	
+	private float textDescentStandardTextImpl() {
+		if (textInfo_graphics == null)
+			throw new RuntimeException("Frame needs to be intialized before any other guiSET element");
+		return textInfo_graphics.textDescent() * fontSize / textInfo_graphics.textSize;
+	}
+
+	
+
+	protected float textLeading() {
+		return (textAscent() + textDescent()) * 1.275f; // as done in PGraphics.handleTextSize()
+	}
+
+	
 
 
 
@@ -419,296 +1242,20 @@ public abstract class Control {
 
 
 
-
-	/**
-	 * Standard text drawing method accounting padding, align, color etc. This
-	 * method can be used by any control for drawing its text.
+	/*
+	 * Called by containers when they add this object to their content list.
 	 */
+	protected void addedToParent() {
 
-	protected void drawDefaultText() {
-		pg.fill(foregroundColor);
-		pg.textSize(fontSize);
-		pg.textAlign(textAlign, textAlignY);
-		int x = 0;
-		int y = 0;
-
-		switch (textAlign) {
-		case 37:
-			x = paddingLeft;
-			break;
-		case 3:
-			x = (width - paddingRight - paddingLeft) / 2 + paddingLeft;
-			break;
-		case 39:
-			x = width - paddingRight;
-			break;
-		}
-		switch (textAlignY) {
-		case 101:
-			y = (int) (paddingTop - 0.2 * fontSize);
-			break;
-		case 3:
-			y = (int) (height / 2 - 0.07 * fontSize); // somehow alignY center by processing is not quite exact in middle of fontSize
-			break;
-		case 102:
-			y = height - paddingBottom;
-			break;
-		}
-		pg.text(text.toCharArray(), 0, text.length(), x, y);
 	}
 
-
-
-	/**
-	 * Standard background drawing method - this method can be used by any control
-	 * to draw its background. Features backgroundColors, borders, images and
-	 * transparency.
+	/*
+	 * Called by animations after a change. Some components might need to adjust
+	 * stuff then as no setter is called.
 	 */
-	protected void drawDefaultBackground() {
-		if (image == null) {
-
-			if (visualBackgroundColor != 0) {
-				pg.fill(visualBackgroundColor);
-			} else {
-				pg.noFill();
-			}
-			if (borderWidth > 0) {
-				pg.strokeWeight(borderWidth);
-				pg.stroke(borderColor);
-			} else {
-				pg.noStroke();
-			}
-			pg.rect(borderWidth / 2, borderWidth / 2, width - borderWidth, height - borderWidth, borderRadius);
-
-		} else {
-
-			// All this stuff does not work :( now using mask() instead
-			/*
-			 * PShape pg, globe; pg = pg.createShape(PApplet.RECT, 0, 0, width, height,
-			 * borderRadius); pg.setTexture(image);
-			 * 
-			 * globe = pg.createShape(PApplet.ELLIPSE, width/2, height/2, width, height); //
-			 * Automatically texture the shape with the image globe.setTexture(image);
-			 */
-			/*
-			 * s = pg.createShape(PApplet.RECT, 0, 0, width, height);
-			 * s.beginShape(PApplet.TRIANGLE_STRIP); s.vertex(30, 75); s.vertex(40, 20);
-			 * s.vertex(50, 75); s.vertex(60, 20); s.vertex(70, 75); s.vertex(80, 20);
-			 * s.vertex(90, 75); s.endShape();
-			 */
-			// a.setTexture(image);
-			// pg.setTexture(image);
-			/*
-			 * pg.beginShape(); // vertex(x1+tl, y1); //pg.fill(30); //pg.texture(image);
-			 * //pg.fill(34); if (borderRadius != 0) { pg.vertex(width-borderRadius, 0);
-			 * pg.quadraticVertex(width, 0, width, 0+borderRadius); pg.vertex(width,
-			 * height-borderRadius); pg.quadraticVertex(width, height, width-borderRadius,
-			 * height); pg.vertex(0+borderRadius, height); pg.quadraticVertex(0, height, 0,
-			 * height-borderRadius); pg.vertex(0, 0+borderRadius); pg.quadraticVertex(0,0,
-			 * 0+borderRadius, 0); } else { pg.vertex(width, 0); pg.vertex(width, height);
-			 * pg.vertex(0, height); pg.vertex(0,0); }
-			 */
-
-			/*
-			 * if (borderRadius != 0) { pg.vertex(width-borderRadius, 0);
-			 * pg.quadraticVertex(width, 0, width, 0+borderRadius); } else {
-			 * pg.vertex(width, 0); } if (borderRadius != 0) { pg.vertex(width,
-			 * height-borderRadius); pg.quadraticVertex(width, height, width-borderRadius,
-			 * height); } else { } if (borderRadius != 0) { pg.vertex(0+borderRadius,
-			 * height); pg.quadraticVertex(0, height, 0, height-borderRadius); } else { } if
-			 * (borderRadius != 0) { pg.vertex(0, 0+borderRadius); pg.quadraticVertex(0,0,
-			 * 0+borderRadius, 0); } else { }
-			 */
-//		    endShape();
-			// pg.endShape(PApplet.CLOSE);
-			// pg.shape(pg);
-
-
-
-			if (imageMode == FILL) {
-				pg.image(image, 0, 0, width, height);
-			}
-
-			else if (imageMode == FIT) {
-
-				// mode FIT fills the entire background (without distortion) but without leaving
-				// any blank parts
-				if (image.width / image.height < width / height) {
-					int newHeight = (int) (image.height / (float) image.width * width);
-					pg.image(image, 0, -(newHeight - height) / 2, width, newHeight);
-				} else {
-					int newWidth = (int) (image.width / (float) image.height * height);
-					pg.image(image, -(newWidth - width) / 2, 0, newWidth, height);
-				}
-
-			} else if (imageMode == FIT_INSIDE) {
-
-				// mode FITINSIDE makes sure the entire image is visible without distortion;
-				// usually results in blank parts
-				if (image.width / image.height > width / height) {
-					int newHeight = (int) (image.height / (float) image.width * width);
-					pg.image(image, 0, -(newHeight - height) / 2, width, newHeight);
-				} else {
-					int newWidth = (int) (image.width / (float) image.height * height);
-					pg.image(image, -(newWidth - width) / 2, 0, newWidth, height);
-				}
-
-			}
-
-			// is there is a border radius we need to mask the image
-			if (borderRadius > 0) {
-				PGraphics maskImage = getPApplet().createGraphics(width, height);
-				maskImage.beginDraw();
-				maskImage.noStroke();
-				maskImage.rect(borderWidth / 2, borderWidth / 2, width - borderWidth, height - borderWidth, borderRadius);
-				maskImage.endDraw();
-				pg.mask(maskImage);
-			}
-			// still draw border
-
-			if (borderWidth > 0) {
-				pg.noFill();
-				pg.strokeWeight(borderWidth);
-				pg.stroke(borderColor);
-				pg.rect(borderWidth / 2, borderWidth / 2, width - borderWidth, height - borderWidth, borderRadius);
-
-			}
-		}
+	protected void animated() {
+		update();
 	}
-
-
-	/**
-	 * Standard disabled-state drawing feature. If called at end of render() it will
-	 * draw a transparent grey rectangle upon the control to indicate its disabled
-	 * state.
-	 */
-	protected void drawDefaultDisabled() {
-		if (!enabled) {
-			pg.fill(200, 100);
-			pg.noStroke();
-			pg.rect(borderWidth / 2, borderWidth / 2, width - borderWidth, height - borderWidth, borderRadius);
-		}
-	}
-
-
-	/**
-	 * A 1x1 dummy graphics is used for getting textwidth etc. without needing to
-	 * create the pgraphics before for each control method for getting width of text
-	 * making autoFit calculations easier and more independant.
-	 * 
-	 * It is intialized when a Frame is created first time and only then ready.
-	 */
-	private static PGraphics textInfo_graphics;
-	private static PFont pfont;
-
-	// called by Frame at constructor
-	protected static void init_pfont() {
-
-//		textInfo_graphics = Frame.frame0.papplet.createGraphics(1, 1);
-//		textInfo_graphics.beginDraw();
-//		textInfo_graphics.textSize(12);
-		// System.out.println(textInfo_graphics.textFont);
-		// textInfo_graphics.textFont = createDefaultFont(12f);
-		// textInfo_graphics.endDraw();
-
-		pfont = createDefaultFont(13);
-	}
-
-	// copied from PGraphics - need this here but cant access
-	private static PFont createDefaultFont(float size) {
-		Font baseFont = new Font("Lucida Sans", Font.PLAIN, 1);
-		return createFont(baseFont, size, true, null, false);
-	}
-
-	// copied from PGraphics - need this here but cant access
-	private static PFont createFont(Font baseFont, float size, boolean smooth, char[] charset, boolean stream) {
-		return new PFont(baseFont.deriveFont(size * getPApplet().pixelDensity), smooth, charset, stream, getPApplet().pixelDensity);
-	}
-
-
-
-	/**
-	 * Descent of text below baseline for the set fontsize in pixel.
-	 */
-	protected float textDescent() {
-		if (pfont == null)
-			throw new RuntimeException("Frame needs to be intialized before any other guiSET element");
-		return pfont.descent() * fontSize;
-	}
-
-	/**
-	 * Ascent of text for the set fontsize in pixel.
-	 */
-	protected float textAscent() {
-		if (pfont == null)
-			throw new RuntimeException("Frame needs to be intialized before any other guiSET element");
-		return pfont.ascent() * fontSize;
-	}
-
-	protected float textLeading() {
-		return (textAscent() + textDescent()) * 1.5f;
-	}
-
-	/**
-	 * Width of text in pixel.
-	 */
-	protected float textWidth(String text) {
-		if (pfont == null)
-			throw new RuntimeException("Frame needs to be intialized before any other guiSET element");
-
-
-//		System.out.println(wide + " " + (textInfo_graphics.textWidth(text) - wide) + " " + textWidthStr(text) + " " + text);
-//		return wide;
-
-		return textWidthStr(text);
-	}
-
-
-
-
-	static char[] textWidthBuffer = new char[3];
-
-	// copied from PGraphics
-	// also takes care of strings with \n
-	private float textWidthStr(String str) {
-		int length = str.length();
-		if (length > textWidthBuffer.length) {
-			textWidthBuffer = new char[length + 10];
-		}
-		str.getChars(0, length, textWidthBuffer, 0);
-
-		float wide = 0;
-		int index = 0;
-		int start = 0;
-
-		while (index < length) {
-			if (textWidthBuffer[index] == '\n') {
-				wide = Math.max(wide, textWidthImpl(textWidthBuffer, start, index));
-				start = index + 1;
-			}
-			index++;
-		}
-		if (start < length) {
-			wide = Math.max(wide, textWidthImpl(textWidthBuffer, start, index));
-		}
-		return wide;
-	}
-
-	// copied from PGraphics
-	private float textWidthImpl(char buffer[], int start, int stop) {
-		float wide = 0;
-		for (int i = start; i < stop; i++) {
-			// could add kerning here, but it just ain't implemented
-			wide += pfont.width(buffer[i]) * fontSize;
-		}
-		return wide;
-	}
-
-
-
-
-
-
 
 	/*
 	 * _______________________________________________________________________________________________________________
@@ -1259,6 +1806,7 @@ public abstract class Control {
 	 */
 	public void setForegroundColor(int clr) {
 		foregroundColor = clr;
+		textRenderer.setTextColor(clr);
 		update();
 	}
 
@@ -1327,6 +1875,7 @@ public abstract class Control {
 
 	public void setFontSize(float fontSize) {
 		this.fontSize = Math.max(0, fontSize);
+		textRenderer.setFontSize(fontSize);
 		autosize();
 		update();
 	}
@@ -1337,8 +1886,10 @@ public abstract class Control {
 	 * @param align LEFT, CENTER, RIGHT
 	 */
 	public void setTextAlign(int align) {
-		if (align == 3 || align == 37 || align == 39)
+		if (align == CENTER || align == LEFT || align == RIGHT) {
 			this.textAlign = align;
+			textRenderer.setTextAlign(align);
+		}
 		update();
 	}
 
@@ -1348,8 +1899,10 @@ public abstract class Control {
 	 * @param align TOP, MIDDLE, BOTTOM
 	 */
 	public void setTextAlignY(int align) {
-		if (align == PApplet.CENTER || align == PApplet.TOP || align == PApplet.BOTTOM)
+		if (align == CENTER || align == TOP || align == BOTTOM) {
 			this.textAlignY = align;
+			textRenderer.setTextAlignY(align);
+		}
 		update();
 	}
 
@@ -1374,6 +1927,12 @@ public abstract class Control {
 	public void setImage(PImage image) {
 		try {
 			this.image = (PImage) image.clone();
+			if (hoverColor == backgroundColor) {
+				hoverColor = Color.create(0, 40);
+			}
+			if (pressedColor == backgroundColor) {
+				pressedColor = Color.create(0, 80);
+			}
 			update();
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -1406,6 +1965,7 @@ public abstract class Control {
 			gradient.stroke(c);
 			gradient.line(0, i, width, i);
 		}
+		gradient.endDraw();
 		setImage(gradient);
 	}
 
@@ -2269,6 +2829,7 @@ public abstract class Control {
 				stopPropagation();
 				press(currentMouseEvent);
 				handleEvent(pressListener, currentMouseEvent);
+				pPressed = true;
 				break;
 			case MouseEvent.WHEEL:
 				mouseWheel(currentMouseEvent);
@@ -2282,6 +2843,8 @@ public abstract class Control {
 				stopPropagation();
 				release(currentMouseEvent);
 				handleEvent(releaseListener, currentMouseEvent);
+				pPressed = false;
+
 				break;
 			case MouseEvent.DRAG:
 				// this code wont be reached anymore for every drag event will be caught by

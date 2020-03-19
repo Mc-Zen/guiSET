@@ -40,8 +40,8 @@ import java.awt.datatransfer.DataFlavor;
  */
 public class Textbox extends HScrollContainer {
 
-	protected int selectionColor = -13395457;
-	protected int cursorColor = -12171706; // color(70)
+	protected int selectionColor = SELECTION_BLUE;
+	protected int cursorColor = TEXT_CURSOR_COLOR;
 	protected String hint = ""; // text to display when textbox is empty
 
 	protected int cursorPosition;
@@ -67,21 +67,20 @@ public class Textbox extends HScrollContainer {
 
 
 	public Textbox() {
-		this(100, 13);
+		this(100, 12);
 	}
 
 	public Textbox(int width) {
-		this(width, 13);
+		this(width, 12);
 	}
 
 	public Textbox(int width, int fontSize) {
 		super(width, 20); // height does not matter
 
-		foregroundColor = -16777216;
+		setForegroundColor(BLACK);
 		setBackgroundColor(-2302756);
-
 		setFontSize(fontSize);
-		cursor = PApplet.TEXT;
+		setCursor(PApplet.TEXT);
 		setPadding(5);
 		setSlimScrollHandle(true);
 
@@ -103,7 +102,7 @@ public class Textbox extends HScrollContainer {
 	protected void render() {
 		drawDefaultBackground();
 
-		if (borderWidth == 0) {
+		if (borderWidth == 0 && borderRadius == 0) {
 			// draw "3D"-Border
 			pg.strokeWeight(1);
 			pg.stroke(70);
@@ -376,7 +375,7 @@ public class Textbox extends HScrollContainer {
 	public void setText(String text) {
 		this.text = text.replaceAll("\\r\\n|\\r|\\n", " ");
 		cursorPosition = PApplet.constrain(cursorPosition, 0, text.length());
-		update();
+		textChanged();
 	}
 
 	/**
@@ -408,6 +407,18 @@ public class Textbox extends HScrollContainer {
 		return selectionColor;
 	}
 
+	public int getSelectionStart() {
+		return selectionStart;
+	}
+
+	public int getSelectionEnd() {
+		return selectionEnd;
+	}
+
+	public String getSelection() {
+		return text.substring(selectionStart, selectionEnd);
+	}
+
 	public String getHint() {
 		return hint;
 	}
@@ -419,7 +430,7 @@ public class Textbox extends HScrollContainer {
 
 	@Override
 	protected void autosizeRule() {
-		setHeight((int) (fontSize + paddingTop + paddingBottom));
+		setHeight((int) fontSize + paddingTop + paddingBottom);
 	}
 
 
@@ -738,7 +749,7 @@ public class Textbox extends HScrollContainer {
 			case PApplet.RETURN: // for macinthosh
 			case PApplet.ENTER:
 				if (submitOnEnter) {
-					blur(); // this first, in case the event callback wants to focus this again 
+					blur(); // this first, in case the event callback wants to focus this again
 					handleEvent(submitListener, null);
 				}
 				break;
@@ -764,7 +775,7 @@ public class Textbox extends HScrollContainer {
 	/**
 	 * Copy selection to clipboard
 	 */
-	protected void copy() {
+	public void copy() {
 		if (selectionStart < selectionEnd) {
 			StringSelection selection = new StringSelection(text.substring(selectionStart, selectionEnd));
 			Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
@@ -775,7 +786,7 @@ public class Textbox extends HScrollContainer {
 	/**
 	 * Paste from clipboard (and delete selection)
 	 */
-	protected void paste() {
+	public void paste() {
 		Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
 		Transferable contents = clipboard.getContents(null);
 		if (contents != null && contents.isDataFlavorSupported(DataFlavor.stringFlavor)) {
@@ -801,7 +812,7 @@ public class Textbox extends HScrollContainer {
 	/**
 	 * Cut selection and copy to clipboard
 	 */
-	protected void cut() {
+	public void cut() {
 		copy();
 		int selStart = selectionStart;
 		deleteRange(selectionStart, selectionEnd);

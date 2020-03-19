@@ -166,31 +166,39 @@ public class Frame extends Container {
 
 		animations = new ArrayList<Animation>();
 
-		init_pfont();		// initialize a pfont for getting textWidth/textDescent...
+		Control.init_pfont();		// initialize a pfont for getting textWidth/textDescent...
+
 
 		new Protected_Frame(timeToDraw);
 
 
-		// jframe = (javax.swing.JFrame)((processing.awt.PSurfaceAWT.SmoothCanvas)getSurface().getNative()).getFrame();
-		awtFrame = ((processing.awt.PSurfaceAWT.SmoothCanvas) papplet.getSurface().getNative()).getFrame();
+		try {
+			// jframe =
+			// (javax.swing.JFrame)((processing.awt.PSurfaceAWT.SmoothCanvas)getSurface().getNative()).getFrame();
+			awtFrame = ((processing.awt.PSurfaceAWT.SmoothCanvas) papplet.getSurface().getNative()).getFrame();
 
 
-		awtFrame.addWindowFocusListener(new java.awt.event.WindowFocusListener() {
-			@Override
-			public void windowLostFocus(java.awt.event.WindowEvent e) {
+			awtFrame.addWindowFocusListener(new java.awt.event.WindowFocusListener() {
+				@Override
+				public void windowLostFocus(java.awt.event.WindowEvent e) {
 
-			}
+				}
 
-			@Override
-			public void windowGainedFocus(java.awt.event.WindowEvent e) {
-			}
-		});
+				@Override
+				public void windowGainedFocus(java.awt.event.WindowEvent e) {
+				}
+			});
 
-		awtFrame.addComponentListener(new java.awt.event.ComponentAdapter() {
-			public void componentResized(java.awt.event.ComponentEvent evt) {
-				resize();
-			}
-		});
+			awtFrame.addComponentListener(new java.awt.event.ComponentAdapter() {
+				public void componentResized(java.awt.event.ComponentEvent evt) {
+					if (initialized) {
+						resize();
+					}
+				}
+			});
+		} catch (ClassCastException e) {
+			e.printStackTrace();
+		}
 	}
 
 
@@ -301,49 +309,10 @@ public class Frame extends Container {
 	 */
 	private void display() {
 
-
 		if (!initialized) {
-
 			initialize();	// recursive procedure going through all elements connected to Frame
-			handleEvent(guiInitializedListener, null);
-			initialized = true;
-
-
-			if (resizable) {
-				// somehow sometimes a second render is important if resizable is active.
-				// In fact that's because a PFont() is created which calls some stuff. Has to do
-				// with something in Graphics awt java class
-				render();
-				update();
-				return;
-			}
 		}
 
-		/*
-		 * check if window has been resized
-		 */
-		/*if (currentWidth != papplet.width || currentHeight != papplet.height) { // window resized
-			currentWidth = papplet.width;
-			currentHeight = papplet.height;
-		
-			handleEvent(windowResizeListener, null);
-		
-			// always resize frame to window size
-			this.width = papplet.width;
-			this.height = papplet.height;
-		
-			// perform own and childrens internal resize event
-			resize();
-		
-			// frame resize event (need to call this because in resize no anchors are set
-			// usually
-			// yes, this is basically redundant to the WINDOW_RESIZE_EVENT (for the Frame
-			// class) but it's easier for users.
-			handleEvent(resizeListener, null);
-		
-			update();
-		}
-		*/
 		/*
 		 * handle animations
 		 */
@@ -361,6 +330,7 @@ public class Frame extends Container {
 			render();
 		}
 	}
+
 
 
 	@Override
@@ -390,7 +360,6 @@ public class Frame extends Container {
 		if (drawMode == CONTINOUS || drawMode == NO_LOOP) {
 			papplet.image(pg, 0, 0);
 		}
-
 	}
 
 
@@ -407,6 +376,26 @@ public class Frame extends Container {
 			papplet.redraw();
 		}
 	}
+
+	@Override
+	protected void initialize() {
+		super.initialize();
+		handleEvent(guiInitializedListener, null);
+		initialized = true;
+
+		if (resizable) {
+			// somehow sometimes a second render is important if resizable is active.
+			// In fact that's because a PFont() is created which calls some stuff. Has to do
+			// with something in Graphics awt java class
+			render();
+			update();
+			return;
+		}
+	}
+
+
+
+
 
 	@Override
 	protected void resize() {
@@ -474,7 +463,7 @@ public class Frame extends Container {
 	}
 
 	/**
-	 * Register a strong shortcut to the sketch and fire the given method when the
+	 * Register a shortcut to the sketch and fire the given method when the
 	 * combination is hit on the keyboard.
 	 * 
 	 * @param shortcut   shortcut to register
@@ -497,20 +486,6 @@ public class Frame extends Container {
 		return registerShortcut(shortcut, methodName, target, false);
 	}
 
-	/**
-	 * If the shortcut has been removed returns true. This is not the case if given
-	 * shortcut has never been registered. The given shortcut does not need to be
-	 * THE exact same as the registered one. It can be a new one with the same
-	 * attributes.
-	 * 
-	 * @param shortcut shortcut to deregister
-	 * @return true if deregistering has been successful.
-	 */
-	public boolean deregisterShortcut(Shortcut shortcut) {
-		int size = shortcutMethods.size();
-		shortcutMethods.remove(shortcut);
-		return shortcutMethods.size() < size;
-	}
 
 
 	/**
@@ -539,6 +514,22 @@ public class Frame extends Container {
 		}
 		return false;
 	}
+
+	/**
+	 * If the shortcut has been removed returns true. This is not the case if given
+	 * shortcut has never been registered. The given shortcut does not need to be
+	 * THE exact same as the registered one. It can be a new one with the same
+	 * attributes.
+	 * 
+	 * @param shortcut shortcut to deregister
+	 * @return true if deregistering has been successful.
+	 */
+	public boolean deregisterShortcut(Shortcut shortcut) {
+		int size = shortcutMethods.size();
+		shortcutMethods.remove(shortcut);
+		return shortcutMethods.size() < size;
+	}
+
 
 	protected boolean checkShortcut(Shortcut shortcut) {
 
@@ -719,7 +710,7 @@ public class Frame extends Container {
 	/**
 	 * Set the minimum size of the application window
 	 * 
-	 * @param minWidth minimum width
+	 * @param minWidth  minimum width
 	 * @param minHeight minimum height
 	 */
 	public void setMinimumWindowSize(int minWidth, int minHeight) {
@@ -729,7 +720,7 @@ public class Frame extends Container {
 	/**
 	 * Set the maximum size of the application window+
 	 * 
-	 * @param maxWidth maximum width
+	 * @param maxWidth  maximum width
 	 * @param maxHeight maximum height
 	 */
 	public void setMaximumWindowSize(int maxWidth, int maxHeight) {
@@ -917,6 +908,7 @@ public class Frame extends Container {
 				stopPropagation(); // not even necessary, we dont call mouseEvent()
 
 				draggedElement.release(e);
+				draggedElement.pPressed = false;
 				draggedElement.handleEvent(draggedElement.releaseListener, e);
 
 				// now we need to check if mouse is still over the element
@@ -926,7 +918,7 @@ public class Frame extends Container {
 					if (trace.get(0) == draggedElement) {
 						hoveredElement = draggedElement; // hoveredElement not set, because not calling mouseEvent
 					} else {
-						//print("drop on ", trace.get(0));
+						// print("drop on ", trace.get(0));
 					}
 				}
 

@@ -6,8 +6,8 @@ import processing.event.MouseEvent;
 
 
 /**
- * Standard container for top bar menu strips. Sets automatic anchors, special
- * height and background greyish gradient.
+ * Top bar for menu strips which automatically fills out parent, has special menu
+ * height and a greyish background gradient.
  * 
  * @author E-Bow
  *
@@ -15,7 +15,7 @@ import processing.event.MouseEvent;
 public class MenuBar extends HFlowContainer {
 
 	public MenuBar() {
-		setGradient(Color.create(230), Color.create(200));
+		setGradient(Color.create(230), Color.create(190));
 		setZ(MenuItem.MenuZIndex);
 		setHeightImpl(MenuItem.MENUITEM_HEIGHT);
 	}
@@ -26,8 +26,6 @@ public class MenuBar extends HFlowContainer {
 		addAutoAnchors(PApplet.LEFT, PApplet.RIGHT);
 	}
 
-	// enable MenuSurface to close when clicked somewhere on menubar that is not an
-	// item
 	@Override
 	protected void press(MouseEvent e) {
 		propagationStopped = false;

@@ -31,14 +31,24 @@ public class Switch extends Checkbox {
 	public Switch(String text, boolean checked) {
 		super(text, checked);
 
-		uncheckedBackgroundColor = Color.create(160);
-		checkedBackgroundColor = Color.create(46, 116, 122);
-		checkmarkColor = Color.create(100, 50, 50);
+		setUncheckedBackgroundColor(Color.create(160));
+		setCheckedBackgroundColor(Color.create(46, 116, 122));
+		setCheckmarkColor(Color.create(100, 50, 50));
 
 		// initialize currentPosition
 		currentPosition = (int) (checked ? (1.75 * checkboxSize - (checkboxSize - checkboxSize / 4) / 2 - (checkboxSize / 4) + 1)
 				: ((checkboxSize - checkboxSize / 4) / 2 + (checkboxSize / 4) - 1));
 
+	}
+
+	public Switch(String text, String toggleEventMethodName) {
+		this(text, false);
+		addToggleListener(toggleEventMethodName);
+	}
+
+	public Switch(String text, String toggleEventMethodName, boolean checked) {
+		this(text, checked);
+		addToggleListener(toggleEventMethodName);
 	}
 
 	/**
@@ -50,6 +60,16 @@ public class Switch extends Checkbox {
 	public void setCurrentPosition(float c) {
 		this.currentPosition = c;
 		update();
+	}
+
+	/**
+	 * No one needs this function - it is just used internally for the switch
+	 * animation.
+	 * 
+	 * @return c
+	 */
+	public float getCurrentPosition() {
+		return currentPosition;
 	}
 
 	protected void render() {

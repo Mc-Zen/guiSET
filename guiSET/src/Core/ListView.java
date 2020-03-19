@@ -1,6 +1,5 @@
 package guiSET.core;
 
-import processing.core.*;
 import processing.event.*;
 
 import java.util.ArrayList;
@@ -18,7 +17,7 @@ import java.util.ArrayList;
 public class ListView extends VScrollContainer {
 
 	// default background color for new Items generated with add(String)
-	protected int itemBackgroundColor;
+	protected int newItemBackgroundColor;
 
 	// default back color for selected items for new Items generated with
 	// add(String)
@@ -51,7 +50,7 @@ public class ListView extends VScrollContainer {
 
 		setBackgroundColor(-3618616); // light grey
 		setSelectionColor(-12171706);
-		itemBackgroundColor = -1; // color(255)
+		setNewItemBackgroundColor(WHITE); // color(255)
 	}
 
 
@@ -173,13 +172,12 @@ public class ListView extends VScrollContainer {
 	public void deselect(int index) {
 		if (index >= 0 && index < items.size()) {
 			Control c = items.get(index);
-			try {
+			if (c instanceof ListItem) {
 				// only raise event if item has not been selected before
 				if (((ListItem) c).selected) {
 					((ListItem) c).selected = false; // dont use setter here
 					c.update();
 				}
-			} catch (ClassCastException e) {
 			}
 
 			selectedItems.remove(c);	// does no harm if not in list
@@ -277,11 +275,11 @@ public class ListView extends VScrollContainer {
 		 * by string easier. Of course this works only for properties that listview
 		 * itself doesn't use.
 		 */
-		newListItem.text = newItem;
-		newListItem.fontSize = fontSize;
-		newListItem.textAlign = textAlign;
-		newListItem.selectionColor = selectionColor;
-		newListItem.selectionHoverColor = selectionHoverColor;
+		newListItem.setText(newItem);
+		newListItem.setFontSize(fontSize);
+		newListItem.setTextAlign(textAlign);
+		newListItem.setSelectionColor(selectionColor);
+		newListItem.setSelectionHoverColor(selectionHoverColor);
 		newListItem.setWidthImpl(this.width);
 
 		// newListItem.setBackgroundColor(itemBackgroundColor);
@@ -338,7 +336,7 @@ public class ListView extends VScrollContainer {
 	 * @param itemBackgroundColor background color for new items
 	 */
 	public void setNewItemBackgroundColor(int itemBackgroundColor) {
-		this.itemBackgroundColor = itemBackgroundColor;
+		this.newItemBackgroundColor = itemBackgroundColor;
 		update();
 	}
 
@@ -398,7 +396,7 @@ public class ListView extends VScrollContainer {
 	 */
 
 	public int getItemBackgroundColor() {
-		return itemBackgroundColor;
+		return newItemBackgroundColor;
 	}
 
 	public int getSelectionColor() {
@@ -462,14 +460,14 @@ public class ListView extends VScrollContainer {
 	protected void keyPress(KeyEvent e) {
 		super.keyPress(e);
 		switch (e.getKeyCode()) {
-		case PApplet.DOWN:
+		case DOWN:
 			int selectionIndex = getSelectionIndex();
 			if (selectionIndex < items.size() - 1) {
 				itemPressed(items.get(selectionIndex + 1));
 				scrollToItem(selectionIndex + 1);
 			}
 			break;
-		case PApplet.UP:
+		case UP:
 			selectionIndex = getSelectionIndex();
 			if (selectionIndex > 0) {
 				itemPressed(items.get(selectionIndex - 1));

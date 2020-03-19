@@ -177,14 +177,13 @@ public class MenuItem extends Control {
 	public MenuItem(String text) {
 		super();
 		setHeightImpl(MENUITEM_HEIGHT);
-		setPadding(0, 6, 10, 6);
+		setPadding(0, 6, 0, 6);
 		setText(text);
-		fontSize = 13;
+		setFontSize(13);
 
-		backgroundColor = 0;
-		visualBackgroundColor = 0;
-		hoverColor = 1342177280; 		// just darken menucontainer backgroundcolor a bit
-		pressedColor = 1677721600; 		// only used by menu headers
+		setBackgroundColor(TRANSPARENT);
+		setHoverColor(1342177280); 		// just darken menucontainer backgroundcolor a bit
+		setPressedColor(1677721600); 		// only used by menu headers
 
 		items = new ArrayList<Control>(0);
 		MenuSurface.usingMenus();
@@ -210,6 +209,21 @@ public class MenuItem extends Control {
 		addSelectListener(methodName);
 	}
 
+	/**
+	 * If strong set to true, then the shortcut might also be fired when a textbox
+	 * has focus.
+	 * 
+	 * @param text       text
+	 * @param methodName method name
+	 * @param shortcut   shortcut
+	 * @param strong     strong property
+	 */
+	public MenuItem(String text, String methodName, Shortcut shortcut, boolean strong) {
+		this(text, methodName);
+		setShortcut(shortcut);
+		Frame.frame0.registerShortcut(shortcut, methodName, getPApplet(), strong);
+		addSelectListener(methodName);
+	}
 
 
 
@@ -260,11 +274,11 @@ public class MenuItem extends Control {
 			 */
 			if (shortcut != null) {
 				String textBKP = text;
-				textAlign = PApplet.RIGHT; // temporary RIGHT (no need to reset)
+				textAlign = RIGHT; // temporary RIGHT (no need to reset), no setter!! dont wanna call update always
 				text = shortcut.toString() + " ";
 				drawDefaultText();
 				text = textBKP;
-				textAlign = PApplet.LEFT; // temporary RIGHT (no need to reset)
+				textAlign = LEFT; // temporary RIGHT (no need to reset)
 			}
 
 			/*
@@ -297,9 +311,9 @@ public class MenuItem extends Control {
 		if (parent instanceof MenuStrip) {
 			type = MENU_ITEM;
 
-			textAlign = PApplet.LEFT;
-			hoverColor = 671088660;
-			paddingLeft = 27;
+			setTextAlign(LEFT);
+			setHoverColor(671088660);
+			setPaddingLeft(27);
 
 			// If this whole strip (that this item just has been added to) is already added
 			// to a MenuBar or similar, we need to add the dropDown for this item separately
@@ -308,7 +322,7 @@ public class MenuItem extends Control {
 			}
 		} else {
 			type = MENU_HEADER;
-			textAlign = PApplet.CENTER;
+			setTextAlign(CENTER);
 			// set this as header recursively for all (sub...-) children. This is only
 			// necessary for headers as it is already included in the add() method when
 			// adding MenuItems.

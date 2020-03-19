@@ -14,9 +14,9 @@ public class Button extends Control {
 	public Button() {
 		super();
 		setPadding(5);
-		borderWidth = 1;
-		hoverColor = -3618616; 		// color(200)
-		pressedColor = -6908266;	// color(150)
+		setBorderWidth(1);
+		setHoverColor(-3618616); 		// color(200)
+		setPressedColor(-6908266);	// color(150)
 	}
 
 	/**
@@ -84,7 +84,7 @@ public class Button extends Control {
 		setImage(image);
 		setWidthImpl(width);  // should be okay to set size without setter
 		setHeightImpl(height);
-		borderWidth = 0;
+		setBorderWidth(0);
 	}
 
 

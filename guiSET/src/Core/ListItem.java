@@ -24,12 +24,12 @@ public class ListItem extends Control {
 	public ListItem() {
 		super();
 		setPadding(3);
-		borderWidth = 1;
+		setBorderWidth(1);
 		setSelectionColor(-12171706);
-		selectionForegroundColor = -1;
-		setBackgroundColor(-1);
-		hoverColor = -3618616;
-		pressedColor = -6908266;
+		setSelectionForegroundColor(WHITE);
+		setBackgroundColor(WHITE);
+		setHoverColor(-3618616);
+		setPressedColor(-6908266);
 
 		autosize();
 	}
@@ -50,7 +50,8 @@ public class ListItem extends Control {
 		// parent expects that
 
 		setWidthImpl(((Container) parent).getAvailableWidth());
-		updateAnchors(); // not really necessary or elegant but for now (just in case listitem has children)
+		updateAnchors(); // not really necessary or elegant but for now (just in case listitem has
+						 // children)
 		resize();        // ...
 
 		pg = getPApplet().createGraphics(width, height);
@@ -174,11 +175,8 @@ public class ListItem extends Control {
 	@Override
 	protected void press(MouseEvent e) {
 		super.press(e);
-		try {
+		if (parent instanceof ListView) {
 			((ListView) parent).itemPressed((Control) this);
-		} catch (ClassCastException cce) {
-			// just ignore
 		}
 	}
-
 }
