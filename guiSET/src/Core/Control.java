@@ -5,8 +5,41 @@ import processing.event.*;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 
+import guiSET.core.Frame.Initialization_State;
+
 import java.lang.reflect.InvocationTargetException;
-import java.awt.Font;
+
+
+/*
+ * The code in this class is divided in a few sections:
+
+	1. Most fields that deal with UI and UX
+	
+	2. Constructor
+	
+	3. Methods to be overriden by other classes:
+			- initialized()
+			- addedToParent()
+			
+	5. Focus
+	
+	4. Rendering methods, classes, default draw methods. 
+	
+	6. Anchors and Resizing
+	
+	7. Setters
+	
+	8. Getters
+	
+	9. EventListener
+	
+	10. Mouse event methods and protected static fields
+	
+	11. Event methods to be overriden by other classes
+	
+	12. Debugging functions
+	
+ */
 
 /**
  * (Abstract) Base class for all other visual components.
@@ -15,7 +48,6 @@ import java.awt.Font;
  * essential event handling and some rendering methods.
  * 
  */
-
 
 public abstract class Control implements PConstants {
 
@@ -79,79 +111,62 @@ public abstract class Control implements PConstants {
 	 */
 	protected int x;
 	protected int y;
-
-	/*
-	 * z-index of component, only has an effect when component is in a
-	 * panelcontainer (not a flow- or scroll container)
-	 */
+	// z-index of element; only has an effect when element is in a
+	// panelcontainer (not a flow- or scroll container)
 	protected int z;
 
-	protected int width;
-	protected int height;
+	protected int width; 				// is always between minWidth and maxWidth
+	protected int height; 				// is always between minHeight and maxHeight
 
-	protected int minWidth = 1;
+	protected int minWidth = 1; 		// never below 1
 	protected int maxWidth = 100000;
-	protected int minHeight = 1;
+	protected int minHeight = 1; 		// never below 1
 	protected int maxHeight = 100000;
 
-	protected int marginLeft;
+	protected int marginLeft; 			// margins are not included in width/height and honored by containers when
+								 			// layouting their items
 	protected int marginTop;
 	protected int marginRight;
 	protected int marginBottom;
 
-	protected int paddingLeft;
+	protected int paddingLeft; 			// paddings are included in width/height and i.e. regarded when performing
+								 			// autosize
 	protected int paddingRight;
 	protected int paddingTop;
 	protected int paddingBottom;
 
 
 	/*
-	 * EDIT: new mouse event listening does not use bounds anymore
-	 * 
-	 * Bounds are the key to the mouse event listening process. They describe the
-	 * objects position and size relative to the window origin.
-	 * 
-	 * Containers set the bounds of their children after rendering. Don't change
-	 * them manually!
-	 */
-
-	// @Deprecated
-	// protected Bounds bounds = new Bounds(0, 0, 0, 0);
-
-
-	/*
 	 * Visuals
 	 */
-	protected String text = ""; 			// multi-purpose text to display, e.g. button text, label text, textbox content
-	protected float fontSize = 13;
-	protected int textAlign = CENTER; 			// LEFT, CENTER, RIGHT (= 37, 3, 39) from PConstants
-	protected int textAlignY = CENTER; 			// vertical text align (TOP, CENTER, BOTTOM) (= 101, 3, 102)
-
 	protected PImage image;
-	protected int imageMode = FILL;
+	protected ImageMode imageMode = ImageMode.FILL_DISTORT;
 
 
 	/*
 	 * IMAGE MODES:
 	 */
 
+	public enum ImageMode {
+		FILL_DISTORT, FIT_FILL_ALL, FIT_INSIDE
+	}
+
 	/**
-	 * Image mode: fill Component with given image and if necessary, distort the
-	 * image
+	 * Image mode: fill element with given image and if necessary, distort the image
 	 */
-	public static final int FILL = 1;
+	public static final ImageMode FILL = ImageMode.FILL_DISTORT;
 
 	/**
 	 * Image mode: enlarge image so it fills out entire object centered, parts of
 	 * the image might be hidden; fits the larger side
 	 */
-	public static final int FIT = 2;
+	public static final ImageMode FIT = ImageMode.FIT_FILL_ALL;
 
 	/**
 	 * Image mode: place image centered in the object without cropping it, so it
 	 * fits the smaller side
 	 */
-	public static final int FIT_INSIDE = 3;
+	public static final ImageMode FIT_INSIDE = ImageMode.FIT_INSIDE;
 
 	protected int backgroundColor;
 	protected int foregroundColor;
@@ -188,20 +203,69 @@ public abstract class Control implements PConstants {
 
 
 	/*
-	 * if true then shortcuts registered to frame won't be handled if this element
+	 * If true, then shortcuts registered to frame won't be handled if this element
 	 * is focused. I.e. useful for textboxes (ctrl-c, x etc.)
 	 */
-
 	protected boolean overridesFrameShortcuts = false;
 
-
-	protected static final int BLACK = -16777216;
-	protected static final int WHITE = -1;
-	protected static final int TRANSPARENT = 0;
-	protected static final int SELECTION_BLUE = -13395457;
-	protected static final int TEXT_CURSOR_COLOR = -12171706; // color(70)
+	// Some useful colors
+	public static final int BLACK = -16777216;
+	public static final int WHITE = -1;
+	public static final int TRANSPARENT = 0;
+	public static final int SELECTION_BLUE = -13395457;
+	public static final int TEXT_CURSOR_COLOR = -12171706; // color(70)
 
 	protected static final int DEFAULT_SCROLL_SPEED = 40;
+
+
+	public enum RenderingMethod {
+		BUFFERED_RENDERING, NON_BUFFERED_RENDERING
+	}
+
+	/**
+	 * Elements graphics are drawn on a buffer image. This element needs to be
+	 * re-rendered only if it changed and not if siblings or parents changed. This
+	 * saves CPU resources but needs more memory.
+	 */
+	public static final RenderingMethod BUFFERED_RENDERING = RenderingMethod.BUFFERED_RENDERING;
+	/**
+	 * Elements graphics are drawn on parent buffer. Each change of any element
+	 * makes a re-rendering of this element necessary. There are exceptions though:
+	 * if this parents mode is {@link #BUFFERED_RENDERING} and a sibling of the
+	 * parent has changed, then the element that is buffered by the parent needs no
+	 * redrawing.
+	 */
+	public static final RenderingMethod NON_BUFFERED_RENDERING = RenderingMethod.NON_BUFFERED_RENDERING;
+
+	/**
+	 * Specify rendering type for any new element instances.
+	 */
+	public static RenderingMethod renderingMethod = BUFFERED_RENDERING;
+
+
+
+
+	/*
+	 * default values
+	 */
+	public static int defaultBackgroundColor = WHITE;
+	public static int defaultForegroudColor = BLACK;
+	public static int defaultTextColor = defaultForegroudColor;
+	public static int defaultBorderColor = -15461356;
+	public static int defaultBorderWidth = 0;
+	public static int defaultBorderRadius = 0;
+	// public static int defaultOpacity = 1; // not with opactiy
+
+	public static int defaultPaddingLeft = 0;
+	public static int defaultPaddingRight = 0;
+	public static int defaultPaddingTop = 0;
+	public static int defaultPaddingBottom = 0;
+
+
+	public static int defaultMarginLeft = 0;
+	public static int defaultMarginRight = 0;
+	public static int defaultMarginTop = 0;
+	public static int defaultMarginBottom = 0;
 
 
 	public Control() {
@@ -209,13 +273,31 @@ public abstract class Control implements PConstants {
 		height = 50;
 		width = 50;
 
-		backgroundColor = WHITE;
-		visualBackgroundColor = WHITE;
-		foregroundColor = BLACK;
-		borderColor = -15461356;
-		hoverColor = WHITE;
-		pressedColor = WHITE;
-		
+		backgroundColor = defaultBackgroundColor;
+		visualBackgroundColor = defaultBackgroundColor;
+		foregroundColor = defaultForegroudColor;
+		hoverColor = defaultBackgroundColor;
+		pressedColor = defaultBackgroundColor;
+
+		paddingLeft = defaultPaddingLeft;
+		paddingRight = defaultPaddingRight;
+		paddingTop = defaultPaddingTop;
+		paddingBottom = defaultPaddingBottom;
+
+		marginLeft = defaultMarginLeft;
+		marginRight = defaultMarginRight;
+		marginTop = defaultMarginTop;
+		marginBottom = defaultMarginBottom;
+
+		borderColor = defaultBorderColor;
+		borderRadius = defaultBorderRadius;
+		this.borderWidth = Math.max(0, borderWidth);
+
+		if (renderingMethod == RenderingMethod.BUFFERED_RENDERING) {
+			renderer = new BasicRenderer();
+		} else {
+			renderer = new ParentGraphicsRenderer();
+		}
 	}
 
 
@@ -224,12 +306,58 @@ public abstract class Control implements PConstants {
 
 
 	/*
-	 * Called after sketchs setup() and before rendering the first time.
-	 * Don't call setZ(int) in initialize() nor any function or constructor (like MenuSurface) that does!
+	 * Called before rendering the first time.
+	 * Don't call setZ(int) in initialize() nor call any function or constructor (like MenuSurface()) that does.
 	 */
 	protected void initialize() {
 
 	}
+
+
+	/*
+	 * Called by containers when they add this object to their content list.
+	 */
+	protected void addedToParent() {
+
+	}
+
+
+
+
+
+
+	/**
+	 * Request the Frame component to focus this object. The Frame decides upon the
+	 * demand and can set this elements focused state to true. There can only be one
+	 * focused element at a time and it is stored in the Frames focusedElement
+	 * property.
+	 * 
+	 * @see Frame#focusedElement focusedElement.
+	 */
+	public void focus() {
+		getFrame().requestFocus(this);
+	}
+
+
+	/**
+	 * Request the Frame component to blur this object (set focus to false).
+	 * 
+	 * @see Frame#focusedElement focusedElement.
+	 */
+	public void blur() {
+		getFrame().requestBlur(this);
+	}
+
+	/**
+	 * Request the Frame component to blur this object (set focus to false),
+	 * duplicate of {@link #blur()}.
+	 * 
+	 * @see Frame#focusedElement focusedElement.
+	 */
+	public void unfocus() {
+		blur();
+	}
+
 
 
 
@@ -250,7 +378,7 @@ public abstract class Control implements PConstants {
 	protected final void preRender() {
 		// only create graphics when size changed
 		if (width != pWidth || height != pHeight) {
-			pg = Frame.frame0.papplet.createGraphics(width, height);
+			pg = getPApplet().createGraphics(width, height);
 			pWidth = width;
 			pHeight = height;
 			pg.beginDraw();
@@ -259,6 +387,7 @@ public abstract class Control implements PConstants {
 			pg.clear();
 		}
 	}
+
 
 	/*
 	 * Main drawing method that determines the looks of the object.
@@ -278,59 +407,42 @@ public abstract class Control implements PConstants {
 	 * ..., textAlign, fontColor, fontSize.
 	 * 
 	 */
-
 	protected abstract void render();
 
+	/*
+	 * Method used by containers to draw an item at specfied position. 
+	 */
 	protected final void renderItem(Control item, int x, int y) {
 		// check visiblity in render(), some containers need to check it there anyway
 
 		item.renderer.renderAll(x, y, pg);
-		if (true)
-			return;
-		/*
-				if (item.opacity == 0) {
-		
-					// make this thing inaccessible to mouse events
-					item.offsetX = width;
-					item.offsetY = height;
-					return;
-				}
-		
-				item.offsetX = x;
-				item.offsetY = y;
-		
-		
-				if (item.dirty) {
-					item.dirty = false; // do this before render, so it can use animations by calling update again
-		
-					item.preRender();
-					item.render();
-					item.pg.endDraw();
-		
-		//			Frame.renderCount++;
-		//			Frame.renderedObjects += item.getClass();
-				}
-				// apply opacity (tinting carries out quite a lot of calculations in PGraphics,
-				// while noTint() doesn't)
-				if (item.opacity < 1) {
-					pg.tint(255, (int) (item.opacity * 256));
-				} else {
-					pg.tint = false;
-				}
-				pg.image(item.getGraphics(), x, y);
-				*/
 	}
 
-	protected Renderer renderer = new ExtendedRenderer();
+
+	/**
+	 * The renderers renderAll method is called by renderItem(). There are different
+	 * versions for best performance.
+	 * 
+	 * Standard is the basic renderer which does not implement opacity. If opacity
+	 * (or in future shadow) is set, the renderer is replaced by an
+	 * ExtendedRenderer.
+	 * 
+	 */
+	protected Renderer renderer;
+
+	abstract class Renderer {
+		abstract void renderAll(int x, int y, PGraphics parentGraphics);
+	}
 
 	// The standard renderer. Draw looks on own buffer graphics. Can get expensive
 	// with memory if using a lot of elements.
-	class Renderer {
+	class BasicRenderer extends Renderer {
 		void renderAll(int x, int y, PGraphics parentGraphics) {
 			if (dirty) {
 				dirty = false;
 				preRender();
 				render();
+				drawBorder();
 				pg.endDraw();
 			}
 			offsetX = x;
@@ -348,6 +460,7 @@ public abstract class Control implements PConstants {
 				dirty = false;
 				preRender();
 				render();
+				drawBorder();
 				pg.endDraw();
 			}
 			if (opacity == 0) { // make this thing inaccessible to mouse events
@@ -358,13 +471,14 @@ public abstract class Control implements PConstants {
 			// TODO: draw shadow
 			if (opacity < 1) {
 				parentGraphics.tint(255, (int) (opacity * 256));
-			} else {
+				parentGraphics.image(pg, x, y);
 				parentGraphics.tint = false;
+			} else {
+				parentGraphics.image(pg, x, y);
 			}
 
 			offsetX = x;
 			offsetY = y;
-			parentGraphics.image(pg, x, y);
 		}
 	}
 
@@ -374,11 +488,21 @@ public abstract class Control implements PConstants {
 	class ParentGraphicsRenderer extends Renderer {
 		@Override
 		void renderAll(int x, int y, PGraphics parentGraphics) {
+
+			// constrain drawing to this elements area and its parents area
+			int x0 = Math.max(0, x), y0 = Math.max(0, y);
+			int x1 = Math.min(x + width, parent.width), y1 = Math.min(y + height, parent.height);
+			parentGraphics.clip(x0, y0, x1 - x0, y1 - y0);
+
 			parentGraphics.pushMatrix();
 			parentGraphics.translate(x, y);
-			parentGraphics.clip(0, 0, width, height);
 			pg = parentGraphics;
+			PFont f = parentGraphics.textFont;
+
 			render(); // no preRender(), pg.endDraw() needed
+			drawBorder();
+			if (f != null)
+				parentGraphics.textFont(f); // might need to reset font if textRenderer is an extended one
 			offsetX = x;
 			offsetY = y;
 			parentGraphics.popMatrix();
@@ -391,9 +515,16 @@ public abstract class Control implements PConstants {
 	class ParentGraphicsExtendedRenderer extends Renderer {
 		@Override
 		void renderAll(int x, int y, PGraphics parentGraphics) {
+			// constrain drawing to this elements area and its parents area
+			int x0 = Math.max(0, x), y0 = Math.max(0, y);
+			int x1 = Math.min(x + width, parent.width), y1 = Math.min(y + height, parent.height);
+			parentGraphics.clip(x0, y0, x1 - x0, y1 - y0);
+
 			parentGraphics.pushMatrix();
 			parentGraphics.translate(x, y);
 			pg = parentGraphics;
+			PFont f = parentGraphics.textFont;
+
 			// TODO: draw shadow
 			if (opacity == 0) { // make this thing inaccessible to mouse events
 				offsetX = width;
@@ -402,13 +533,20 @@ public abstract class Control implements PConstants {
 			}
 			if (opacity < 1) {
 				parentGraphics.tint(255, (int) (opacity * 256));
+				render(); // no preRender()/pg.endDraw() needed
+				drawBorder();
+				// parentGraphics.tint = false;
 			} else {
-				parentGraphics.tint = false;
+				render(); // no preRender()/pg.endDraw() needed
+				drawBorder();
 			}
-			render(); // no preRender()/pg.endDraw() needed
+
+			if (f != null)
+				parentGraphics.textFont(f); // might need to reset font if textRenderer is an extended one
 			offsetX = x;
 			offsetY = y;
 			parentGraphics.popMatrix();
+			parentGraphics.noClip();
 		}
 	}
 
@@ -739,6 +877,16 @@ public abstract class Control implements PConstants {
 	*/
 
 
+
+	private void drawBorder() {
+		if (borderWidth > 0) {
+			pg.noFill();
+			pg.strokeWeight(borderWidth);
+			pg.stroke(borderColor);
+			pg.rect(borderWidth / 2, borderWidth / 2, width - borderWidth, height - borderWidth, borderRadius);
+		}
+	}
+
 	/**
 	 * Standard background drawing method - this method can be used by any control
 	 * to draw its background. Features backgroundColors, borders, images and
@@ -754,12 +902,13 @@ public abstract class Control implements PConstants {
 			} else {
 				pg.noFill();
 			}
-			if (borderWidth > 0) {
+			/*if (borderWidth > 0) {
 				pg.strokeWeight(borderWidth);
 				pg.stroke(borderColor);
 			} else {
 				pg.noStroke();
-			}
+			}*/
+			pg.noStroke();
 			pg.rect(borderWidth / 2, borderWidth / 2, width - borderWidth, height - borderWidth, borderRadius);
 
 		} else {
@@ -860,402 +1009,22 @@ public abstract class Control implements PConstants {
 		}
 	}
 
+	protected void setVisualBackgroundColor(int color) {
+		if (color != visualBackgroundColor) {
+			visualBackgroundColor = color;
+			update();
 
-
-
-
-
-
-	/**
-	 * Standard text drawing method accounting padding, align, color etc. This
-	 * method can be used by any control for drawing its text.
-	 */
-
-	protected void drawDefaultText() {
-		textRenderer.draw(text);
-//		pg.fill(foregroundColor);
-//		pg.textSize(fontSize);
-//		pg.textAlign(textAlign, textAlignY);
-//		int x = 0;
-//		int y = 0;
-//
-//		switch (textAlign) {
-//		case 37:
-//			x = paddingLeft;
-//			break;
-//		case 3:
-//			x = (width - paddingRight - paddingLeft) / 2 + paddingLeft;
-//			break;
-//		case 39:
-//			x = width - paddingRight;
-//			break;
-//		}
-//		switch (textAlignY) {
-//		case 101:
-//			y = (int) (paddingTop - 0.2 * fontSize);
-//			break;
-//		case 3:
-//			y = (int) (height / 2 - 0.07 * fontSize); // somehow alignY center by processing is not quite exact in middle of fontSize
-//			break;
-//		case 102:
-//			y = height - paddingBottom;
-//			break;
-//		}
-//
-//		pg.text(text.toCharArray(), 0, text.length(), x, y);
-	}
-
-	protected TextRenderer textRenderer = new ExtendedTextRenderer();
-
-	protected interface TextRenderer {
-
-		void draw(String text);
-
-		int getTextColor();
-
-		float getFontSize();
-
-		int getTextAlign();
-
-		int getTextAlignY();
-
-		void setTextColor(int color);
-
-		void setFontSize(float fontSize);
-
-		void setTextAlign(int textAlign);
-
-		void setTextAlignY(int textAlignY);
-		
-		float textWidth(String text);
-		
-		float textAscent();
-		
-		float textDescent();
-
-	}
-
-	class StandardTextRenderer implements TextRenderer {
-		protected float fontSize = 13;
-		protected int color = BLACK;
-		protected int textAlign = CENTER;
-		protected int textAlignY = CENTER;
-		protected int lineHeight = 15;
-
-		public void draw(String text) {
-			pg.fill(color);
-			pg.textSize(fontSize);
-			pg.textAlign(textAlign, textAlignY);
-
-			String[] lines = text.split("\n");
-			float posY = paddingTop + textAscent();
-			float textHeight = lineHeight * (lines.length - 1) + fontSize;
-
-			switch (textAlignY) {
-			case CENTER:
-				posY += (height - paddingTop - paddingBottom - textHeight) / 2f;  // somehow alignY center by processing is not quite exact in middle
-				break;
-			case BOTTOM:
-				posY += height - paddingBottom - paddingTop - textHeight;
-				break;
-			}
-			for (int i = 0; i < lines.length; ++i) {
-				textLineAlignImpl(lines[i], 0, (int) posY + i * lineHeight);
-			}
-		}
-
-		// draw text to THIS position
-		// We could use all the implementation from PGraphics but we need to compute a
-		// lot of these values anyway
-		protected void textLineAlignImpl(String text, int posX, int posY) {
-			pg.textAlign(LEFT, BASELINE);
-			posX += paddingLeft;
-			switch (textAlign) {
-			case CENTER:
-				// posX = (width - paddingRight - paddingLeft) / 2 + paddingLeft;
-				posX += (width - paddingRight - paddingLeft - textWidth(text)) / 2f;
-				break;
-			case RIGHT:
-				posX += (width - paddingRight - paddingLeft) - textWidth(text);
-				break;
-			}
-			pg.text(text.toCharArray(), 0, text.length(), posX, posY);
-		}
-
-		public int getTextColor() {
-			return color;
-		}
-
-		public float getFontSize() {
-			return fontSize;
-		}
-
-		public void setTextColor(int color) {
-			this.color = color;
-		}
-
-		public void setFontSize(float fontSize) {
-			this.fontSize = fontSize;
-		}
-
-		public void setTextAlign(int textAlign) {
-			this.textAlign = textAlign;
-		}
-
-		public void setTextAlignY(int textAlignY) {
-			this.textAlignY = textAlignY;
-		}
-
-		public int getTextAlign() {
-			return textAlign;
-		}
-
-		public int getTextAlignY() {
-			return textAlignY;
-		}
-		
-		public float textWidth(String text) {
-			return textWidthStandardTextImpl(text);
-		}
-		
-		public float textAscent() {
-			return textAscentStandardTextImpl();
-		}
-		public float textDescent() {
-			return textDescentStandardTextImpl();
-		}
-	}
-
-	class ExtendedTextRenderer extends StandardTextRenderer {
-		static final int NONE = 0;
-		static final int BOLD = 1 << 0;
-		static final int ITALIC = 1 << 1;
-		static final int UNDERLINE = 1 << 2;
-		static final int STRIKE = 1 << 3;
-
-		protected int style = 0; // contains info for bold/italic/underline/strike
-		protected PFont font;
-
-		void setStyle(int type, boolean bool) {
-			if (bool)
-				style |= type;
-			else
-				style &= ~type;
-			switch(type) {
-			case BOLD:
-			case ITALIC:
-				if(font == null) {
-					font = createFont(new Font("Lucida Sans", Font.PLAIN, 12), 12, true, null, false);
-						
-				}
-				@SuppressWarnings("deprecation") 
-				Font formerFont = font.getFont();
-				int newStyle = formerFont.getStyle();
-				if(bool) 
-					newStyle |= type;
-				else
-					newStyle &= ~type;
-				
-				font.setNative(new Font(formerFont.getName(), newStyle, formerFont.getSize()));
-				break;
-				
-			}
-		}
-
-		boolean isStyle(int type) {
-			return (style & type) != 0;
-		}
-		void setFont(PFont font) {
-			this.font = font;
-		}
-
-		@Override
-		public void draw(String text) {
-			
-			if(font != null) {
-				pg.textFont(font);
-			}
-
-			pg.fill(color);
-			pg.textSize(fontSize);
-
-			String[] lines = text.split("\n");
-			float posY = paddingTop + textAscent();
-			float textHeight = lineHeight * (lines.length - 1) + fontSize;
-
-			switch (textAlignY) {
-			case CENTER:
-				posY += (height - paddingTop - paddingBottom - textHeight) / 2f;  // somehow alignY center by processing is not quite exact in middle
-				break;
-			case BOTTOM:
-				posY += height - paddingBottom - paddingTop - textHeight;
-				break;
-			}
-			for (int i = 0; i < lines.length; ++i) {
-				textLineAlignImpl(lines[i], 0, (int) posY + i * lineHeight);
-			}
-
-
-
-		}
-
-		@Override
-		protected void textLineAlignImpl(String text, int posX, int posY) {
-			float tw = textWidth(text);
-			pg.textAlign(LEFT, BASELINE);
-			posX += paddingLeft;
-			switch (textAlign) {
-			case CENTER:
-				// posX = (width - paddingRight - paddingLeft) / 2 + paddingLeft;
-				posX += (width - paddingRight - paddingLeft - tw) / 2f;
-				break;
-			case RIGHT:
-				posX += (width - paddingRight - paddingLeft) - tw;
-				break;
-			}
-			pg.text(text.toCharArray(), 0, text.length(), posX, posY);
-			if (isStyle(UNDERLINE)) {
-				pg.line(posX, posY + 2, posX + tw, posY + 2);
-			}
-			if (isStyle(STRIKE)) {
-				float posYY = posY - textAscent() / 3;
-				pg.line(posX, posYY, posX + tw, posYY);
-			}
-		}
-		
-		@Override 
-		public float textWidth(String text) {
-			if(font == null) // no specific font - use standardtext implementation 
-				return super.textWidth(text);
-			PFont temp = textInfo_graphics.textFont;
-			textInfo_graphics.textFont(font);
-			float width = textInfo_graphics.textWidth(text) / textInfo_graphics.textSize * fontSize;
-			textInfo_graphics.textFont = temp;
-			return width;
 		}
 	}
 
 
 
 
-	/**
-	 * A 1x1 dummy graphics is used for getting textwidth etc. without needing to
-	 * create the pgraphics before for each control method for getting width of text
-	 * making autoFit calculations easier and more independant.
-	 * 
-	 * It is intialized when a Frame is created first time and only then ready.
-	 * We can't just use a PFont as the different renderers (Java2D, OpenGL, ...) have different 
-	 * text implementations. 
-	 */
-	protected static PGraphics textInfo_graphics;
-	// called by Frame at constructor
-	protected static void init_pfont() {
-		textInfo_graphics = Frame.frame0.papplet.createGraphics(1, 1);
-		textInfo_graphics.beginDraw();
-		textInfo_graphics.textSize(12);
-	}
-
-	// copied from PGraphics - need this here but cant access
-	private static PFont createDefaultFont(float size) {
-		Font baseFont = new Font("Lucida Sans", Font.PLAIN, 1);
-		return createFont(baseFont, size, true, null, false);
-	}
-
-	// copied from PGraphics - need this here but cant access
-	private static PFont createFont(Font baseFont, float size, boolean smooth, char[] charset, boolean stream) {
-		return new PFont(baseFont.deriveFont(size * getPApplet().pixelDensity), smooth, charset, stream, getPApplet().pixelDensity);
-	}
-
-
-	/**
-	 * Width of text in pixel - no matter which font in the TextRenderer
-	 */
-	protected float textWidth(String text) {
-		return textRenderer.textWidth(text);
-	}
-	/**
-	 * Ascent of text for the set fontsize in pixel.
-	 */
-	protected float textAscent() {
-		return textRenderer.textAscent();
-	}
-	/**
-	 * Descent of text below baseline for the set fontsize in pixel.
-	 */
-	protected float textDescent() {
-		return textRenderer.textDescent();
-	}
-	
-	
-	
-	private float textWidthStandardTextImpl(String text) {
-		if (textInfo_graphics == null)
-			throw new RuntimeException("Frame needs to be intialized before any other guiSET element");
-		return textInfo_graphics.textWidth(text) / textInfo_graphics.textSize * fontSize;
-	}
-	
-	private float textAscentStandardTextImpl() {
-		if (textInfo_graphics == null)
-			throw new RuntimeException("Frame needs to be intialized before any other guiSET element");
-		return textInfo_graphics.textAscent() * fontSize / textInfo_graphics.textSize;
-	}
-	
-	private float textDescentStandardTextImpl() {
-		if (textInfo_graphics == null)
-			throw new RuntimeException("Frame needs to be intialized before any other guiSET element");
-		return textInfo_graphics.textDescent() * fontSize / textInfo_graphics.textSize;
-	}
-
-	
-
-	protected float textLeading() {
-		return (textAscent() + textDescent()) * 1.275f; // as done in PGraphics.handleTextSize()
-	}
-
-	
 
 
 
 
-	/**
-	 * Request the Frame component to focus this object. The Frame decides upon the
-	 * demand and can set this elements focused state to true. There can only be one
-	 * focused element at a time and it is stored in the Frames focusedElement
-	 * property.
-	 * 
-	 * @see Frame#focusedElement focusedElement.
-	 */
 
-	public void focus() {
-		Frame.frame0.requestFocus(this);
-	}
-
-
-	/**
-	 * Request the Frame component to blur this object (set focus to false).
-	 * 
-	 * @see Frame#focusedElement focusedElement.
-	 */
-	public void blur() {
-		Frame.frame0.requestBlur(this);
-	}
-
-
-
-	/*
-	 * Called by containers when they add this object to their content list.
-	 */
-	protected void addedToParent() {
-
-	}
-
-	/*
-	 * Called by animations after a change. Some components might need to adjust
-	 * stuff then as no setter is called.
-	 */
-	protected void animated() {
-		update();
-	}
 
 	/*
 	 * _______________________________________________________________________________________________________________
@@ -1266,125 +1035,106 @@ public abstract class Control implements PConstants {
 	 *
 	 * 
 	 * The usage of anchors allows to adapt size or keep fixed positions when a
-	 * parent container changes in size. I.e. When the RIGHT anchor is set the
+	 * parent container changes in size. I.e. when the RIGHT anchor is set, the
 	 * control will keep the distance between its right edge and the right edge of
-	 * the container (like a right align). When RIGHT and LEFT anchors are set both
-	 * right and left edges will keep their distance to the container Bounds which
-	 * results in a new size of this control.
+	 * the container (like a right-alignment). When RIGHT and LEFT anchors are set, both
+	 * right and left edges will keep their distance to the containers bounds which
+	 * results in a new size of this element. Same for TOP and BOTTOM. 
 	 * 
-	 * The anchors-array is set to all MIN_VALUE per default which means they are
-	 * inactive. When an anchor is added it stores the distance from the top,
-	 * bottom, left or right edge of this control to the according edge of the
-	 * container. When the resize() function is called the anchors will be checked
-	 * and applied.
+	 * The anchors-array is set to all ANCHOR_NOT_SET (Integer.MIN_VALUE) per default which means they are
+	 * inactive. When an anchor is added, it stores the distance from the top,
+	 * bottom, left or right edge of this element to the according edge of the
+	 * container. When the parentResized() function is called, the anchors will be checked
+	 * and size/position of the element accordingly adjusted.
 	 *
-	 * 
 	 * The new size of the control will be constrained by minimal and maximal
-	 * width/height obviously. If the new size cannot be fully attained the control
+	 * width/height obviously. If the new size cannot be fully attained, the control
 	 * will orient at the top left of the container.
 	 * 
 	 * 
+	 * Each anchor can be in PIXEL_MODE (default) or PERCENTAGE_MODE. 
+	 * 
 	 */
 
-	// the anchor array used to store the anchors data.
+	// The anchor array used to store the anchors data.
 	// In following order: TOP, RIGHT, BOTTOM, LEFT:
-	protected int[] anchors = { Integer.MIN_VALUE, Integer.MIN_VALUE, Integer.MIN_VALUE, Integer.MIN_VALUE };
+	protected int[] anchors = { ANCHOR_NOT_SET, ANCHOR_NOT_SET, ANCHOR_NOT_SET, ANCHOR_NOT_SET };
 
-	public static final int TOP_ANCHOR = 0;
-	public static final int RIGHT_ANCHOR = 1;
-	public static final int BOTTOM_ANCHOR = 2;
-	public static final int LEFT_ANCHOR = 3;
+	// from outside, PApplet.TOP, RIGHT... is used, but these match the indices in
+	// the anchor array.
+	protected static final int TOP_ANCHOR = 0;
+	protected static final int RIGHT_ANCHOR = 1;
+	protected static final int BOTTOM_ANCHOR = 2;
+	protected static final int LEFT_ANCHOR = 3;
 
-	// used for quickly checking if anchors are set up at all.
-	protected boolean usingAnchors = false;
+	protected static final int ANCHOR_NOT_SET = Integer.MIN_VALUE;
 
+	/*
+	 * Combines if anchors are active at all (true if at least one anchor is active)
+	 * and modes for all anchors. The anchors can be in pixel or percentage mode.
+	 * If anchorMode is 0, then all anchors are off
+	 */
+	protected int anchorMode = 0;
 
 	/**
-	 * Add an anchor (types are TOP, RIGHT, BOTTOM, LEFT). Anchors ensure the
-	 * Component stays at fixed relative positions when the parent is resized. If
-	 * opposite anchors are set, the Component will be resized as well. When this
-	 * function is called the Component will remember the CURRENT(!) distances to
-	 * the parents bounds. Multiple anchors can be set with this method.
-	 * 
-	 * @param anchorTypes accepts TOP, RIGHT, LEFT or BOTTOM. Pass up to four anchor
-	 *                    types (order doesn't matter)
+	 * Anchor mode for percentage of parents size.
 	 */
-	public void addAutoAnchors(int... anchorTypes) {
-		if (parent == null) {
-			System.err.println("addAutoAnchor() ignored: element " + this + " has no parent");
-			return;
-		}
-
-		for (int anchor : anchorTypes) {
-			switch (anchor) {
-			case PApplet.TOP:
-				anchors[TOP_ANCHOR] = y;
-				break;
-			case PApplet.RIGHT:
-				anchors[RIGHT_ANCHOR] = parent.width - width - x;
-				break;
-			case PApplet.BOTTOM:
-				anchors[BOTTOM_ANCHOR] = parent.height - height - y;
-				break;
-			case PApplet.LEFT:
-				anchors[LEFT_ANCHOR] = x;
-				break;
-			default:
-				return;
-			}
-		}
-
-		usingAnchors = true;
-	}
-
-
+	public static final boolean PERCENTAGE_MODE = true;
+	/**
+	 * Anchor mode for absolute pixel values.
+	 */
+	public static final boolean PIXEL_MODE = false;
 
 
 	/**
 	 * Set an Anchor of type TOP BOTTOM, LEFT or RIGHT to a certain value. This also
 	 * immediately sets the position or size of this element if necessary according
-	 * to the anchors. Unlike with {@link #addAutoAnchors(int...)} only one anchor
-	 * can be set with one call of this function so you might want to call it
-	 * several times.
+	 * to the anchors.
 	 * 
-	 * @param anchorType anchor type
-	 * @param value      value
+	 * It is not possible to use this method if this element has not been added to a
+	 * parent.
+	 * 
+	 * This version sets the anchor without changing its type like
+	 * {@link #setPercentageAnchor(int, int)} and {@link #setPixelAnchor(int, int)}.
+	 * 
+	 * @param anchor anchor direction
+	 * @param value  value
 	 */
-	public void setAnchor(int anchorType, int value) {
+	public void setAnchor(int anchor, int value) {
 		if (parent == null) {
-			System.err.println("addAutoAnchor() ignored: element " + this + " has no parent");
+			System.err.println("setAnchor() ignored: element " + this + " has no parent");
 			return;
 		}
 
-		switch (anchorType) {
+		switch (anchor) {
 		case PApplet.TOP:
 			anchors[TOP_ANCHOR] = value;
-			usingAnchors = true;
+			anchorMode |= 1;
 
 			// set y now, because resize only changes y if BOTTOM is set. (elements are
-			// always "anchored" to TOP). This way everything is alright. Still call resize
-			// because maybe BOTTOM_ANCHOR is set too.
+			// always "anchored" to TOP). This way everything is alright. Still call
+			// parentResized because maybe BOTTOM_ANCHOR is set too.
 			this.y = value;
-			resize();
+			parentResized();
 			break;
 		case PApplet.RIGHT:
 			anchors[RIGHT_ANCHOR] = value;
-			usingAnchors = true;
-			resize();
+			anchorMode |= 1;
+			parentResized();
 			break;
 		case PApplet.BOTTOM:
 			anchors[BOTTOM_ANCHOR] = value;
-			usingAnchors = true;
-			resize();
+			anchorMode |= 1;
+			parentResized();
 			break;
 		case PApplet.LEFT:
 			anchors[LEFT_ANCHOR] = value;
-			usingAnchors = true;
+			anchorMode |= 1;
 
 			// set x now, because resize only changes x if RIGHT is set. This way everything
 			// is alright
 			this.x = value;
-			resize();
+			parentResized();
 			break;
 		default:
 			return;
@@ -1392,90 +1142,372 @@ public abstract class Control implements PConstants {
 
 	}
 
-
 	/**
-	 * Calculate all set anchors new. Needed when position of this item has been
-	 * changed through the setter.
+	 * Set any number of anchors by passing first a direction and then the value
+	 * (more than four - one for each direction - don't make sense though).
+	 * 
+	 * @param anchors_and_values anchors and values
 	 */
-	protected void updateAnchors() {
-		if (usingAnchors) {
-			if (anchors[TOP_ANCHOR] != Integer.MIN_VALUE) {
-				anchors[TOP_ANCHOR] = y;
-			}
-			if (anchors[RIGHT_ANCHOR] != Integer.MIN_VALUE) {
-				anchors[RIGHT_ANCHOR] = parent.width - width - x;
-			}
-			if (anchors[BOTTOM_ANCHOR] != Integer.MIN_VALUE) {
-				anchors[BOTTOM_ANCHOR] = parent.height - height - y;
-			}
-			if (anchors[LEFT_ANCHOR] != Integer.MIN_VALUE) {
-				anchors[LEFT_ANCHOR] = x;
-			}
-
+	public void setAnchors(int... anchors_and_values) {
+		if (anchors_and_values.length < 2)
+			return;
+		for (int i = 0; i < anchors_and_values.length; i += 2) {
+			setAnchor(anchors_and_values[i], anchors_and_values[i + 1]);
 		}
 	}
+
+	/**
+	 * Set an anchor like with {@link #setAnchor(int, int)} but definitely use the
+	 * {@link #PIXEL_MODE}. The anchor will be set to @param value pixels.
+	 * 
+	 * @param anchor LEFT, RIGHT, TOP or BOTTOM
+	 * @param value  value
+	 */
+	public void setPixelAnchor(int anchor, int value) {
+		switch (anchor) {
+		case PApplet.TOP:
+			setAnchorModeImpl(TOP_ANCHOR, PIXEL_MODE);
+			break;
+		case PApplet.RIGHT:
+			setAnchorModeImpl(RIGHT_ANCHOR, PIXEL_MODE);
+			break;
+		case PApplet.BOTTOM:
+			setAnchorModeImpl(BOTTOM_ANCHOR, PIXEL_MODE);
+			break;
+		case PApplet.LEFT:
+			setAnchorModeImpl(LEFT_ANCHOR, PIXEL_MODE);
+			break;
+		}
+		setAnchor(anchor, value);
+	}
+
+	public void setPixelAnchors(int... anchors_and_values) {
+		if (anchors_and_values.length < 2)
+			return;
+		for (int i = 0; i < anchors_and_values.length; i += 2) {
+			setPixelAnchor(anchors_and_values[i], anchors_and_values[i + 1]);
+		}
+	}
+
+	/**
+	 * Set an anchor like in {@link #PERCENTAGE_MODE}. This will place or resize the
+	 * element in percent relative to the size of the parent (give i.e. 100 for
+	 * 100%).
+	 * 
+	 * @param anchor anchor
+	 * @param value  value
+	 */
+	public void setPercentageAnchor(int anchor, int value) {
+		switch (anchor) {
+		case PApplet.TOP:
+			setAnchorModeImpl(TOP_ANCHOR, PERCENTAGE_MODE);
+			break;
+		case PApplet.RIGHT:
+			setAnchorModeImpl(RIGHT_ANCHOR, PERCENTAGE_MODE);
+			break;
+		case PApplet.BOTTOM:
+			setAnchorModeImpl(BOTTOM_ANCHOR, PERCENTAGE_MODE);
+			break;
+		case PApplet.LEFT:
+			setAnchorModeImpl(LEFT_ANCHOR, PERCENTAGE_MODE);
+			break;
+		}
+		setAnchor(anchor, value);
+	}
+
+	public void setPercentageAnchors(int... anchors_and_values) {
+		if (anchors_and_values.length < 2)
+			return;
+		for (int i = 0; i < anchors_and_values.length; i += 2) {
+			setPercentageAnchor(anchors_and_values[i], anchors_and_values[i + 1]);
+		}
+	}
+
+
+	// internal method used to set the according bit in anchorMode to the given mode
+	protected void setAnchorModeImpl(int anchor, boolean percentage) {
+		if (percentage)
+			anchorMode |= 1 << (anchor + 1);
+		else
+			anchorMode &= ~1 << (anchor + 1);
+	}
+
+	protected boolean getAnchorModeImpl(int anchor) {
+		return (anchorMode & (1 << (anchor + 1))) != 0;
+	}
+
+
+
+
+	/**
+	 * Get anchor mode for given anchor direction. Returns a boolean
+	 * {@link #PIXEL_MODE} (false) or {@link #PERCENTAGE_MODE} (true).
+	 * 
+	 * @param anchor anchor direction
+	 * @return anchor mode
+	 */
+	public boolean getAnchorMode(int anchor) {
+		switch (anchor) {
+		case PApplet.TOP:
+			return getAnchorModeImpl(TOP_ANCHOR);
+		case PApplet.RIGHT:
+			return getAnchorModeImpl(RIGHT_ANCHOR);
+		case PApplet.BOTTOM:
+			return getAnchorModeImpl(BOTTOM_ANCHOR);
+		case PApplet.LEFT:
+			return getAnchorModeImpl(LEFT_ANCHOR);
+		default:
+			return false;
+		}
+	}
+
+	/**
+	 * Get the value of an anchor. Returns {@link Control#ANCHOR_NOT_SET} if the
+	 * anchor is inactive.
+	 * 
+	 * @param anchor anchor direction
+	 * @return anchor value
+	 */
+	public int getAnchorValue(int anchor) {
+		switch (anchor) {
+		case PApplet.TOP:
+			return anchors[TOP_ANCHOR];
+		case PApplet.RIGHT:
+			return anchors[RIGHT_ANCHOR];
+		case PApplet.BOTTOM:
+			return anchors[BOTTOM_ANCHOR];
+		case PApplet.LEFT:
+			return anchors[LEFT_ANCHOR];
+		default:
+			return ANCHOR_NOT_SET;
+		}
+	}
+
+	/**
+	 * Add an anchor (types are TOP, RIGHT, BOTTOM, LEFT). Anchors ensure the
+	 * element stays at fixed relative positions when the parent is resized. If
+	 * opposite anchors are set, the element will be resized as well. When this
+	 * function is called, the element will remember the CURRENT(!) distances to the
+	 * parents bounds. Multiple anchors can be set with this method.
+	 * 
+	 * This currently only works with {@link #PIXEL_MODE} and not with
+	 * {@link #PERCENTAGE_MODE}.
+	 * 
+	 * It is not possible to use this method if this element has not been added to a
+	 * parent.
+	 * 
+	 * @param anchor accepts TOP, RIGHT, LEFT or BOTTOM. Pass up to four anchor
+	 *               types (order doesn't matter)
+	 */
+	public void addAutoAnchors(int... anchor) {
+		if (parent == null) {
+			System.err.println("addAutoAnchor() ignored: element " + this + " has no parent");
+			return;
+		}
+
+		for (int a : anchor) {
+			switch (a) {
+			case PApplet.TOP:
+				anchors[TOP_ANCHOR] = y;
+				setAnchorModeImpl(TOP_ANCHOR, PIXEL_MODE);
+				anchorMode |= 1;
+				break;
+			case PApplet.RIGHT:
+				anchors[RIGHT_ANCHOR] = parent.width - width - x;
+				setAnchorModeImpl(RIGHT_ANCHOR, PIXEL_MODE);
+				anchorMode |= 1;
+				break;
+			case PApplet.BOTTOM:
+				anchors[BOTTOM_ANCHOR] = parent.height - height - y;
+				setAnchorModeImpl(BOTTOM_ANCHOR, PIXEL_MODE);
+				anchorMode |= 1;
+				break;
+			case PApplet.LEFT:
+				anchors[LEFT_ANCHOR] = x;
+				setAnchorModeImpl(LEFT_ANCHOR, PIXEL_MODE);
+				anchorMode |= 1;
+				break;
+			default:
+				continue;
+			}
+		}
+	}
+
+
+
+
+
 
 	/**
 	 * Remove a set anchor.
 	 * 
-	 * @param anchorType accepts TOP, RIGHT, LEFT or BOTTOM
+	 * @param anchor accepts TOP, RIGHT, LEFT or BOTTOM
 	 */
-	public void removeAnchor(int anchorType) {
-		switch (anchorType) {
+	public void removeAnchor(int anchor) {
+		switch (anchor) {
 		case PApplet.TOP:
-			anchors[TOP_ANCHOR] = Integer.MIN_VALUE;
+			anchors[TOP_ANCHOR] = ANCHOR_NOT_SET;
 			break;
 		case PApplet.RIGHT:
-			anchors[RIGHT_ANCHOR] = Integer.MIN_VALUE;
+			anchors[RIGHT_ANCHOR] = ANCHOR_NOT_SET;
 			break;
 		case PApplet.BOTTOM:
-			anchors[BOTTOM_ANCHOR] = Integer.MIN_VALUE;
+			anchors[BOTTOM_ANCHOR] = ANCHOR_NOT_SET;
 			break;
 		case PApplet.LEFT:
-			anchors[LEFT_ANCHOR] = Integer.MIN_VALUE;
+			anchors[LEFT_ANCHOR] = ANCHOR_NOT_SET;
 			break;
 		}
-		if (anchors[TOP_ANCHOR] == Integer.MIN_VALUE && anchors[RIGHT_ANCHOR] == Integer.MIN_VALUE && anchors[BOTTOM_ANCHOR] == Integer.MIN_VALUE
-				&& anchors[LEFT_ANCHOR] == Integer.MIN_VALUE) {
-			usingAnchors = false;
+		if (anchors[TOP_ANCHOR] == ANCHOR_NOT_SET && anchors[RIGHT_ANCHOR] == ANCHOR_NOT_SET && anchors[BOTTOM_ANCHOR] == ANCHOR_NOT_SET
+				&& anchors[LEFT_ANCHOR] == ANCHOR_NOT_SET) {
+			anchorMode = 0;
 		}
 	}
 
-
-
 	/**
-	 * Intenal resize Event: if any anchors are set, either size or position of this
-	 * control might need adjusting.
+	 * Fill x percent of parent width and center this element horizontally.
+	 * 
+	 * @param percent percent 100 for 100%
 	 */
-	protected void resize() {
-		if (usingAnchors) {
-			if (anchors[RIGHT_ANCHOR] != Integer.MIN_VALUE) {
-				if (anchors[LEFT_ANCHOR] != Integer.MIN_VALUE) { // also left anchor
+	public void fillParentWidth(int percent) {
+		setAnchors(LEFT, (100 - percent) / 2, RIGHT, (100 - percent) / 2);
+	}
 
-					// don't call setWidth - would call resize() again etc.
-					setWidthImpl(parent.width - x - anchors[RIGHT_ANCHOR]);
+	/**
+	 * Fill parent width.
+	 */
+	public void fillParentWidth() {
+		fillParentWidth(100);
+	}
+
+	/**
+	 * Fill x percent of parent height and center this element vertically.
+	 * 
+	 * @param percent percent 100 for 100%
+	 */
+	public void fillParentHeight(int percent) {
+		setAnchors(TOP, (100 - percent) / 2, BOTTOM, (100 - percent) / 2);
+	}
+
+	/**
+	 * Fill parent height.
+	 */
+	public void fillParentHeight() {
+		fillParentHeight(100);
+	}
+
+	/**
+	 * Fill parent width and height
+	 */
+	public void fillParent() {
+		fillParent(100);
+	}
+
+	/**
+	 * Fill x percent of parents width and height
+	 * 
+	 * @param percent percent
+	 */
+	public void fillParent(int percent) {
+		fillParent(percent, percent);
+	}
+
+	/**
+	 * Fill widthPercent of parent width and heightPercent of parent height.
+	 * 
+	 * @param widthPercent  width percentage
+	 * @param heightPercent height percentage
+	 */
+	public void fillParent(int widthPercent, int heightPercent) {
+		fillParentHeight(heightPercent);
+		fillParentWidth(widthPercent);
+	}
+
+
+
+	/**
+	 * Containers call this for all items to inform them that their size has
+	 * changed. Items might want to adjust their size or position according to that
+	 * if they have active anchors.
+	 */
+	protected final void parentResized() {
+		if (anchorMode != 0) {
+			if (anchors[RIGHT_ANCHOR] != ANCHOR_NOT_SET) {
+				if (anchors[LEFT_ANCHOR] != ANCHOR_NOT_SET) { // also left anchor
+					PAUSE_UPDATE_ANCHORS = true;
+					setWidth(getRight() - getLeft());
+					setX(getLeft());
+					update();
+					PAUSE_UPDATE_ANCHORS = false;
+					// setWidth(parent.width - x - anchors[RIGHT_ANCHOR]);
 				} else { // only right anchor
-					x = parent.width - width - anchors[RIGHT_ANCHOR];
+					setX(getRight() - width);
 				}
+			} else if (anchors[LEFT_ANCHOR] != ANCHOR_NOT_SET && getAnchorModeImpl(LEFT_ANCHOR)) {
+				setX(anchors[LEFT_ANCHOR] * parent.width / 100);
 			}
-			if (anchors[BOTTOM_ANCHOR] != Integer.MIN_VALUE) {
-				if (anchors[TOP_ANCHOR] != Integer.MIN_VALUE) { // also top anchor
-
-					// don't call setHeight - would call resize() again etc.
-					setHeightImpl(parent.height - y - anchors[BOTTOM_ANCHOR]);
+			if (anchors[BOTTOM_ANCHOR] != ANCHOR_NOT_SET) {
+				if (anchors[TOP_ANCHOR] != ANCHOR_NOT_SET) { // also top anchor
+					PAUSE_UPDATE_ANCHORS = true;
+					setHeight(getBottom() - getTop());
+					setY(getTop());
+					update();
+					PAUSE_UPDATE_ANCHORS = false;
+				} else { // only right anchor
+					setY(getBottom() - height);
+				}
+			} else if (anchors[TOP_ANCHOR] != ANCHOR_NOT_SET && getAnchorModeImpl(TOP_ANCHOR)) {
+				setY(anchors[TOP_ANCHOR] * parent.height / 100);
+			}
+			/*if (anchors[BOTTOM_ANCHOR] != ANCHOR_NOT_SET) {
+				if (anchors[TOP_ANCHOR] != ANCHOR_NOT_SET) { // also top anchor
+					setHeight(parent.height - y - anchors[BOTTOM_ANCHOR]);
 				} else { // only bottom anchor
-					y = parent.height - height - anchors[BOTTOM_ANCHOR];
+					setY(parent.height - height - anchors[BOTTOM_ANCHOR]);
 				}
-			}
-			update();
-			handleEvent(resizeListener, this);
+			}*/
 		}
+	}
+
+	// get left position in pixel according to LEFT_ANCHOR
+	private final int getLeft() {
+		return getAnchorModeImpl(LEFT_ANCHOR) ? anchors[LEFT_ANCHOR] * parent.width / 100 : anchors[LEFT_ANCHOR];
+	}
+
+	// get position of right side from left of element in pixel according to
+	// RIGHT_ANCHOR
+	private final int getRight() {
+		return parent.width - (getAnchorModeImpl(RIGHT_ANCHOR) ? anchors[RIGHT_ANCHOR] * parent.width / 100 : anchors[RIGHT_ANCHOR]);
+	}
+
+	// get top position in pixel according to TOP_ANCHOR
+	private final int getTop() {
+		return getAnchorModeImpl(TOP_ANCHOR) ? anchors[TOP_ANCHOR] * parent.height / 100 : anchors[TOP_ANCHOR];
+	}
+
+	// get position of bottom side from top of element in pixel according to
+	// BOTTOM_ANCHOR
+	private final int getBottom() {
+		return parent.height - (getAnchorModeImpl(BOTTOM_ANCHOR) ? anchors[BOTTOM_ANCHOR] * parent.height / 100 : anchors[BOTTOM_ANCHOR]);
+	}
+
+
+	/*
+	 * only needed when setting x, y or position but for a lot of anchors
+	 */
+	private boolean isAnchorSetAndPixelMode(int anchor) {
+		return anchors[anchor] != ANCHOR_NOT_SET && getAnchorModeImpl(anchor) == PIXEL_MODE;
 	}
 
 
 
 
-	/**
+
+
+
+
+
+	/*
 	 * AUTO-SIZE
 	 * 
 	 * autosizeRule specifies actions that will set width/height new when i.e.
@@ -1488,33 +1520,98 @@ public abstract class Control implements PConstants {
 	 * I.e. setPadding(), setText(), setFontSize(), Checkbox.setCheckboxSize() all
 	 * do.
 	 * 
-	 * As position anchors are stronger than autosize rules, autosize is disabled
-	 * for elements with anchors. In autosizeRule() setWidthImpl() and
+	 * 
+	 * TODO
+	 * As position anchors are stronger than autosize rules, autosizing is disabled
+	 * for elements with anchors. ???
+	 * 
+	 * In autosizeRule() setWidthImpl() and
 	 * setHeightImpl() should be used.
 	 */
-	protected void autosizeRule() {
-	}
+	public static int AUTOSIZE_NONE = 0;
+	public static int AUTOSIZE_WIDTH = 1;
+	public static int AUTOSIZE_HEIGHT = 2;
+	public static int AUTOSIZE_BOTH = AUTOSIZE_WIDTH | AUTOSIZE_HEIGHT;
+	int autosizing = AUTOSIZE_BOTH;
 
-
-
-	protected final void autosize() {
-		if (!usingAnchors) {
-			autosizeRule();
-			// of course resize() should not be called for this element. But it might have
-			// children that rely on it and as usingAnchors is false if this code is
-			// reached, only the items will process resize (if they do at all).
-//			resize();
-		}
+	/**
+	 * Enable/disable autosizing.
+	 * 
+	 * @param autosizing autosizing
+	 */
+	public void setAutosizing(boolean autosizing) {
+		this.autosizing = autosizing ? AUTOSIZE_BOTH : AUTOSIZE_NONE;
 	}
 
 	/**
-	 * Disable autosizing by setting a LEFT anchor (only if no anchors set) which
-	 * does nothing without a RIGHT anchor.
+	 * Disable autosizing.
 	 */
 	public void noAutosize() {
-		if (usingAnchors)
-			return;
-		addAutoAnchors(PApplet.LEFT);
+		autosizing = AUTOSIZE_NONE;
+	}
+
+	/**
+	 * Set size of element and disable autosizing.
+	 * 
+	 * @param width  width
+	 * @param height height
+	 */
+	public void setFixedSize(int width, int height) {
+		autosizing = AUTOSIZE_NONE;
+		setSize(width, height);
+	}
+
+
+	/**
+	 * Called indirectly through autosize(). This is the component-specific
+	 * implementation of autosizing.
+	 */
+	/**
+	 * Autosize width routine to be overriden by subclasses. Do not set the width,
+	 * just return the desired value. If a negative value is returned, then the
+	 * result is ignored.
+	 * 
+	 * @return new desired width
+	 */
+	protected int autoWidth() {
+		return -1;
+	}
+
+	/**
+	 * Autosize width routine to be overriden by subclasses. Do not set the height,
+	 * just return the desired value. If a negative value is returned, then the
+	 * result is ignored.
+	 * 
+	 * @return new desired height
+	 */
+	protected int autoHeight() {
+		return -1;
+	}
+//	protected void autosizeRule() {
+//		
+//	}
+
+
+	/**
+	 * Called in setPadding, setText, setFontSize, setBold etc. Redirects to
+	 * autosizeRule() if autosizing is enabled
+	 */
+	protected final void autosize() {
+		if ((autosizing & AUTOSIZE_WIDTH) != 0) {
+			int w = autoWidth();
+			if (w >= 0) {
+				setWidthNoUpdate(w);
+			}
+		}
+		if ((autosizing & AUTOSIZE_HEIGHT) != 0) {
+			int h = autoHeight();
+			if (h >= 0) {
+				setHeightNoUpdate(h);
+			}
+		}
+//		if (autosizing != AUTOSIZE_NONE) {
+//			 autosizeRule();
+//		}
 	}
 
 
@@ -1530,42 +1627,66 @@ public abstract class Control implements PConstants {
 
 	/**
 	 * Set x-coordinate of element relative to parent. Does not apply if element is
-	 * added to containers that provide some other layout.
+	 * added to containers that provide some own layout.
 	 * 
 	 * @param x pixel integer
 	 */
 	public void setX(int x) {
+		if (x == this.x)
+			return;
 		this.x = x;
-		updateAnchors();
+		if (anchorMode != 0) {
+			// only need to update anchor if in pixel mode
+
+			if (isAnchorSetAndPixelMode(LEFT_ANCHOR)) {
+				anchors[LEFT_ANCHOR] = x;
+			}
+			if (isAnchorSetAndPixelMode(RIGHT_ANCHOR)) {
+				anchors[RIGHT_ANCHOR] = parent.width - width - x;
+			}
+		}
 		update();
 	}
 
+
+
 	/**
 	 * Set y-coordinate of element relative to parent. Does not apply if element is
-	 * added to containers that provide some other layout.
+	 * added to containers that provide some own layout.
 	 * 
 	 * @param y pixel integer
 	 */
 	public void setY(int y) {
+		if (y == this.y)
+			return;
 		this.y = y;
-		updateAnchors();
+		if (anchorMode != 0) {
+			// only need to update anchor if in pixel mode
+
+			if (isAnchorSetAndPixelMode(TOP_ANCHOR)) {
+				anchors[TOP_ANCHOR] = y;
+			}
+			if (isAnchorSetAndPixelMode(BOTTOM_ANCHOR)) {
+				anchors[BOTTOM_ANCHOR] = parent.height - height - y;
+			}
+		}
 		update();
 	}
 
 	/**
-	 * Set z-coordinate of element. element are sorted by z-index when overlapping
+	 * Set z-coordinate of element. Elements are sorted by z-index when overlapping
 	 * on the screen.
 	 * 
 	 * @param z z-index
 	 */
 	public void setZ(int z) {
 		this.z = z;
-		if (parent != null) {
+		if (parent != null && getFrame().initialized != Frame.Initialization_State.INITIALIZING) { // during intializing setting Z is not allowed.
 			try {
 				// no use to sort containers with autolayout (its bad actually because it could
 				// change order)
 				if (!((Container) parent).containerMakesAutoLayout)
-					((Container) parent).sortContent();
+					((Container) parent).sortItemsbyZ();
 			} catch (ClassCastException cce) {
 			}
 		}
@@ -1581,7 +1702,21 @@ public abstract class Control implements PConstants {
 	public void setPosition(int x, int y) {
 		this.x = x;
 		this.y = y;
-		updateAnchors();
+
+		if (anchorMode != 0) {
+			if (isAnchorSetAndPixelMode(LEFT_ANCHOR)) {
+				anchors[LEFT_ANCHOR] = x;
+			}
+			if (isAnchorSetAndPixelMode(RIGHT_ANCHOR)) {
+				anchors[RIGHT_ANCHOR] = parent.width - width - x;
+			}
+			if (isAnchorSetAndPixelMode(TOP_ANCHOR)) {
+				anchors[TOP_ANCHOR] = y;
+			}
+			if (isAnchorSetAndPixelMode(BOTTOM_ANCHOR)) {
+				anchors[BOTTOM_ANCHOR] = parent.height - height - y;
+			}
+		}
 		update();
 	}
 
@@ -1601,6 +1736,8 @@ public abstract class Control implements PConstants {
 	 *  3. anchors 
 	 *  4. minWidth/maxWidth (strongest)
 	 *  
+	 *  
+	 *  TODO 
 	 *  autosize is not called if ANY anchor is set. This way we can surpress autosize by setting 
 	 *  an anchor (f.e. only LEFT, which does nothing on its own). 
 	 *  
@@ -1610,9 +1747,11 @@ public abstract class Control implements PConstants {
 	 * following actions (no pun intended^^), depending on who changes it:
 	 * - constrain between minWidth and maxWidth 
 	 *   (as this is the strongest rule, it has to be executed always)
-	 * - call resize() 
-	 * - call updateAnchors()
+	 * - call parentResized() for children 
+	 * - call update anchors
 	 * - call update()
+	 * 
+	 * There is also a method setWidthNoUpdate() and setHeightNoUpdate() that can be used if an update should NOT happen. 
 	 * 
 	 * 
 	 * 
@@ -1623,21 +1762,21 @@ public abstract class Control implements PConstants {
 	 * 
 	 * 
 	 * Width (and height similarily) can be changed by: 
-	 * - calling setWidth(int): 					need to call resize, updateAnchors() and update()
-	 * - setMin/MaxWidth: 							need to call resize, updateAnchors() and update() (might need to set width new)
-	 * - automatic change of width in resize(): 	don't call resize/updateAnchors!, do call update 
-	 * - Default or given width in constructor: 	all unnecessary, nothing yet set
-	 * - exceptions where it's changed in render(): for ListItem: no prob, has no children (yet)
-	 * - in autosize():								resize (for children), updateAnchors unnecessary as none are set, update unnecessary (already called)
-	 * - in Container.fitContent():					need to call resize, updateAnchors() and update()
-	 * - set width through animation: 				all? (big problem)
+	 * - calling setWidth(int): 						need to call parentResized() for children, update anchors() and update()
+	 * - setMin/MaxWidth: 								need to call parentResized() for children, update anchors() and update() (might need to set width new)
+	 * - automatic change of width in parentResized(): 	don't call parentResized/update anchors!, do call update 
+	 * - Default or given width in constructor: 		all unnecessary, nothing yet set
+	 * - exceptions where it's changed in render(): 	for ListItem: no prob, has no children (yet)
+	 * - in autosize():									parentResized() for children, update anchors unnecessary as none are set, update unnecessary (already called)
+	 * - in Container.fitContent():						need to call parentResized() for children, update anchors() and update()
+	 * - set width through animation: 					all, delegated to setWidth()
 	 * 
 	 * 
 	 */
 
 
 	/*
-	 * In this library never set width/height like "width = ..." Always used
+	 * In this library, never set width/height by calling "width = ...". Always use
 	 * setWidthImpl(int) and setHeightImpl(int).
 	 * 
 	 * This ensures that dimensions are always constrained by min/max dimensions.
@@ -1651,6 +1790,80 @@ public abstract class Control implements PConstants {
 		this.height = Math.max(Math.min(height, maxHeight), minHeight);
 	}
 
+	/*
+	 * Open questions: 
+	 * - Update if position changed in this method?
+	 * TODO
+	 * - use parent.getAvailable height for anchors?
+	 * 
+	 * Returns true if size has been changed
+	 */
+	protected boolean setWidthNoUpdate(int width) {
+		int oldWidth = this.width;
+		setWidthImpl(width);
+		if (oldWidth == this.width) 		// no unnecessary resize event calling when setting min/max
+			return false;
+
+		handleEvent(resizeListener, this); 	// width of this element has really changed
+
+		// Need to update position or anchors depending on which anchors are set.
+		if (!PAUSE_UPDATE_ANCHORS) {
+			if (anchors[RIGHT_ANCHOR] != ANCHOR_NOT_SET) {
+				if (anchors[LEFT_ANCHOR] != ANCHOR_NOT_SET) {
+					// both l/r -> width is set new here, so change right anchor
+					// left anchor is not touched
+					if (getAnchorModeImpl(RIGHT_ANCHOR) == PIXEL_MODE) {
+						// makes no difference if setWidthNoUpdate() is just called by parentResized()
+						anchors[RIGHT_ANCHOR] = parent.width - width - x;
+					} else {
+						// makes no difference if setWidthNoUpdate() is just called by parentResized()
+						anchors[RIGHT_ANCHOR] = Math.round((parent.width - width - getLeft()) * 100f / parent.width);
+					}
+				} else { // only right anchor -> keep element fixed at right and change x-position
+					x = getRight() - width;
+				}
+			}
+		}
+
+		return true;
+	}
+
+	// indicates that setWidth/HeightNoUpdate() should not update the anchors
+	// temporarily changed to true by parentResized() to set width without
+	// disturbing anchors.
+	private static boolean PAUSE_UPDATE_ANCHORS = false;
+
+
+
+	protected boolean setHeightNoUpdate(int height) {
+		int temp = this.height;
+		setHeightImpl(height);
+		if (temp == this.height) 			// no unnecessary resize event calling when setting min/max
+			return false;
+
+		handleEvent(resizeListener, this); 	// height of this element has really changed
+
+		if (!PAUSE_UPDATE_ANCHORS) {
+			if (anchors[BOTTOM_ANCHOR] != ANCHOR_NOT_SET) {
+				if (anchors[TOP_ANCHOR] != ANCHOR_NOT_SET) {
+					// both t/d -> height is set new here, so change bottom anchor
+					// top anchor is not touched
+					if (getAnchorModeImpl(BOTTOM_ANCHOR) == PIXEL_MODE) {
+						// makes no difference if setHeightNoUpdate() is just called by parentResized()
+						anchors[BOTTOM_ANCHOR] = parent.height - height - y;
+					} else {
+						// makes no difference if setHeightNoUpdate() is just called by parentResized()
+						anchors[BOTTOM_ANCHOR] = Math.round((parent.height - height - getTop()) * 100f / parent.height);
+					}
+				} else { // only bottom anchor -> keep element fixed at bottom and change y-position
+					y = getBottom() - height;
+				}
+			}
+		}
+
+		return true;
+	}
+
 
 
 	/**
@@ -1659,15 +1872,8 @@ public abstract class Control implements PConstants {
 	 * @param width width in pixel
 	 */
 	public void setWidth(int width) {
-		int temp = this.width;
-		setWidthImpl(width);
-		if (temp == this.width) // no unnecessary resize event calling when setting min/max
-			return;
-		// call the resize event.
-
-		updateAnchors();
-		resize();
-		update();
+		if (setWidthNoUpdate(width))
+			update();
 	}
 
 
@@ -1677,14 +1883,16 @@ public abstract class Control implements PConstants {
 	 * @param height height in pixel
 	 */
 	public void setHeight(int height) {
-		int temp = this.height;
-		setHeightImpl(height);
-		if (temp == this.height) // no unnecessary resize event calling when setting min/max
-			return;
+		if (setHeightNoUpdate(height))
+			update();
+	}
 
-		updateAnchors();
-		resize();
-		update();
+	public void setWidth(float width) {
+		setWidth((int) width);
+	}
+
+	public void setHeight(float height) {
+		setHeight((int) height);
 	}
 
 	/**
@@ -1694,12 +1902,10 @@ public abstract class Control implements PConstants {
 	 * @param height height
 	 */
 	public void setSize(int width, int height) {
-		setHeightImpl(height);
-		setWidthImpl(width);
-
-		updateAnchors();
-		resize();
-		update();
+		boolean widthChanged = setWidthNoUpdate(width);
+		boolean heightChanged = setHeightNoUpdate(height);
+		if (widthChanged || heightChanged) // dont put the two methods in here because the latter can be optimized away
+			update();
 	}
 
 
@@ -1785,28 +1991,29 @@ public abstract class Control implements PConstants {
 		int r = (int) getPApplet().red(clr);
 		int g = (int) getPApplet().green(clr);
 		int b = (int) getPApplet().blue(clr);
-		// int a = (int) papplet.alpha(clr);
+		int a = (int) getPApplet().alpha(clr);
 
 		if (getPApplet().brightness(clr) > 40) { // darken color for HoverColor and PressedColor when color is
 												 // bright enough
-			hoverColor = Color.create(r - 20, g - 20, b - 20);
-			pressedColor = Color.create(r - 40, g - 40, b - 40);
+			int alpha = a == 255 ? 255 : a + 20;
+			hoverColor = Color.create(r - 20, g - 20, b - 20, alpha);
+			pressedColor = Color.create(r - 40, g - 40, b - 40, alpha);
 		} else { // lighten color for HoverColor and PressedColor when color too dark
-			hoverColor = Color.create(r + 20, g + 20, b + 20);
-			pressedColor = Color.create(r + 40, g + 40, b + 40);
+			int alpha = a == 255 ? 255 : a + 40;
+			hoverColor = Color.create(r + 20, g + 20, b + 20, alpha);
+			pressedColor = Color.create(r + 40, g + 40, b + 40, alpha);
 		}
 		image = null; // just in case
 		update();
 	}
 
 	/**
-	 * Set the foreground color (usually the text color).
+	 * Set the foreground color (not really used anymore, except in slider).
 	 * 
 	 * @param clr integer rgb color
 	 */
 	public void setForegroundColor(int clr) {
 		foregroundColor = clr;
-		textRenderer.setTextColor(clr);
 		update();
 	}
 
@@ -1862,48 +2069,27 @@ public abstract class Control implements PConstants {
 
 
 	/**
-	 * Set the text content. Some elements do not display any text (i.e. most
-	 * containers).
+	 * Shorthand property for setting all border properties.
 	 * 
-	 * @param text text
+	 * @param borderWidth  border width
+	 * @param borderColor  border color
+	 * @param borderRadius border radius
 	 */
-	public void setText(String text) {
-		this.text = text;
-		autosize();
-		update();
-	}
-
-	public void setFontSize(float fontSize) {
-		this.fontSize = Math.max(0, fontSize);
-		textRenderer.setFontSize(fontSize);
-		autosize();
-		update();
+	public void setBorder(int borderWidth, int borderColor, int borderRadius) {
+		setBorderWidth(borderWidth);
+		setBorderColor(borderColor);
+		setBorderRadius(borderRadius);
 	}
 
 	/**
-	 * Set the text align (works for most classes).
+	 * Shorthand property for setting border width and color.
 	 * 
-	 * @param align LEFT, CENTER, RIGHT
+	 * @param borderWidth border width
+	 * @param borderColor border color
 	 */
-	public void setTextAlign(int align) {
-		if (align == CENTER || align == LEFT || align == RIGHT) {
-			this.textAlign = align;
-			textRenderer.setTextAlign(align);
-		}
-		update();
-	}
-
-	/**
-	 * Vertical align (not implemented in all classes).
-	 * 
-	 * @param align TOP, MIDDLE, BOTTOM
-	 */
-	public void setTextAlignY(int align) {
-		if (align == CENTER || align == TOP || align == BOTTOM) {
-			this.textAlignY = align;
-			textRenderer.setTextAlignY(align);
-		}
-		update();
+	public void setBorder(int borderWidth, int borderColor) {
+		setBorderWidth(borderWidth);
+		setBorderColor(borderColor);
 	}
 
 	/**
@@ -1940,11 +2126,12 @@ public abstract class Control implements PConstants {
 	}
 
 	/**
-	 * Set the image filling mode. @see FILL @see FIT @see FIT_INSIDE.
+	 * Set the image filling mode. @see {@link #FILL}, @see {@link #FIT} @see
+	 * {@link #FIT_INSIDE}.
 	 * 
 	 * @param imageMode. Use Control.FILL, Control.FIT or Control.FIT_INSIDE
 	 */
-	public void setImageMode(int imageMode) {
+	public void setImageMode(ImageMode imageMode) {
 		this.imageMode = imageMode;
 		update();
 	}
@@ -2022,6 +2209,12 @@ public abstract class Control implements PConstants {
 	 */
 	public void setOpacity(float opacity) {
 		this.opacity = Math.max(0, Math.min(1, opacity));
+
+		if (renderer instanceof BasicRenderer) {
+			renderer = new ExtendedRenderer();
+		} else if (renderer instanceof ParentGraphicsRenderer) {
+			renderer = new ParentGraphicsExtendedRenderer();
+		}
 		update();
 	}
 
@@ -2182,6 +2375,10 @@ public abstract class Control implements PConstants {
 		return y;
 	}
 
+	public int getZ() {
+		return z;
+	}
+
 	public int getWidth() {
 		return width;
 	}
@@ -2204,6 +2401,24 @@ public abstract class Control implements PConstants {
 
 	public int getMaxHeight() {
 		return maxHeight;
+	}
+
+	/**
+	 * Get available content width subtracting paddings.
+	 * 
+	 * @return available width
+	 */
+	public int getAvailableWidth() {
+		return width - paddingRight - paddingLeft;
+	}
+
+	/**
+	 * Get available content height subtracting paddings.
+	 * 
+	 * @return available height
+	 */
+	public int getAvailableHeight() {
+		return height - paddingTop - paddingBottom;
 	}
 
 	public int getBackgroundColor() {
@@ -2232,22 +2447,6 @@ public abstract class Control implements PConstants {
 
 	public int getBorderRadius() {
 		return borderRadius;
-	}
-
-	public String getText() {
-		return text;
-	}
-
-	public float getFontSize() {
-		return fontSize;
-	}
-
-	public int getTextAlign() {
-		return textAlign;
-	}
-
-	public int getTextAlignY() {
-		return textAlignY;
 	}
 
 	public int getCursor() {
@@ -2310,19 +2509,220 @@ public abstract class Control implements PConstants {
 		return paddingLeft;
 	}
 
+	/*
+	 * Enable user of the library to adopt a set of visual properties from another element. 
+	 * 
+	 * Call copyStyle(Control, attribs) to read given attributes (separated by bitwise OR) from given element c:
+	 * 
+	 * myElement.copyStyle(otherElement, PADDING_LEFT | MARGIN_BOTTOM, FOREGROUND_COLOR);
+	 * 
+	 * There some shortcuts to include several properties, like ALL, COLORS, MARGIN (all margins), PADDING (all paddings), 
+	 * SPACING (all margins and paddings), BACKGROUND_COLORS (background-, hover-, and pressedColor).
+	 * 
+	 * 
+	 */
+
+
+	public static final long PADDING_LEFT = 1 << 0;
+	public static final long PADDING_RIGHT = 1 << 1;
+	public static final long PADDING_TOP = 1 << 2;
+	public static final long PADDING_BOTTOM = 1 << 3;
+	public static final long PADDING = PADDING_LEFT | PADDING_RIGHT | PADDING_TOP | PADDING_BOTTOM;
+
+	public static final long MARGIN_LEFT = 1 << 4;
+	public static final long MARGIN_RIGHT = 1 << 5;
+	public static final long MARGIN_TOP = 1 << 6;
+	public static final long MARGIN_BOTTOM = 1 << 7;
+	public static final long MARGIN = MARGIN_LEFT | MARGIN_RIGHT | MARGIN_TOP | MARGIN_BOTTOM;
+
+	public static final long BACKGROUND_COLOR = 1 << 8;
+	public static final long HOVER_COLOR = 1 << 9;
+	public static final long PRESSED_COLOR = 1 << 10;
+	public static final long BACKGROUND_COLORS = BACKGROUND_COLOR | HOVER_COLOR | PRESSED_COLOR;
+
+	public static final long FOREGROUND_COLOR = 1 << 11;
+
+
+	public static final long BORDER_WIDTH = 1 << 12;
+	public static final long BORDER_COLOR = 1 << 13;
+	public static final long BORDER_RADIUS = 1 << 14;
+	public static final long BORDER = BORDER_WIDTH | BORDER_COLOR | BORDER_RADIUS;
+
+	public static final long OPACITY = 1 << 15;
+
+	public static final long TEXT_COLOR = 1 << 16;
+	public static final long FONT_SIZE = 1 << 17;
+	public static final long TEXT_ALIGN = 1 << 18;
+	public static final long TEXT_ALIGN_Y = 1 << 19;
+	public static final long LINE_HEIGHT = 1 << 20;
+	public static final long TEXT_PROPERTIES = TEXT_COLOR | FONT_SIZE | TEXT_ALIGN | TEXT_ALIGN_Y | LINE_HEIGHT;
+
+	public static final long COLORS = BACKGROUND_COLORS | FOREGROUND_COLOR | BORDER_COLOR | TEXT_COLOR;
+	public static final long SPACING = PADDING | MARGIN;
+
+	public static final long ALL = SPACING | COLORS | OPACITY | TEXT_PROPERTIES;
+
 
 
 	/**
-	 * Create a transition animation for a property of this Component. The @link
-	 * Frame will deal with changing this property in appropriate steps to create
-	 * the effect.
+	 * Enable user of the library to adopt a set of visual properties from another
+	 * element. @see {@link Control#copyStyle(Control, long)}.
+	 * 
+	 * 
+	 * @param source element to adopt properties from.
+	 */
+	public void copyStyle(Control source) {
+		copyStyle(source, ALL);
+	}
+
+
+	/**
+	 * Enable user of the library to adopt a set of visual style properties from
+	 * another element.
+	 * 
+	 * Call copyStyle(Control, attribs) to read given attributes (separated by
+	 * bitwise OR) from given element c:
+	 * 
+	 * myElement.copyStyle(otherElement, PADDING_LEFT | MARGIN_BOTTOM,
+	 * FOREGROUND_COLOR);
+	 * 
+	 * Options are: {@link #PADDING_LEFT}, {@link #PADDING_RIGHT},
+	 * {@link #PADDING_TOP}, {@link #PADDING_BOTTOM}, {@link #MARGIN_LEFT},
+	 * {@link #MARGIN_RIGHT}, {@link #MARGIN_TOP}, {@link #MARGIN_BOTTOM},
+	 * {@link #BACKGROUND_COLOR}, {@link #HOVER_COLOR}, {@link #PRESSED_COLOR},
+	 * {@link #FOREGROUND_COLOR}, {@link #BORDER_WIDTH}, {@link #BORDER_RADIUS},
+	 * {@link #BORDER_COLOR}, {@link #OPACITY},
+	 * 
+	 * Only if source and target have text properties: {@link #TEXT_COLOR},
+	 * {@link #TEXT_ALIGN}, {@link #TEXT_ALIGN_Y}, {@link #FONT_SIZE},
+	 * {@link #LINE_HEIGHT}.
+	 * 
+	 * There some shortcuts to include several properties, like {@link #ALL},
+	 * {@link #COLORS}, {@link #MARGIN} (all margins), {@link #PADDING} (all
+	 * paddings), {@link #SPACING} (all margins and paddings),
+	 * {@link #BACKGROUND_COLORS} (background-, hover-, and pressedColor),
+	 * {@link #BORDER} (border-width, -color and -radius), {@link #TEXT} (all text
+	 * properties).
+	 * 
+	 * 
+	 * @param source  element to adopt properties from.
+	 * @param attribs bitwise OR added attributes
+	 */
+	public void copyStyle(Control source, long attribs) {
+		if ((attribs & PADDING) != 0)
+			setPadding(source.paddingTop, source.paddingRight, source.paddingBottom, source.paddingLeft);
+		else {
+			if ((attribs & PADDING_LEFT) != 0)
+				setPaddingLeft(source.paddingLeft);
+			if ((attribs & PADDING_RIGHT) != 0)
+				setPaddingRight(source.paddingRight);
+			if ((attribs & PADDING_TOP) != 0)
+				setPaddingTop(source.paddingTop);
+			if ((attribs & PADDING_BOTTOM) != 0)
+				setPaddingBottom(source.paddingBottom);
+		}
+		if ((attribs & MARGIN) != 0)
+			setMargin(source.marginTop, source.marginRight, source.marginBottom, source.marginLeft);
+		else {
+			if ((attribs & MARGIN_LEFT) != 0)
+				setMarginLeft(source.marginLeft);
+			if ((attribs & MARGIN_RIGHT) != 0)
+				setMarginRight(source.marginRight);
+			if ((attribs & MARGIN_TOP) != 0)
+				setMarginTop(source.marginTop);
+			if ((attribs & MARGIN_BOTTOM) != 0)
+				setMarginBottom(source.marginBottom);
+		}
+		if ((attribs & BACKGROUND_COLOR) != 0)
+			setBackgroundColor(source.backgroundColor);
+		if ((attribs & HOVER_COLOR) != 0)
+			setHoverColor(source.hoverColor);
+		if ((attribs & PRESSED_COLOR) != 0)
+			setPressedColor(source.pressedColor);
+
+		if ((attribs & FOREGROUND_COLOR) != 0)
+			setForegroundColor(source.foregroundColor);
+
+		if ((attribs & BORDER_WIDTH) != 0)
+			setBorderWidth(source.borderWidth);
+		if ((attribs & BORDER_RADIUS) != 0)
+			setBorderRadius(source.borderRadius);
+		if ((attribs & BORDER_COLOR) != 0)
+			setBorderColor(source.borderColor);
+
+		if ((attribs & OPACITY) != 0)
+			setOpacity(source.opacity);
+	}
+
+
+	/**
+	 * @see {@link Control#doForAll(Setter, Object...)
+	 *
+	 * @param <T> type
+	 */
+	public static abstract class Setter<T> {
+		public abstract void run(T c);
+	}
+
+	/**
+	 * (A bit more advanced!) Do a given method for all given objects (not
+	 * necessarily UI elements). The idea is to apply setters to several elements
+	 * without boilerplate code.
+	 * 
+	 * You can pass an instance of Control.Setter<T>, override its run() method and
+	 * then pass any number of elements.
+	 * 
+	 * You need to specify an object class, i.e. Control if you only need to use
+	 * methods from Control or Textbox, if you would like to use setters individual
+	 * to Textbox.
+	 *
+	 * Example:
+	 * 
+	 * <code>
+	 * Control.doForAll( new Control.Setter<Control>() {
+	 *     &#64;Override 
+	 *     public void run(Control c) {
+	 *         c.setBackgroundColor(color(0)); 
+	 *     }
+	 * }, myButton, byLabel, myTextbox);
+	 * </code>
+	 * 
+	 * 
+	 * or:
+	 * 
+	 * <code>
+	 * Control.doForAll( new Control.Setter<Container>() {
+	 *     &#64;Override 
+	 *     public void run(Container c) {
+	 *         c.fitContent();
+	 *     }
+	 * }, myContainer, myHScrollContainer, myScrollArea, myFlowContainer);
+	 * </code>
+	 * 
+	 * @param setter   a setter (need to override the run() method and specify
+	 *                 template type)
+	 * @param elements arbitrary number of elements that are of the given template
+	 *                 type
+	 */
+	public static <T> void doForAll(Setter<T> setter, T... elements) {
+		for (T c : elements) {
+			setter.run(c);
+		}
+	}
+
+
+
+	/**
+	 * Create a transition animation for a property of this Component. The
+	 * {@link Frame} will deal with changing this property in appropriate steps to
+	 * create the effect.
 	 * 
 	 * @param attribute    name of attribute to animate
 	 * @param aimedValue   final value for the attribute
 	 * @param milliseconds time for animation in milliseconds
 	 */
 	public void animate(String attribute, float aimedValue, double milliseconds) {
-		Frame.frame0.animateImpl(attribute, this, aimedValue, milliseconds);
+		getFrame().animateImpl(attribute, this, aimedValue, milliseconds);
 	}
 
 
@@ -2350,7 +2750,7 @@ public abstract class Control implements PConstants {
 			this.invokeWithArgs = invokeWithArgs;
 		}
 
-		void handle(Object args) {
+		void handle(Object... args) {
 			try {
 				if (this.invokeWithArgs) { // might have no args
 					method.invoke(target, args);
@@ -2367,34 +2767,13 @@ public abstract class Control implements PConstants {
 
 
 
-	protected void handleEvent(EventListener callback, Object args) {
+	protected void handleEvent(EventListener callback, Object... args) {
 		if (callback == null)
 			return;
 		callback.handle(args);
 	}
 
-	/*protected EventListener createEventListener(String methodName, Object target, Class<?> args_class) {
-		Class<?> c = target.getClass();
-		try { // try with no args
-			Method m = c.getMethod(methodName);
-			return new EventListener(m, target, false);
-		} catch (NoSuchMethodException nsme) {
-			try { // try with args
-				if (args_class != null) {
-					Method m = c.getMethod(methodName, args_class);
-					return new EventListener(m, target, true);
-	
-				} else {
-					Frame.frame0.papplet.die("There is no public " + methodName + "() method with the right arguments.");
-				}
-			} catch (NoSuchMethodException nsme2) {
-				getPApplet().die("There is no public " + methodName + "() method with the right arguments.");
-			}
-		}
-		return null;
-	}*/
-
-	protected EventListener createEventListener(String methodName, Object target, Class<?> args_class) {
+	protected EventListener createEventListener(String methodName, Object target, Class<?>... args_class) {
 		Class<?> c = target.getClass();
 		try { // try with args
 			Method m = c.getMethod(methodName, args_class);
@@ -2410,33 +2789,17 @@ public abstract class Control implements PConstants {
 		return null;
 	}
 
-	protected EventListener createEventListenerMultipleArgs(String methodName, Object target, Class<?>[] args_classes) {
-		Class<?> c = target.getClass();
-		try { // try with args
-			Method m = c.getMethod(methodName, args_classes);
-			return new EventListener(m, target, false);
-		} catch (NoSuchMethodException nsme) {
-			try { // try without args
-				Method m = c.getMethod(methodName);
-				return new EventListener(m, target, true);
-
-			} catch (NoSuchMethodException nsme2) {
-				getPApplet().die("There is no public " + methodName + "() method with the right arguments.");
-			}
-		}
-		return null;
-	}
 
 
-	EventListener pressListener;
-	EventListener releaseListener;
-	EventListener enterListener;
-	EventListener exitListener;
-	EventListener moveListener;
-	EventListener dragListener;
-	EventListener wheelListener;
-	EventListener resizeListener;
-	EventListener focusListener;
+	protected EventListener pressListener;
+	protected EventListener releaseListener;
+	protected EventListener enterListener;
+	protected EventListener exitListener;
+	protected EventListener moveListener;
+	protected EventListener dragListener;
+	protected EventListener wheelListener;
+	protected EventListener resizeListener;
+	protected EventListener focusListener;
 
 
 
@@ -2556,7 +2919,6 @@ public abstract class Control implements PConstants {
 	 */
 	public void addFocusListener(String methodName, Object target) {
 		focusListener = createEventListener(methodName, target, Control.class);
-		print(focusListener, target);
 	}
 
 	public void addFocusListener(String methodName) {
@@ -2608,23 +2970,28 @@ public abstract class Control implements PConstants {
 	 *   An example with no arguments. 
 	 *   
 	 *   
-	 * 
-	 *	 protected EventListener myListener;
-	 *	 public void addMyListener(String methodName, Object target) {
-	 *	     myListener = createEventListener(methodName, target, null);
-	 *	 }
-	 *	 public void addMyListener(String methodName) {
-	 *	     addMyListener(methodName, getPApplet());
-	 *	 }
-	 *	 public void removeMyListener(){
-	 *	     myListener = null; // setting listener to null is the way to do it
-	 *	 }
-	 *   protected void someFunctionThatChangesObervedState(){
-	 *       // do stuff
-	 *       handleEvent(myListener, null);
-	 *   }
-	 *   
-	 *   
+	 
+		 protected EventListener myListener;
+		 
+		 public void addMyListener(String methodName, Object target) {
+		     myListener = createEventListener(methodName, target, null);
+		 }
+		 
+		 public void addMyListener(String methodName) {
+		     addMyListener(methodName, getPApplet());
+		 }
+		 
+		 public void removeMyListener(){
+	     	myListener = null; // setting listener to null is the way to do it
+		 }
+		 
+	  	 protected void someFunctionThatChangesObervedState(){
+	      	// do stuff
+	      	handleEvent(myListener, null);
+	     }  
+	
+	
+	
 	 *   If arguments shall be passed to the callback function, then pass their 
 	 *   class to the createEventListener() method as third argument. When handling 
 	 *   the event, pass the argument here. Look at the example from focusListener. 
@@ -2663,18 +3030,18 @@ public abstract class Control implements PConstants {
 
 	// new mouse event stuff
 	/*
-	 * Replace bounds with x0, y0 Right and bottom bounds are not needed for an item
+	 * Replace bounds with offsetX, offsetY. Right and bottom bounds are not needed for an item
 	 * gets the mouse event only if mouse is over parent. This way no constraining
-	 * like in calcbounds is needed. instead of passing the mouseEvent, this is
-	 * stored globally (in Control.e) and relative x,y coords are passed. Each
-	 * container subtracts its own x0,y0 from them so the items only need to know
+	 * like in former calcbounds is needed. Instead of passing the mouseEvent, this is
+	 * stored globally (in Control.currentMouseEvent) and relative x,y coords are passed. Each
+	 * container subtracts its own offsetX,offsetY from them so the items only need to know
 	 * their relative position to parent and not absolute position in window to
 	 * determine if mouse is over the item.
 	 * 
-	 * x0,y0 store computed position origin of item relative container it is
+	 * offsetX,offsetY store computed position origin of item relative container it is
 	 * evaluated and set in renderItem(). Problem: Flowcontainers decide not to draw
-	 * items that are out of the visible area and needs to set x0,y0 to somewhere
-	 * outside this area.
+	 * items that are out of the visible area and needs to set offsetX,offsetY to somewhere
+	 * outside this area. 
 	 * 
 	 * hovering is now dealt with in a different way: the first item to find out
 	 * that the mouse is over it sets the Control.hoveredElement to itself. At then
@@ -2686,11 +3053,6 @@ public abstract class Control implements PConstants {
 	 * 
 	 * 
 	 * 
-	 * Issues:
-	 * 
-	 * - MenuItem cannot hide when clicked aynwhere else, because menuitem does not
-	 * get these events anymore also menuitem seems to rely on calcbounds in some
-	 * point.
 	 * 
 	 * - only one element can be hovered on (not really an issue)
 	 * 
@@ -2711,8 +3073,10 @@ public abstract class Control implements PConstants {
 	// currently dragged element
 	protected static Control draggedElement;
 
-	// use new mouse event handling or old?
-	protected static boolean useNewMouseEvent = true;
+	// classes can set this to false in their release(MouseEvent) method. Then a
+	// drag of this element will induce no drop event
+	protected static boolean drop = true;
+
 
 
 	/*
@@ -2876,27 +3240,21 @@ public abstract class Control implements PConstants {
 	}
 
 	protected void enter(MouseEvent e) {
-		visualBackgroundColor = hoverColor;
-		update();
+		setVisualBackgroundColor(hoverColor);
 	}
 
 	protected void exit(MouseEvent e) {
-		visualBackgroundColor = backgroundColor;
-		update();
+		setVisualBackgroundColor(backgroundColor);
 	}
 
 	protected void press(MouseEvent e) {
-		visualBackgroundColor = pressedColor;
-		update();
+		setVisualBackgroundColor(pressedColor);
 	}
 
 	protected void release(MouseEvent e) {
-		visualBackgroundColor = hoverColor;
-		update();
+		setVisualBackgroundColor(hoverColor);
 	}
 
-	// methods that will be called when key events occured and this element is the
-	// currently focusedElement.
 
 	/**
 	 * Called by {@link Frame} through KeyListener
@@ -2927,8 +3285,20 @@ public abstract class Control implements PConstants {
 		PApplet.println(v);
 	}
 
+	// debugging function - get text if textbased
+	protected String textIfTextBased() {
+		if (this instanceof TextBased) {
+			return ((TextBased) this).text;
+		} else
+			return this.toString();
+	}
+
 	protected static PApplet getPApplet() {
 		return Frame.getPApplet();
+	}
+
+	protected static Frame getFrame() {
+		return Frame.getFrame();
 	}
 
 

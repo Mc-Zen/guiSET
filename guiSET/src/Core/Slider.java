@@ -24,16 +24,18 @@ public class Slider extends Control {
 	protected float maxValue = 100;
 
 
-
+	public enum Orientation {
+		HORIZONTAL, VERTICAL
+	}
 
 
 	protected int thickness = 4;
 	protected int ballSize = 15;
 
-	public static final int HORIZONTAL = 0;
-	public static final int VERTICAL = 1;
+	public static final Orientation HORIZONTAL = Orientation.HORIZONTAL;
+	public static final Orientation VERTICAL = Orientation.VERTICAL;
 	// is it a vertical or horzontal slider?
-	protected int orientation = HORIZONTAL;
+	protected Orientation orientation = Orientation.HORIZONTAL;
 
 	protected boolean wheelEnabled = false;
 	protected int scrollSpeed = 3;
@@ -189,7 +191,7 @@ public class Slider extends Control {
 		this.ballSize = ballSize;
 
 		// adjust height to larger of Size and BallSize
-		if (orientation == HORIZONTAL)
+		if (orientation == Orientation.HORIZONTAL)
 			setHeightImpl((int) (Math.max(thickness, ballSize) * 1.3));
 		else
 			setWidthImpl((int) (Math.max(thickness, ballSize) * 1.3));
@@ -201,16 +203,15 @@ public class Slider extends Control {
 	 * 
 	 * @param orientation {@link Slider#HORIZONTAL} or {@link Slider#VERTICAL}
 	 */
-	public void setOrientation(int orientation) {
-		if (orientation == HORIZONTAL) {
-			if (this.orientation == VERTICAL) {
+	public void setOrientation(Orientation orientation) {
+		if (orientation == Orientation.HORIZONTAL) {
+			if (this.orientation == Orientation.VERTICAL) {
 				setWidthImpl(height);
 				setHeightImpl((int) (Math.max(thickness, ballSize) * 1.3));
 			}
 			this.orientation = orientation;
-		}
-		if (orientation == VERTICAL) {
-			if (this.orientation == HORIZONTAL) {
+		} else {
+			if (this.orientation == Orientation.HORIZONTAL) {
 				setHeightImpl(width);
 				setWidthImpl((int) (Math.max(thickness, ballSize) * 1.3));
 			}
@@ -243,7 +244,6 @@ public class Slider extends Control {
 
 
 
-
 	public float getValue() {
 		return value;
 	}
@@ -264,7 +264,7 @@ public class Slider extends Control {
 		return ballSize;
 	}
 
-	public int getOrientation() {
+	public Orientation getOrientation() {
 		return orientation;
 	}
 
@@ -316,7 +316,7 @@ public class Slider extends Control {
 	 * internal method for setting the actual position of the ball
 	 */
 	protected void setBallPosition(float position) {
-		if (orientation == HORIZONTAL) {
+		if (orientation == Orientation.HORIZONTAL) {
 			setValue(((position - ballSize / 2) * Math.abs(maxValue - minValue) / (float) (width - ballSize)) + minValue);
 		} else {
 			setValue(((height - position - ballSize / 2) * Math.abs(maxValue - minValue) / (float) (height - ballSize)) + minValue);
@@ -329,12 +329,12 @@ public class Slider extends Control {
 
 	@Override
 	protected void drag(MouseEvent e) {
-		setBallPosition(orientation == HORIZONTAL ? e.getX() - getOffsetXWindow() : e.getY() - getOffsetYWindow());
+		setBallPosition(orientation == Orientation.HORIZONTAL ? e.getX() - getOffsetXWindow() : e.getY() - getOffsetYWindow());
 	}
 
 	@Override
 	protected void press(MouseEvent e) {
-		setBallPosition(orientation == HORIZONTAL ? e.getX() - getOffsetXWindow() : e.getY() - getOffsetYWindow());
+		setBallPosition(orientation == Orientation.HORIZONTAL ? e.getX() - getOffsetXWindow() : e.getY() - getOffsetYWindow());
 	}
 
 	@Override

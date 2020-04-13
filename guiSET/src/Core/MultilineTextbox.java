@@ -111,7 +111,7 @@ public class MultilineTextbox extends VScrollContainer {
 		}
 
 
-		pg.textSize(fontSize);
+		pg.textSize(getFontSize());
 		drawDefaultBackground();
 
 		if (borderWidth == 0 && borderRadius == 0) {
@@ -132,7 +132,7 @@ public class MultilineTextbox extends VScrollContainer {
 		/*
 		 * do this before drawing cursor
 		 */
-		fullScrollHeight = (int) (lines.size() * (fontSize + lineHeight) + paddingTop + paddingBottom);
+		fullScrollHeight = (int) (lines.size() * (getFontSize() + lineHeight) + paddingTop + paddingBottom);
 		scrollPosition = PApplet.constrain(scrollPosition, 0, PApplet.max(0, fullScrollHeight - height));
 
 		/*
@@ -155,11 +155,11 @@ public class MultilineTextbox extends VScrollContainer {
 					int start = Math.max(selectionStart, breakPositions.get(i));
 					int end = Math.min(selectionEnd, breakPositions.get(i + 1));
 
-					int selectionX = (int) (pg.textWidth(lines.get(i).substring(0, start - breakPositions.get(i))) + fontSize / 40f);
+					int selectionX = (int) (pg.textWidth(lines.get(i).substring(0, start - breakPositions.get(i))) + getFontSize() / 40f);
 
 					int selectionWidth = (int) pg.textWidth(lines.get(i).substring(start - breakPositions.get(i), end - breakPositions.get(i)));
-					pg.rect(lineStart(lines.get(i)) + selectionX, i * (lineHeight + fontSize) + paddingTop - scrollPosition, selectionWidth,
-							fontSize + pg.textDescent());
+					pg.rect(lineStart(lines.get(i)) + selectionX, i * (lineHeight + getFontSize()) + paddingTop - scrollPosition, selectionWidth,
+							getFontSize() + pg.textDescent());
 				}
 			}
 		}
@@ -167,16 +167,16 @@ public class MultilineTextbox extends VScrollContainer {
 		/*
 		 * DRAW TEXT
 		 */
-		pg.fill(foregroundColor);
-		pg.textAlign(textAlign, PApplet.TOP);
+		pg.fill(getTextColor());
+		pg.textAlign(getTextAlign(), PApplet.TOP);
 		if (!text.equals("")) {
 
-			float posX = textAlign == PApplet.LEFT ? paddingLeft
-					: (textAlign == PApplet.RIGHT ? getAvailableWidth() + paddingLeft : getAvailableWidth() / 2 + paddingLeft);
-			int i0 = (int) ((-paddingTop + scrollPosition) / (lineHeight + fontSize)); // first (partly) visible line
+			float posX = getTextAlign() == PApplet.LEFT ? paddingLeft
+					: (getTextAlign() == PApplet.RIGHT ? getAvailableWidth() + paddingLeft : getAvailableWidth() / 2 + paddingLeft);
+			int i0 = (int) ((-paddingTop + scrollPosition) / (lineHeight + getFontSize())); // first (partly) visible line
 
 			for (int i = i0; i < lines.size(); i++) {
-				float posY = i * (lineHeight + fontSize) + paddingTop - scrollPosition;
+				float posY = i * (lineHeight + getFontSize()) + paddingTop - scrollPosition;
 				if (posY > height) // all further lines not visible
 					break;
 				pg.text(lines.get(i), posX, posY);
@@ -185,11 +185,12 @@ public class MultilineTextbox extends VScrollContainer {
 			// as a side effect we can just apply boxedText() to the hint and get "lines"
 			// for the hint, perfect to draw (seems this does not interfere with anything
 			// else
+			float posX = getTextAlign() == PApplet.LEFT ? paddingLeft
+					: (getTextAlign() == PApplet.RIGHT ? getAvailableWidth() + paddingLeft : getAvailableWidth() / 2 + paddingLeft);
 			pg.fill(120);
 			boxedText(hint);
-			float posX = paddingLeft;
 			for (int i = 0; i < lines.size(); ++i) {
-				pg.text(lines.get(i), posX, i * (lineHeight + fontSize) + paddingTop - scrollPosition);
+				pg.text(lines.get(i), posX, i * (lineHeight + getFontSize()) + paddingTop - scrollPosition);
 			}
 			boxedText(""); // important
 		}
@@ -204,7 +205,7 @@ public class MultilineTextbox extends VScrollContainer {
 	}
 
 	protected int compensateAlign(int x, int lineWidth) {
-		switch (textAlign) {
+		switch (getTextAlign()) {
 		case PApplet.LEFT:
 			return x;
 		case PApplet.RIGHT:
@@ -219,7 +220,7 @@ public class MultilineTextbox extends VScrollContainer {
 	// return the xpos where the line with given width starts, regardless of the
 	// alignment
 	protected float lineStart(String line) {
-		switch (textAlign) {
+		switch (getTextAlign()) {
 		case PApplet.LEFT:
 			return paddingLeft;
 		case PApplet.RIGHT:
@@ -394,16 +395,16 @@ public class MultilineTextbox extends VScrollContainer {
 
 	protected void drawCursor() {
 		int lineNumber = getLineToCursor();
-		float posX = lineWidthUntilCursor() + lineStart(lines.get(lineNumber)) + fontSize / 40f;
+		float posX = lineWidthUntilCursor() + lineStart(lines.get(lineNumber)) + getFontSize() / 40f;
 		// position of upper left corner of cursor relative to first character of text
-		int posY = (int) ((lineNumber) * (lineHeight + fontSize));
-		float cursorHeight = fontSize;
+		int posY = (int) ((lineNumber) * (lineHeight + getFontSize()));
+		float cursorHeight = getFontSize();
 
 		// perform autoscroll (i.e. when created new line)
 		if (needsScrolling) {
 			// cursor has left the element at the bottom
 			if (posY - scrollPosition + cursorHeight > height - paddingBottom - paddingTop) {
-				setScrollPosition((int) (posY - height + fontSize + paddingTop + paddingBottom));
+				setScrollPosition((int) (posY - height + getFontSize() + paddingTop + paddingBottom));
 			} else if (posY < scrollPosition + paddingTop) { // cursor has left the element at the top
 				setScrollPosition(posY);
 			}
@@ -470,7 +471,7 @@ public class MultilineTextbox extends VScrollContainer {
 	protected void setCursorByClick(int mX, int mY) { // mX, mY being coordinates relative to parent
 		// determine which line clicked on
 		int textY = mY - paddingTop + scrollPosition; // clicked y position on text (max(), because when drag, lines can be exceeded)
-		int lineNumber = (int) ((textY + lineHeight / 2) / (lineHeight + fontSize)); // clickedPosY+lineHeight/2, to switch between two lines
+		int lineNumber = (int) ((textY + lineHeight / 2) / (lineHeight + getFontSize())); // clickedPosY+lineHeight/2, to switch between two lines
 
 		setCursorByXAndLine(mX, Math.max(lineNumber, 0));
 	}
@@ -569,7 +570,7 @@ public class MultilineTextbox extends VScrollContainer {
 
 	// called whenether the text has been altered through user interaction
 	protected void textChanged() {
-		handleEvent(textChangeListener, null);
+		handleEvent(textChangeListener);
 		boxedText(text);
 		cursorChanged();
 	}
@@ -727,21 +728,6 @@ public class MultilineTextbox extends VScrollContainer {
 
 
 
-	/*
-	 * !!! Setting width or padding (or scrollhandlewidth) affects how the text
-	 * breaks need to be set. So call boxedText() here.
-	 * 
-	 */
-	@Override
-	protected void animated() {
-		super.animated();
-
-		// might look wasteful but isn't as it still would be called a lot more often if
-		// called in render()
-		boxedText(text);
-	}
-
-
 	@Override
 	public void setSize(int width, int height) {
 		super.setSize(width, height);
@@ -897,7 +883,7 @@ public class MultilineTextbox extends VScrollContainer {
 	 * @param target     object that declares callback method.
 	 */
 	public void addTextChangeListener(String methodName, Object target) {
-		textChangeListener = createEventListener(methodName, target, null);
+		textChangeListener = createEventListener(methodName, target);
 	}
 
 	public void addTextChangeListener(String methodName) {
@@ -942,7 +928,7 @@ public class MultilineTextbox extends VScrollContainer {
 	@Override
 	protected void drag(MouseEvent e) {
 		super.drag(e); // need to handle scrollbar stuff
-		if (startHandleDragPos > -1)// only select text if not dragging scrollbar
+		if (startHandleDragPos > -1) // only select text if not dragging scrollbar
 			return;
 
 		setCursorByClick(e.getX() - getOffsetXWindow(), e.getY() - getOffsetYWindow());
@@ -958,12 +944,13 @@ public class MultilineTextbox extends VScrollContainer {
 	@Override
 	protected void release(MouseEvent e) {
 		super.release(e);
+		Control.drop = false; // induce no drop events on Frame
 	}
 
 	@Override
 	protected void mouseWheel(MouseEvent e) {
-		if (Frame.frame0.isControlDown()) {
-			setFontSize(fontSize * (e.getCount() > 0 ? 1.1f : 1 / 1.1f));
+		if (getFrame().isControlDown()) {
+			setFontSize(getFontSize() * (e.getCount() > 0 ? 1.1f : 1 / 1.1f));
 		} else {
 			super.mouseWheel(e);
 		}

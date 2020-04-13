@@ -57,7 +57,7 @@ import java.util.Comparator;
  * @author Mc-Zen
  *
  */
-public class Container extends Control {
+public class Container extends TextBased {
 
 	/*
 	 * list of items
@@ -121,14 +121,28 @@ public class Container extends Control {
 	 * When resized also call resize for all children
 	 */
 
+
 	@Override
-	protected void resize() {
-		super.resize();
-		for (Control c : items) {
-			c.resize();
+	protected boolean setWidthNoUpdate(int width) {
+		boolean widthActuallyChanged = super.setWidthNoUpdate(width);
+		if (widthActuallyChanged) {
+			for (Control c : items) {
+				c.parentResized();
+			}
 		}
+		return widthActuallyChanged;
 	}
 
+	@Override
+	protected boolean setHeightNoUpdate(int width) {
+		boolean heightActuallyChanged = super.setHeightNoUpdate(width);
+		if (heightActuallyChanged) {
+			for (Control c : items) {
+				c.parentResized();
+			}
+		}
+		return heightActuallyChanged;
+	}
 
 
 
@@ -159,7 +173,7 @@ public class Container extends Control {
 	 */
 
 	// internal item adding method
-	protected void addItem(int position, Control newItem) {
+	protected void addItemImpl(int position, Control newItem) {
 		items.add(position, newItem);
 		newItem.parent = this;
 		newItem.addedToParent(); // notify control that it has been added to this parent
@@ -176,10 +190,10 @@ public class Container extends Control {
 	 */
 	public void add(Control... newItems) {
 		for (Control c : newItems) {
-			addItem(items.size(), c);
+			addItemImpl(items.size(), c);
 		}
 		if (!containerMakesAutoLayout) { // don't sort containers with custom layout
-			sortContent();
+			sortItemsbyZ();
 		}
 		update();
 	}
@@ -192,10 +206,10 @@ public class Container extends Control {
 	 */
 	public void insert(int position, Control... newItems) {
 		for (int i = 0; i < newItems.length; i++) {
-			addItem(position + i, newItems[i]);
+			addItemImpl(position + i, newItems[i]);
 		}
 		if (!containerMakesAutoLayout) { // don't sort auto-layout containers!
-			sortContent();
+			sortItemsbyZ();
 		}
 		update();
 	}
@@ -230,7 +244,8 @@ public class Container extends Control {
 	 */
 	public boolean remove(Control item) {
 		boolean result = items.remove(item);
-		update();
+		if (result)
+			update();
 		return result;
 	}
 
@@ -279,10 +294,18 @@ public class Container extends Control {
 	}
 
 
+	/**
+	 * Sort items providing a Comparator.
+	 * 
+	 * @param comp Comparator
+	 */
+	public void sortItems(Comparator<Control> comp) {
+		Collections.sort(items, comp);
+	}
 
-	// sort items by z-Index
-	protected void sortContent() {
-		Collections.sort(items, new Comparator<Control>() {
+
+	protected void sortItemsbyZ() {
+		sortItems(new Comparator<Control>() {
 			@Override
 			public int compare(Control c1, Control c2) {
 				return c1.z - c2.z;
@@ -313,23 +336,6 @@ public class Container extends Control {
 
 
 
-	/**
-	 * Get available content width subtracting paddings.
-	 * 
-	 * @return available width
-	 */
-	public int getAvailableWidth() {
-		return width - paddingRight - paddingLeft;
-	}
-
-	/**
-	 * Get available content height subtracting paddings.
-	 * 
-	 * @return available height
-	 */
-	public int getAvailableHeight() {
-		return height - paddingTop - paddingBottom;
-	}
 
 
 
@@ -360,7 +366,6 @@ public class Container extends Control {
 					if (isPropagationStopped()) {
 						return;
 					}
-					// print("hovered element", hoveredElement, items.get(i));
 
 					items.get(i).mouseEvent(x_, y_);
 

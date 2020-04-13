@@ -9,7 +9,7 @@ import processing.event.*;
  * @author Mc-Zen
  *
  */
-public class ListItem extends Control {
+public class ListItem extends TextBased {
 
 	// back color for selected state
 	protected int selectionColor;
@@ -25,11 +25,11 @@ public class ListItem extends Control {
 		super();
 		setPadding(3);
 		setBorderWidth(1);
-		setSelectionColor(-12171706);
+		setSelectionColor(SELECTION_BLUE);
 		setSelectionForegroundColor(WHITE);
-		setBackgroundColor(WHITE);
-		setHoverColor(-3618616);
-		setPressedColor(-6908266);
+		setBackgroundColor(TRANSPARENT);
+		setHoverColor(Color.create(0,0,0,30));
+		setPressedColor(Color.create(0,0,0,50));
 
 		autosize();
 	}
@@ -49,13 +49,16 @@ public class ListItem extends Control {
 		// Exception: Width is set in render() method for once which is okay because
 		// parent expects that
 
-		setWidthImpl(((Container) parent).getAvailableWidth());
-		updateAnchors(); // not really necessary or elegant but for now (just in case listitem has
+		//setWidthImpl(((Container) parent).getAvailableWidth());
+//		updateAnchors(); // not really necessary or elegant but for now (just in case listitem has
 						 // children)
-		resize();        // ...
+//		resize();        // ...
 
-		pg = getPApplet().createGraphics(width, height);
-		pg.beginDraw();
+		// only if parent is not a ParentGraphicsRenderer (temporary solution)
+		if (pg != parent.pg) {
+			pg = getPApplet().createGraphics(width, height);
+			pg.beginDraw();
+		}
 
 		if (selected) {
 			int temp = visualBackgroundColor;
@@ -76,12 +79,17 @@ public class ListItem extends Control {
 
 	}
 
+//	@Override
+//	protected void autosizeRule() {
+//		setHeightImpl((int) (getFontSize() * 1.5) + paddingTop + paddingBottom);
+//	}
+
 	@Override
-	protected void autosizeRule() {
-		setHeightImpl((int) (fontSize * 1.5) + paddingTop + paddingBottom);
+	protected int autoHeight() {
+		return (int) (getFontSize() * 1.5) + paddingTop + paddingBottom;
 	}
 
-
+	
 
 
 

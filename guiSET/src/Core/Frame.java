@@ -21,16 +21,22 @@ package guiSET.core;
 import processing.core.*;
 import processing.event.*;
 
+import java.awt.Component;
 import java.awt.Dimension;
-//import java.awt.Font;
+import java.awt.datatransfer.DataFlavor;
+import java.awt.datatransfer.Transferable;
+import java.awt.dnd.*;
+import java.io.File;
 import java.lang.Exception;
 import java.lang.reflect.Method;
 import java.util.HashMap;
-
+import java.util.Iterator;
 import java.util.ArrayList;
 
 import java.lang.reflect.InvocationTargetException;
 
+import com.jogamp.newt.event.WindowEvent;
+import com.jogamp.newt.opengl.GLWindow;
 
 /**
  * 
@@ -42,8 +48,12 @@ public class Frame extends Container {
 
 	/*
 	 * frame0 is the standard frame that can always be accessed. When the programmer
-	 * creates a new Frame : Frame f = new Frame(PApplet) the static frame will be
-	 * replaced by that new one.
+	 * creates a new Frame : Frame f = new Frame(PApplet) the non-ready placeholder 
+	 * frame will be replaced by that new one.
+	 * 
+	 * It is available to all classes for exchanging information through getFrame(). 
+	 * Normally a programmer does not need it except when developing
+	 * custom component classes. Only one Frame may exist per sketch.
 	 * 
 	 * It is necessary to do so for this library and each component needs the parent
 	 * papplet. But in this way some functions can be used even before and it tidies
@@ -52,25 +62,17 @@ public class Frame extends Container {
 	 * Obviously only one Frame can be created AND effectively used per sketch.
 	 * 
 	 */
-
-	/**
-	 * This is a static Frame that when a new Frame object is created is initialized
-	 * with this exact Frame. It is available to all classes for exchanging
-	 * information. Normally a programmer does not need it except when developing
-	 * custom component classes. Only one Frame may exist per sketch.
-	 */
-	public static Frame frame0 = new Frame();
+	private static Frame frame0 = new Frame();
 	private boolean isNullFrame = true; 		// indicates that frame0 is intially a placeholder, is set to false as soon as
 										 		// another one is created
 
-	protected boolean isNullFrame() {
-		return isNullFrame;
+
+	/**
+	 * Get the one and only Frame.
+	 */
+	public static Frame getFrame() {
+		return frame0;
 	}
-
-	private String versionCode = "Version 0.0.3";
-
-
-
 
 
 
@@ -87,7 +89,27 @@ public class Frame extends Container {
 		return frame0.papplet;
 	}
 
-	protected boolean initialized = false;
+
+
+
+
+	/*
+	 * Initialization state. 
+	 */
+	public enum Initialization_State {
+		NOT_INITIALIZED, INITIALIZING, INITIALIZED
+	}
+
+	protected Initialization_State initialized = Initialization_State.NOT_INITIALIZED;
+
+
+
+
+
+
+	public enum DrawTime {
+		PRE, POST
+	}
 
 	/**
 	 * GUI Draw time Mode: Draw the GUI before the {@link PApplet#draw()} happens.
@@ -95,7 +117,7 @@ public class Frame extends Container {
 	 * time mode needs to be specified at the beginning when Frame is created. This
 	 * is the default mode.
 	 */
-	public static final int DRAW_PRE = 1; 		// draw GUI before draw() takes place
+	public static final DrawTime DRAW_PRE = DrawTime.PRE; 		// draw GUI before draw() takes place
 
 	/**
 	 * GUI Draw time Mode: Draw the GUI after the {@link PApplet#draw()} happens.The
@@ -103,26 +125,26 @@ public class Frame extends Container {
 	 * Everything that is drawn during {@link PApplet#draw()} will be overwritten
 	 * without ever being visible, except when Frame is transparent.
 	 */
-	public static final int DRAW_POST = 2; 		// draw GUI after draw() takes place
+	public static final DrawTime DRAW_POST = DrawTime.POST; 		// draw GUI after draw() takes place
 
-	protected float scale = 1; 					// not implemented yet
+
+
+
+
+	// private wrapper for registering some methods at papplet.
+	private Protected_Frame protectedFrame;
+
+	java.awt.Frame awtFrame;	// window if it is an AWTFrame
+	GLWindow glWindow;			// window if it is a GLWindow
+
+
+
 
 	/**
-	 * The element that has got focus currently (always gets the KeyEvents).
+	 * A private version without PApplet only needed for the static dummy before the
+	 * real Frame is created.
 	 */
-	protected Control focusedElement = this;
-
-	java.awt.Frame awtFrame;
-
-
-
-
-
-	/**
-	 * A protected version without PApplet only needed for the static dummy before
-	 * the real Frame is created.
-	 */
-	protected Frame() {
+	private Frame() {
 		super();
 	}
 
@@ -133,8 +155,10 @@ public class Frame extends Container {
 	 * @param pa papplet
 	 */
 	public Frame(PApplet pa) {
-		this(pa, DRAW_PRE);
+		this(pa, DrawTime.PRE);
 	}
+
+
 
 	/**
 	 * Specify the draw time mode with this constructor.
@@ -142,13 +166,13 @@ public class Frame extends Container {
 	 * @param pa         papplet
 	 * @param timeToDraw DRAW_PRE or DRAW_POST
 	 */
-	public Frame(PApplet pa, int timeToDraw) {
+	public Frame(PApplet pa, DrawTime timeToDraw) {
 		super();
 
 		// if static Frame has been a nullFrame (not yet initialized correctly with
 		// papplet) set this the new frame0
-		if (Frame.frame0.isNullFrame) {
-			Frame.frame0 = this;
+		if (frame0.isNullFrame) {
+			frame0 = this;
 			isNullFrame = false;
 		}
 
@@ -166,55 +190,119 @@ public class Frame extends Container {
 
 		animations = new ArrayList<Animation>();
 
-		Control.init_pfont();		// initialize a pfont for getting textWidth/textDescent...
+		TextBased.init_text();
+
+		protectedFrame = new Protected_Frame(timeToDraw); // register pre(), mouseEvent() and keyEvent() methods
 
 
-		new Protected_Frame(timeToDraw);
+		// Get the native window (either AWTFrame in Java2D mode or GLWindow in P2D/P3D
+		// mode
+		// to add some listeners for resizing and focus.
+		Object nativeWindow = papplet.getSurface().getNative();
+		new DropTarget((Component) nativeWindow, new Guiset_Drop_Handler());
 
-
-		try {
-			// jframe =
-			// (javax.swing.JFrame)((processing.awt.PSurfaceAWT.SmoothCanvas)getSurface().getNative()).getFrame();
-			awtFrame = ((processing.awt.PSurfaceAWT.SmoothCanvas) papplet.getSurface().getNative()).getFrame();
-
+		if (nativeWindow instanceof processing.awt.PSurfaceAWT.SmoothCanvas) {
+			awtFrame = ((processing.awt.PSurfaceAWT.SmoothCanvas) nativeWindow).getFrame();
 
 			awtFrame.addWindowFocusListener(new java.awt.event.WindowFocusListener() {
 				@Override
 				public void windowLostFocus(java.awt.event.WindowEvent e) {
-
+					handleEvent(windowFocusLostListener);
 				}
 
 				@Override
 				public void windowGainedFocus(java.awt.event.WindowEvent e) {
+					handleEvent(windowFocusGainedListener);
 				}
+
 			});
 
 			awtFrame.addComponentListener(new java.awt.event.ComponentAdapter() {
 				public void componentResized(java.awt.event.ComponentEvent evt) {
-					if (initialized) {
-						resize();
+					if (initialized == Initialization_State.INITIALIZED) {
+						resized();
 					}
 				}
 			});
-		} catch (ClassCastException e) {
-			e.printStackTrace();
+
+		} else if (nativeWindow instanceof GLWindow) {
+
+			glWindow = ((GLWindow) nativeWindow);
+			glWindow.addWindowListener(new com.jogamp.newt.event.WindowListener() {
+
+				@Override
+				public void windowLostFocus(com.jogamp.newt.event.WindowEvent e) {
+					handleEvent(windowFocusLostListener);
+				}
+
+				@Override
+				public void windowGainedFocus(com.jogamp.newt.event.WindowEvent e) {
+					handleEvent(windowFocusGainedListener);
+				}
+
+				@Override
+				public void windowDestroyed(com.jogamp.newt.event.WindowEvent e) {
+				}
+
+				@Override
+				public void windowDestroyNotify(com.jogamp.newt.event.WindowEvent e) {
+				}
+
+				@Override
+				public void windowRepaint(com.jogamp.newt.event.WindowUpdateEvent e) {
+				}
+
+				@Override
+				public void windowMoved(WindowEvent arg0) {
+
+				}
+
+				@Override
+				public void windowResized(WindowEvent arg0) {
+					if (initialized == Initialization_State.INITIALIZED) {
+						resized();
+					}
+				}
+			});
 		}
+
 	}
+
+
 
 
 	// a protected inner frame that users cannot access so keyEvent, mouseEvent, pre
 	// and draw are hidden from user
 	// only works protected
 	protected class Protected_Frame {
-		Protected_Frame(int timeToDraw) {
+		private boolean postRegistered = false;
+
+		Protected_Frame(DrawTime timeToDraw) {
 			papplet.registerMethod("keyEvent", this);
 			papplet.registerMethod("mouseEvent", this);
+			// papplet.registerMethod("post", this); // if animations should work right
 			if (timeToDraw == DRAW_PRE) {
 				papplet.registerMethod("pre", this);
 			} else if (timeToDraw == DRAW_POST) {
 				papplet.registerMethod("draw", this);
 			} else {
-				System.out.println("Error can't initialize frame with these arguments: " + timeToDraw + ". Use Frame.DRAW_POST or Frame.DRAW_PRE");
+				System.err.println("Error can't initialize Frame with these arguments: " + timeToDraw + ". Use Frame.DRAW_POST or Frame.DRAW_PRE");
+			}
+			// needed for animations to work in NO_LOOP mode
+			if (drawMode == NO_LOOP) {
+				registerPost();
+			}
+		}
+
+		protected void registerPost() {
+			if (!postRegistered) {
+				papplet.registerMethod("post", this);
+			}
+		}
+
+		protected void deregisterPost() {
+			if (postRegistered) {
+				papplet.unregisterMethod("post", this);
 			}
 		}
 
@@ -226,6 +314,13 @@ public class Frame extends Container {
 			Frame.this.display();
 		}
 
+		public void post() {
+			if (no_loopUpdateAgain) {
+				papplet.redraw();
+				no_loopUpdateAgain = false;
+			}
+		}
+
 		public void mouseEvent(MouseEvent e) {
 			Frame.this.mouseEvent(e);
 		}
@@ -234,6 +329,8 @@ public class Frame extends Container {
 			Frame.this.keyEvent(e);
 		}
 	}
+
+
 
 
 
@@ -256,9 +353,12 @@ public class Frame extends Container {
 	 * cursor animation with textboxes.
 	 */
 
+	public enum DrawMode {
+		NO_LOOP, EFFICIENT, CONTINOUS
+	}
 
 
-	protected int drawMode = EFFICIENT;
+	protected DrawMode drawMode = DrawMode.EFFICIENT;
 
 	/**
 	 * Draw frequency mode. Continous makes Frame draw the entire GUI EACH time
@@ -266,22 +366,23 @@ public class Frame extends Container {
 	 * guiSET is combined with manual drawing on the sketch but it is the most
 	 * wasteful mode.This is the default and for many cases recommended mode.
 	 */
-	public static final int CONTINOUS = 0;
+	public static final DrawMode CONTINOUS = DrawMode.CONTINOUS;
 
 	/**
 	 * Draw frequency mode. Only refresh if an element has changed. It still keeps
 	 * the {@link PApplet#draw()} loop running to check for some events but only
 	 * redraws if necessary.
 	 */
-	public static final int EFFICIENT = 1;
+	public static final DrawMode EFFICIENT = DrawMode.EFFICIENT;
+
 
 	/**
-	 * Most efficient mode (but not a lot more than EFFICIENT). The
-	 * {@link PApplet#draw()} loop is interrupted and only key and mouse events are
-	 * still received and can change the state of the GUI. Also animations have
-	 * trouble working here (yet).
+	 * Most efficient mode. The {@link PApplet#draw()} loop is interrupted and only
+	 * key and mouse events are still received and can change the state of the GUI.
+	 * Animation timing is not as good.
 	 */
-	public static final int NO_LOOP = 2;
+	public static final DrawMode NO_LOOP = DrawMode.NO_LOOP;
+
 
 	/**
 	 * Set draw frequency mode {@link #EFFICIENT} {@link #CONTINOUS}
@@ -289,15 +390,33 @@ public class Frame extends Container {
 	 * 
 	 * @param mode accepts Frame.EFFICIENT, Frame.CONTINOUS, Frame.NO_LOOP
 	 */
-	public void setMode(int mode) {
+	public void setMode(DrawMode mode) {
 		this.drawMode = mode;
-		if (mode == NO_LOOP) {
+		if (mode == DrawMode.NO_LOOP) {
 			papplet.noLoop();
 			papplet.redraw();
+
+			protectedFrame.registerPost();
 		} else {
 			papplet.loop();
+			protectedFrame.deregisterPost();
 		}
 	}
+
+
+	// if we are in NO_LOOP drawMode then we need to call redraw() after draw()
+	// happens to
+	// force another update to continue the animation to work. If this flag is set,
+	// then the
+	// Protected_Frame.post() method calls papplet.redraw();
+	private static boolean no_loopUpdateAgain;
+
+	// called by Animation if mode is NO_LOOP
+	protected static void noLoopAfterAnimation() {
+		no_loopUpdateAgain = true;
+	}
+
+
 
 
 
@@ -308,8 +427,7 @@ public class Frame extends Container {
 	 * Called each draw loop
 	 */
 	private void display() {
-
-		if (!initialized) {
+		if (initialized == Initialization_State.NOT_INITIALIZED) {
 			initialize();	// recursive procedure going through all elements connected to Frame
 		}
 
@@ -337,27 +455,21 @@ public class Frame extends Container {
 	protected void render() {
 		if (dirty) {
 
-			// calcBoundsCount = 0;
-			// renderCount = 0;
-			// renderedObjects = "";
-
+			// calcBoundsCount = 0; renderCount = 0; renderedObjects = "";
 			dirty = false;
-			// long t0 = System.nanoTime();
 
 			preRender(); // for frame
 			super.render();    // render everything
 			pg.endDraw();
-
 			// System.out.println((System.nanoTime() - t0));
 
-
-			if (drawMode == EFFICIENT) {
+			if (drawMode == EFFICIENT || drawMode == NO_LOOP) {
 				papplet.image(pg, 0, 0);
 			}
 		}
 
 		// project graphics onto papplet
-		if (drawMode == CONTINOUS || drawMode == NO_LOOP) {
+		if (drawMode == CONTINOUS) {
 			papplet.image(pg, 0, 0);
 		}
 	}
@@ -373,15 +485,17 @@ public class Frame extends Container {
 		 * call redraw upon sketch when changed occured
 		 */
 		if (drawMode == NO_LOOP) {
+			no_loopUpdateAgain = true;
 			papplet.redraw();
 		}
 	}
 
 	@Override
 	protected void initialize() {
+		initialized = Initialization_State.INITIALIZING;
 		super.initialize();
-		handleEvent(guiInitializedListener, null);
-		initialized = true;
+		handleEvent(guiInitializedListener);
+		initialized = Initialization_State.INITIALIZED;
 
 		if (resizable) {
 			// somehow sometimes a second render is important if resizable is active.
@@ -395,31 +509,31 @@ public class Frame extends Container {
 
 
 
-
-
-	@Override
-	protected void resize() {
-		handleEvent(windowResizeListener, null);
+	protected void resized() {
 
 		// always resize frame to window size
 		this.width = papplet.width;
 		this.height = papplet.height;
 
-		// perform own and childrens internal resize event
-		super.resize();
+		handleEvent(windowResizeListener);
 
 		// frame resize event (need to call this because in resize no anchors are set
 		// usually
 		// yes, this is basically redundant to the WINDOW_RESIZE_EVENT (for the Frame
 		// class) but it's easier for users.
-		handleEvent(resizeListener, null);
+		handleEvent(resizeListener);
+		for (Control c : items) {
+			c.parentResized();
+		}
 
 		update();
 	}
 
 
+
+
 	protected boolean setupFinished() {
-		return initialized;
+		return initialized == Initialization_State.INITIALIZED;
 	}
 
 
@@ -532,7 +646,6 @@ public class Frame extends Container {
 
 
 	protected boolean checkShortcut(Shortcut shortcut) {
-
 		ShortcutDetails sd = shortcutMethods.get(shortcut);
 		if (sd != null) {
 			if (!focusedElement.overridesFrameShortcuts || sd.strong) { // don't handle shortcut if focused element
@@ -585,6 +698,12 @@ public class Frame extends Container {
 	 * when other controls request focus or blur
 	 * 
 	 */
+
+
+	/**
+	 * The element that has got focus currently (always gets the KeyEvents).
+	 */
+	protected Control focusedElement = this;
 
 	protected void requestFocus(Control control) {
 		if (focusedElement == control)
@@ -715,6 +834,11 @@ public class Frame extends Container {
 	 */
 	public void setMinimumWindowSize(int minWidth, int minHeight) {
 		awtFrame.setMinimumSize(new Dimension(minWidth, minHeight));
+		if (awtFrame != null) {
+			awtFrame.setMinimumSize(new Dimension(minWidth, minHeight));
+		} else {
+			System.err.println("In P2D/P3D mode minimum window size is not supported.");
+		}
 	}
 
 	/**
@@ -724,12 +848,20 @@ public class Frame extends Container {
 	 * @param maxHeight maximum height
 	 */
 	public void setMaximumWindowSize(int maxWidth, int maxHeight) {
-		awtFrame.setMaximumSize(new Dimension(minWidth, minHeight));
+		if (awtFrame != null) {
+			awtFrame.setMaximumSize(new Dimension(minWidth, minHeight));
+		} else {
+			System.err.println("In P2D/P3D mode maximum window size is not supported.");
+		}
 
 	}
 
 	protected void setAlwaysOnTop(boolean alwaysOnTop) {
-		awtFrame.setAlwaysOnTop(alwaysOnTop);
+		if (awtFrame != null) {
+			awtFrame.setAlwaysOnTop(alwaysOnTop);
+		} else if (glWindow != null) {
+			glWindow.setAlwaysOnTop(alwaysOnTop);
+		}
 	}
 
 
@@ -737,26 +869,32 @@ public class Frame extends Container {
 
 	@Override
 	public void setWidth(int width) {
+		System.err.println("Use frame.setWindowSize() to set the size of the window. The Frame always fills out the entire window");
 	}
 
 	@Override
 	public void setHeight(int height) {
+		System.err.println("Use frame.setWindowSize() to set the size of the window. The Frame always fills out the entire window");
 	}
 
 	@Override
 	public void setX(int x) {
+		System.err.println("The Frame always fills out the entire window. It cannot be positioned");
 	}
 
 	@Override
 	public void setY(int y) {
+		System.err.println("The Frame always fills out the entire window. It cannot be positioned");
 	}
 
 	@Override
 	public void addAutoAnchors(int... anchors) {
+		System.err.println("Frame neither supports nor needs anchors.");
 	}
 
 	@Override
 	public void setAnchor(int anchorType, int value) {
+		System.err.println("Frame neither supports nor needs anchors.");
 	}
 
 
@@ -771,6 +909,10 @@ public class Frame extends Container {
 	protected EventListener windowResizeListener;
 	protected EventListener enterWindowListener;
 	protected EventListener exitWindowListener;
+	protected EventListener dropElementListener;
+	protected EventListener windowFocusGainedListener;
+	protected EventListener windowFocusLostListener;
+	protected EventListener externalDropListener;
 
 	/**
 	 * Add a key listener which fires on key press, type and release events.
@@ -779,7 +921,7 @@ public class Frame extends Container {
 	 * @param target     object
 	 */
 	public void addKeyListener(String methodName, Object target) {
-		openKeyListener = createEventListener(methodName, target, null);
+		openKeyListener = createEventListener(methodName, target);
 	}
 
 	public void addKeyListener(String methodName) {
@@ -797,7 +939,7 @@ public class Frame extends Container {
 	 * @param target     object
 	 */
 	public void addGuiInitializedListener(String methodName, Object target) {
-		guiInitializedListener = createEventListener(methodName, target, null);
+		guiInitializedListener = createEventListener(methodName, target);
 	}
 
 	public void addGuiInitializedListener(String methodName) {
@@ -864,6 +1006,85 @@ public class Frame extends Container {
 
 
 
+	/**
+	 * Internal drop listener for any element in the application. First arg: dropped
+	 * element, Second arg: target on which the first on has been dropped.
+	 * 
+	 * @param methodName method name
+	 * @param target     object
+	 */
+	public void addDropElementListener(String methodName, Object target) {
+		dropElementListener = createEventListener(methodName, target, Control.class, Control.class);
+	}
+
+	public void addDropElementListener(String methodName) {
+		addDropElementListener(methodName, getPApplet());
+	}
+
+	public void removeDropElementListener() {
+		dropElementListener = null;
+	}
+
+	/**
+	 * Fired when the window gained focus.
+	 * 
+	 * @param methodName method name
+	 * @param target     object
+	 */
+	public void addWindowFocusGainedListener(String methodName, Object target) {
+		windowFocusGainedListener = createEventListener(methodName, target);
+	}
+
+	public void addWindowFocusGainedListener(String methodName) {
+		addWindowFocusGainedListener(methodName, getPApplet());
+	}
+
+	public void removeWindowFocusGainedListener() {
+		windowFocusGainedListener = null;
+	}
+
+	/**
+	 * Fired when the window lost focus.
+	 * 
+	 * @param methodName method name
+	 * @param target     object
+	 */
+	public void addWindowFocusLostListener(String methodName, Object target) {
+		windowFocusLostListener = createEventListener(methodName, target, MouseEvent.class);
+	}
+
+	public void addWindowFocusLostListener(String methodName) {
+		addWindowFocusLostListener(methodName, getPApplet());
+	}
+
+	public void removeWindowFocusLostListener() {
+		windowFocusLostListener = null;
+	}
+
+	/**
+	 * External drop listener for data dropped to the application.
+	 * 
+	 * Arguments:
+	 * 
+	 * - 1. int that describes data type (Frame.DROP_STRING or Frame.DROP_FILE) - 2.
+	 * Object instance that is the dropped data (needs casting to String or File) -
+	 * 3. Control instance -> the element that the data has been dropped on
+	 * 
+	 * 
+	 * @param methodName method name
+	 * @param target     object
+	 */
+	public void addExternalDropListener(String methodName, Object target) {
+		externalDropListener = createEventListener(methodName, target, int.class, Object.class, Control.class);
+	}
+
+	public void addExternalDropListener(String methodName) {
+		addExternalDropListener(methodName, getPApplet());
+	}
+
+	public void removeExternalDropListener() {
+		externalDropListener = null;
+	}
 
 
 	/*
@@ -880,7 +1101,6 @@ public class Frame extends Container {
 		 * dragging is handled separately and only for the draggedElement (which is
 		 * always set when clicking on a control).
 		 */
-
 		currentMouseEvent = e;							// store mouse event statically here. No need to carry it around all the time
 
 		Control prevHoveredElement = hoveredElement;	// control that has been hovered over during the previous frame
@@ -888,7 +1108,6 @@ public class Frame extends Container {
 
 		int mousex = e.getX();
 		int mousey = e.getY();
-
 
 		// handle window mouse enter/exit events
 		// not beautiful to call super.mouseEvents() in each case but anyway
@@ -918,7 +1137,10 @@ public class Frame extends Container {
 					if (trace.get(0) == draggedElement) {
 						hoveredElement = draggedElement; // hoveredElement not set, because not calling mouseEvent
 					} else {
-						// print("drop on ", trace.get(0));
+						if (Control.drop) {
+							handleEvent(dropElementListener, draggedElement, trace.get(0));
+						}
+						drop = true;
 					}
 				}
 
@@ -951,6 +1173,7 @@ public class Frame extends Container {
 
 		// exit previously hovered element
 		if (prevHoveredElement != hoveredElement && prevHoveredElement != null) {
+
 			prevHoveredElement.pHovered = false;
 			prevHoveredElement.exit(e);
 			prevHoveredElement.handleEvent(prevHoveredElement.exitListener, e);
@@ -973,7 +1196,6 @@ public class Frame extends Container {
 	}
 
 
-
 	@Override
 	public int getOffsetXWindow() {
 		return offsetX;
@@ -983,6 +1205,8 @@ public class Frame extends Container {
 	public int getOffsetYWindow() {
 		return offsetY;
 	}
+
+
 
 
 
@@ -1050,12 +1274,84 @@ public class Frame extends Container {
 
 
 
+
+
+
+
+
 	/**
-	 * Get guiSET version.
+	 * Get guiSET version. I really hope I'll always remember syncing this.
 	 * 
 	 * @return version
 	 */
 	public String getVersion() {
-		return versionCode;
+		return "Version 0.0.7";
 	}
+
+
+
+
+
+	public static final int DROP_STRING = 0;
+	public static final int DROP_FILE = 1;
+
+	protected class Guiset_Drop_Handler implements java.awt.dnd.DropTargetListener {
+		@Override
+		public void dragEnter(DropTargetDragEvent event) {
+		}
+
+		@Override
+		public void dropActionChanged(DropTargetDragEvent event) {
+		}
+
+		@Override
+		public void dragOver(DropTargetDragEvent dtde) {
+		}
+
+		@Override
+		public void dragExit(DropTargetEvent dte) {
+		}
+
+		void handleDrop(DropTargetDropEvent e, int type, Object o) {
+			// check what element is currently hovered over
+			ArrayList<Control> trace = traceAbsoluteCoordinates(e.getLocation().x, e.getLocation().y);
+			handleEvent(externalDropListener, type, o, trace.size() > 0 ? trace.get(0) : null);
+		}
+
+		@Override
+		public void drop(DropTargetDropEvent e) {
+			try {
+				e.acceptDrop(DnDConstants.ACTION_MOVE);
+				Transferable transferable = e.getTransferable();
+				DataFlavor[] flavors = transferable.getTransferDataFlavors();
+
+				for (int i = 0; i < flavors.length; i++) {
+					DataFlavor d = flavors[i];
+					Object o = transferable.getTransferData(d);
+					if (d.equals(DataFlavor.javaFileListFlavor)) {
+
+						@SuppressWarnings("unchecked")
+						java.util.List<File> fileList = (java.util.List<File>) o;
+
+						Iterator<File> it = fileList.iterator();
+						while (it.hasNext()) {
+							File f = it.next();
+							handleDrop(e, DROP_FILE, f);
+						}
+					}
+					if (d.equals(DataFlavor.stringFlavor)) {
+						String s = (String) transferable.getTransferData(d);
+						handleDrop(e, DROP_STRING, s);
+					}
+				}
+				e.dropComplete(true);
+
+			} catch (Throwable t) {
+				System.err.println("Data transfer error: " + t.getMessage());
+				t.printStackTrace();
+				e.dropComplete(false);
+			}
+		}
+	}
+
 }

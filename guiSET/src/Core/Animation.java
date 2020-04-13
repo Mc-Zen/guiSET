@@ -1,6 +1,6 @@
 package guiSET.core;
 
-import java.lang.reflect.Field;
+//import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
@@ -168,14 +168,16 @@ public class Animation {
 	 * @return false if animation finished
 	 */
 
+	@SuppressWarnings("static-access")
 	protected boolean animate() {
 		if (cancel)
 			return false;
 
 		// immediately finish animation if NO_LOOP is the drawMode (these do not work
 		// together)
-		if (Frame.frame0.drawMode == Frame.NO_LOOP) {
-			counter = numberOfSteps;
+		if (target.getFrame().drawMode == Frame.NO_LOOP) {
+			//counter = numberOfSteps;
+			Frame.noLoopAfterAnimation();
 		}
 
 		// check if there's still work to do
@@ -258,23 +260,23 @@ public class Animation {
 
 
 
-	// get even protected fields
-	private Field getField(Class<?> class_, String fieldName) throws NoSuchFieldException {
-		try {
-
-			return class_.getDeclaredField(fieldName);
-
-		} catch (NoSuchFieldException nsfe) {
-
-			Class<?> superClass = class_.getSuperclass();
-
-			if (superClass == null) {
-				throw nsfe;
-			} else {
-				return getField(superClass, fieldName);
-			}
-		}
-	}
+//	// get even protected fields
+//	private Field getField(Class<?> class_, String fieldName) throws NoSuchFieldException {
+//		try {
+//
+//			return class_.getDeclaredField(fieldName);
+//
+//		} catch (NoSuchFieldException nsfe) {
+//
+//			Class<?> superClass = class_.getSuperclass();
+//
+//			if (superClass == null) {
+//				throw nsfe;
+//			} else {
+//				return getField(superClass, fieldName);
+//			}
+//		}
+//	}
 
 
 

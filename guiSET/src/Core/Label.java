@@ -9,7 +9,7 @@ import processing.core.*;
  * @author E-Bow
  *
  */
-public class Label extends Control {
+public class Label extends TextBased {
 
 	public Label() {
 		this("", 12);
@@ -38,9 +38,8 @@ public class Label extends Control {
 		super();
 		setText(text);
 		setFontSize(fontSize);
-		setBorderWidth(0);
-		setBackgroundColor(TRANSPARENT); 
-		setPadding(2); // might cut off a tiny part of the text otherwise
+		setBackgroundColor(TRANSPARENT);
+		setPadding(3);
 	}
 
 	/**
@@ -85,11 +84,13 @@ public class Label extends Control {
 		drawDefaultText();
 	}
 
+	@Override
+	protected int autoHeight() {
+		return (int) textHeight(text) + paddingTop + paddingBottom;
+	}
 
 	@Override
-	protected void autosizeRule() {
-		setWidthImpl((int) (textWidth(text) + paddingLeft + paddingRight));
-		int numLines = text.split("\n").length;
-		setHeightImpl((int) (numLines * textLeading() + paddingTop + paddingBottom));
+	protected int autoWidth() {
+		return (int) textWidth(text) + paddingLeft + paddingRight;
 	}
 }

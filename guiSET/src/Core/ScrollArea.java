@@ -287,7 +287,7 @@ public class ScrollArea extends Container {
 
 	@Override
 	protected void mouseWheel(MouseEvent e) {
-		if (Frame.frame0.isShiftDown()) {
+		if (getFrame().isShiftDown()) {
 			int temp = scrollPositionX;
 			setScrollPositionX(scrollPositionX + e.getCount() * scrollSpeedX);
 			if (scrollPositionX != temp) {

@@ -1,7 +1,6 @@
 package guiSET.core;
 
 
-import processing.core.PApplet;
 import processing.event.MouseEvent;
 
 
@@ -28,18 +27,7 @@ public class Switch extends Checkbox {
 		this("", checked);
 	}
 
-	public Switch(String text, boolean checked) {
-		super(text, checked);
 
-		setUncheckedBackgroundColor(Color.create(160));
-		setCheckedBackgroundColor(Color.create(46, 116, 122));
-		setCheckmarkColor(Color.create(100, 50, 50));
-
-		// initialize currentPosition
-		currentPosition = (int) (checked ? (1.75 * checkboxSize - (checkboxSize - checkboxSize / 4) / 2 - (checkboxSize / 4) + 1)
-				: ((checkboxSize - checkboxSize / 4) / 2 + (checkboxSize / 4) - 1));
-
-	}
 
 	public Switch(String text, String toggleEventMethodName) {
 		this(text, false);
@@ -51,26 +39,21 @@ public class Switch extends Checkbox {
 		addToggleListener(toggleEventMethodName);
 	}
 
-	/**
-	 * Do not call this function - it is just used internally for the switch
-	 * animation.
-	 * 
-	 * @param c c
-	 */
-	public void setCurrentPosition(float c) {
-		this.currentPosition = c;
-		update();
-	}
+	public Switch(String text, boolean checked) {
+		super(text, checked);
 
-	/**
-	 * No one needs this function - it is just used internally for the switch
-	 * animation.
-	 * 
-	 * @return c
-	 */
-	public float getCurrentPosition() {
-		return currentPosition;
+		setUncheckedBackgroundColor(Color.create(160));
+		setCheckedBackgroundColor(Color.create(46, 116, 122));
+		setCheckmarkColor(Color.create(100, 50, 50));
+
+		// initialize currentPosition
+		currentPosition = (int) (checked ? (1.75 * checkboxSize - (checkboxSize - checkboxSize / 4) / 2 - (checkboxSize / 4) + 1)
+				: ((checkboxSize - checkboxSize / 4) / 2 + (checkboxSize / 4) - 1));
+
+		setPaddingLeft((int) (checkboxSize * 1.75f + checkboxSize / 4));
 	}
+	
+
 
 	protected void render() {
 
@@ -112,17 +95,36 @@ public class Switch extends Checkbox {
 		pg.ellipse(currentPosition, height / 2, checkboxSize - checkboxSize / 4, checkboxSize - checkboxSize / 4);
 
 		// draw text
-		pg.textSize(fontSize);
-		pg.fill(foregroundColor);
-		pg.textAlign(37, 3); // LEFT, CENTER
-		pg.text(text, checkboxSize * 1.75f + checkboxSize / 4 + paddingLeft, height / 2 - 0.07f * fontSize);
+		drawDefaultText();
 
 		// grey out if switch is disabled
 		if (!enabled) {
+			pg.noStroke();
 			pg.fill(150, 150);
 			pg.rect(0, height / 2 - checkboxSize / 2, 1.75f * checkboxSize, checkboxSize, 100);
 		}
 
+	}
+	
+	/**
+	 * Do not call this function - it is just used internally for the switch
+	 * animation.
+	 * 
+	 * @param c c
+	 */
+	public void setCurrentPosition(float c) {
+		this.currentPosition = c;
+		update();
+	}
+
+	/**
+	 * No one needs this function - it is just used internally for the switch
+	 * animation.
+	 * 
+	 * @return c
+	 */
+	public float getCurrentPosition() {
+		return currentPosition;
 	}
 
 	// used for animating the switch movement
@@ -140,17 +142,20 @@ public class Switch extends Checkbox {
 
 
 
-	@Override
-	protected void autosizeRule() {
-		setWidthImpl((int) (1.75f * checkboxSize + checkboxSize / 4 + textWidth(text) + paddingLeft + paddingRight));
-		setHeightImpl((int) (PApplet.max(checkboxSize, fontSize + textDescent(), 1) + paddingTop + paddingBottom));
-	}
+//	@Override
+//	protected void autosizeRule() {
+//		setWidthImpl((int) (textWidth(text) + paddingLeft + paddingRight));
+//		setHeightImpl((int) (PApplet.max(checkboxSize, getFontSize() + textDescent(), 1) + paddingTop + paddingBottom));
+//	}
 
 
 	@Override
 	public void setCheckboxSize(int size) {
+		size = Math.max(size, 0);
 		this.checkboxSize = size;
 		currentPosition = (int) (checked ? (1.75 * size - (size - size / 4) / 2 - (size / 4) + 1) : ((size - size / 4) / 2 + (size / 4) - 1));
+
+		setPaddingLeft((int) (checkboxSize * 1.75f + checkboxSize / 4));
 		update();
 		autosize();
 	}
@@ -161,7 +166,7 @@ public class Switch extends Checkbox {
 		if (!reactToEntireField) {
 			int x_ = e.getX() - getOffsetXWindow();
 			int y_ = e.getY() - getOffsetYWindow();
-			if (!(x_ > 0 && x_ < checkboxSize * 1.75f && y_ > height / 2 - checkboxSize / 2 && y_ < height / 2 + checkboxSize / 2))
+			if (!(x_ < checkboxSize * 1.75f && y_ > height / 2 - checkboxSize / 2 && y_ < height / 2 + checkboxSize / 2))
 				return;
 		}
 		setChecked(!checked);

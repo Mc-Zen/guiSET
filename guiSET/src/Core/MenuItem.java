@@ -1,6 +1,5 @@
 package guiSET.core;
 
-import processing.core.PApplet;
 
 import processing.event.*;
 
@@ -51,14 +50,14 @@ class MenuSurface extends Container {
 	private MenuSurface() {
 		if (staticMS == null) {
 			staticMS = this;
-			Frame.frame0.add(this);
+			getFrame().add(this);
 			setVisible(false);
-			setAnchor(PApplet.LEFT, 0);
-			setAnchor(PApplet.RIGHT, 0);
-			setAnchor(PApplet.TOP, 0); // leave top free for change-menustrip-by-hover
-			setAnchor(PApplet.BOTTOM, 0);
+			setAnchor(LEFT, 0);
+			setAnchor(RIGHT, 0);
+			setAnchor(TOP, 0); // leave top free for change-menustrip-by-hover
+			setAnchor(BOTTOM, 0);
 			setZ(MenuItem.MenuZIndex);
-			setBackgroundColor(0);
+			setBackgroundColor(TRANSPARENT);
 		}
 	}
 
@@ -101,7 +100,7 @@ class MenuSurface extends Container {
 
 }
 
-public class MenuItem extends Control {
+public class MenuItem extends TextBased {
 
 
 	public static final int MenuZIndex = 20;
@@ -179,7 +178,6 @@ public class MenuItem extends Control {
 		setHeightImpl(MENUITEM_HEIGHT);
 		setPadding(0, 6, 0, 6);
 		setText(text);
-		setFontSize(13);
 
 		setBackgroundColor(TRANSPARENT);
 		setHoverColor(1342177280); 		// just darken menucontainer backgroundcolor a bit
@@ -205,7 +203,7 @@ public class MenuItem extends Control {
 	public MenuItem(String text, String methodName, Shortcut shortcut) {
 		this(text, methodName);
 		setShortcut(shortcut);
-		Frame.frame0.registerShortcut(shortcut, methodName);
+		getFrame().registerShortcut(shortcut, methodName);
 		addSelectListener(methodName);
 	}
 
@@ -221,7 +219,7 @@ public class MenuItem extends Control {
 	public MenuItem(String text, String methodName, Shortcut shortcut, boolean strong) {
 		this(text, methodName);
 		setShortcut(shortcut);
-		Frame.frame0.registerShortcut(shortcut, methodName, getPApplet(), strong);
+		getFrame().registerShortcut(shortcut, methodName, getPApplet(), strong);
 		addSelectListener(methodName);
 	}
 
@@ -230,7 +228,7 @@ public class MenuItem extends Control {
 
 	protected void registerShortcutAndMethod(String methodName, Shortcut shortcut) {
 		setShortcut(shortcut);
-		Frame.frame0.registerShortcut(shortcut, methodName);
+		getFrame().registerShortcut(shortcut, methodName);
 		addSelectListener(methodName);
 	}
 
@@ -274,11 +272,11 @@ public class MenuItem extends Control {
 			 */
 			if (shortcut != null) {
 				String textBKP = text;
-				textAlign = RIGHT; // temporary RIGHT (no need to reset), no setter!! dont wanna call update always
+				textRenderer.setTextAlign(RIGHT); // temporary RIGHT (no need to reset), no setter!! dont wanna call update always
 				text = shortcut.toString() + " ";
 				drawDefaultText();
 				text = textBKP;
-				textAlign = LEFT; // temporary RIGHT (no need to reset)
+				textRenderer.setTextAlign(LEFT); // temporary RIGHT (no need to reset)
 			}
 
 			/*
@@ -353,7 +351,7 @@ public class MenuItem extends Control {
 
 
 	@Override
-	protected void autosizeRule() {
+	protected int autoWidth() {
 		float shortcutWidth = (shortcut != null ? textWidth(shortcut.toString()) + 30 : 0);
 		int baseWidth = (int) (textWidth(text) + shortcutWidth);
 
@@ -364,12 +362,32 @@ public class MenuItem extends Control {
 		if (type == MENU_ITEM) {
 			setMinWidth(baseWidth + paddingLeft + paddingRight); // 27 is the left padding
 		} else if (type == MENU_HEADER) {
-			setWidthImpl(baseWidth + paddingLeft + paddingRight);
+			return baseWidth + paddingLeft + paddingRight;
 		} else {
 			// undefined state (before this item has fully been initialized).
 			// At least when called in addedToParent(), the type is defined.
 		}
+		return -1; // will be ignored
 	}
+
+//	@Override
+//	protected void autosizeRule() {
+//		float shortcutWidth = (shortcut != null ? textWidth(shortcut.toString()) + 30 : 0);
+//		int baseWidth = (int) (textWidth(text) + shortcutWidth);
+//
+//		/*
+//		 * if subitem, then only require this as minimal width; as header it's the
+//		 * actual width
+//		 */
+//		if (type == MENU_ITEM) {
+//			setMinWidth(baseWidth + paddingLeft + paddingRight); // 27 is the left padding
+//		} else if (type == MENU_HEADER) {
+//			setWidthImpl(baseWidth + paddingLeft + paddingRight);
+//		} else {
+//			// undefined state (before this item has fully been initialized).
+//			// At least when called in addedToParent(), the type is defined.
+//		}
+//	}
 
 
 	/*
@@ -602,12 +620,17 @@ public class MenuItem extends Control {
 
 
 	/**
-	 * Create and add subitems for each text String passed.
+	 * Create and add subitems for each text String passed. Passing an empty String
+	 * will create a {@link MenuSeparator}.
 	 * 
 	 * @param strings arbitrary number of text.
 	 */
 	public void add(String... strings) {
 		for (String s : strings) {
+			if (s.length() == 0) {
+				addItem(items.size(), new MenuSeparator());
+				continue;
+			}
 			addItem(items.size(), new MenuItem(s));
 		}
 		dropDown.update();// dont need to update this
@@ -615,7 +638,7 @@ public class MenuItem extends Control {
 
 
 	/**
-	 * Insert subitems at given position
+	 * Insert subitems at given position.
 	 * 
 	 * @param position position
 	 * @param newItems arbitrary number of items
@@ -628,6 +651,9 @@ public class MenuItem extends Control {
 	}
 
 
+	/**
+	 * Remove all subitems.
+	 */
 	public void clear() {
 		items.clear();
 		// remove dropdown
@@ -639,11 +665,21 @@ public class MenuItem extends Control {
 	}
 
 
+	/**
+	 * Remove item at given index.
+	 * 
+	 * @param index index of item to remove
+	 */
 	public void remove(int index) {
 		remove(items.get(index));
 	}
 
 
+	/**
+	 * Remove item.
+	 * 
+	 * @param item item to remove
+	 */
 	public void remove(Control item) {
 		((MenuItem) item).close();
 		items.remove(item);
@@ -662,6 +698,11 @@ public class MenuItem extends Control {
 	}
 
 
+	/**
+	 * Get sub items.
+	 * 
+	 * @return sub items
+	 */
 	public Control[] getItems() {
 		Control c[] = new Control[items.size()];
 		for (int i = 0; i < items.size(); i++) {
@@ -670,7 +711,12 @@ public class MenuItem extends Control {
 		return c;
 	}
 
-
+	/**
+	 * Get item at given index.
+	 * 
+	 * @param index index of item to get
+	 * @return item
+	 */
 	public Control getItem(int index) {
 		if (index >= 0 && index < items.size()) {
 			return items.get(index);
@@ -680,6 +726,11 @@ public class MenuItem extends Control {
 	}
 
 
+	/**
+	 * Get number of sub items.
+	 * 
+	 * @return number of sub items
+	 */
 	public int getNumItems() {
 		return items.size();
 	}
@@ -706,7 +757,6 @@ public class MenuItem extends Control {
 		selectListener = createEventListener(methodName, target, MenuItem.class);
 	}
 
-
 	public void addSelectListener(String methodName) {
 		addSelectListener(methodName, getPApplet());
 	}
@@ -715,15 +765,7 @@ public class MenuItem extends Control {
 		selectListener = null;
 	}
 
-	/**
-	 * Add a listener for when a child of this header has been selected.
-	 * 
-	 * @param methodName method name
-	 * @param target     target
-	 */
-	public void addChildSelectedListener(String methodName, Object target) {
-		addChildSelectListener(methodName, target);
-	}
+	
 
 	/**
 	 * Add a listener for when a child of this header has been selected.
@@ -893,9 +935,12 @@ class MenuStrip extends Container {
 		}
 		setHeight(h);
 
-		// we cheat here and give some extra size for shadow
-		pg = getPApplet().createGraphics(width + 5, height + 5);
-		pg.beginDraw();
+		// only if parent is not a ParentGraphicsRenderer (temporary solution)
+		if (pg != parent.pg) {
+			// we cheat here and give some extra size for shadow
+			pg = getPApplet().createGraphics(width + 5, height + 5);
+			pg.beginDraw();
+		}
 
 		drawShadow(width, height, 5);
 
@@ -955,7 +1000,7 @@ class MenuStrip extends Container {
 		for (String s : strings) {
 			MenuItem newItem = new MenuItem();
 			newItem.setText(s);
-			addItem(items.size(), newItem);
+			addItemImpl(items.size(), newItem);
 		}
 		update();
 	}

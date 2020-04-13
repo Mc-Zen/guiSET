@@ -9,11 +9,11 @@ import processing.core.*;
  *
  */
 
-public class Button extends Control {
+public class Button extends TextBased {
 
 	public Button() {
 		super();
-		setPadding(5);
+		setPadding(7);
 		setBorderWidth(1);
 		setHoverColor(-3618616); 		// color(200)
 		setPressedColor(-6908266);	// color(150)
@@ -43,12 +43,12 @@ public class Button extends Control {
 	/**
 	 * Constructor for specifying button text and press callback method name.
 	 * 
-	 * @param text        text
-	 * @param pressMethod callback for press event
+	 * @param text          text
+	 * @param pressCallback callback for press event
 	 */
-	public Button(String text, String pressMethod) {
+	public Button(String text, String pressCallback) {
 		this(text);
-		addMouseListener("press", pressMethod);
+		addMouseListener("press", pressCallback);
 	}
 
 	/**
@@ -65,11 +65,37 @@ public class Button extends Control {
 	 * Create an image button. Width and height of button will be set to dimensions
 	 * of image multiplied by given scale factor.
 	 * 
-	 * @param image image background image for button
-	 * @param scale scale factor for size
+	 * @param image background image for button
+	 * @param scale scale factor for image
 	 */
 	public Button(PImage image, float scale) {
 		this(image, (int) (image.width * scale), (int) (image.height * scale));
+	}
+
+	/**
+	 * Create an image button and provide a mouse press callback method name, width
+	 * and height of button will be set to dimensions of given image.
+	 * 
+	 * @param image         background image for button
+	 * @param pressCallback callback for press event
+	 */
+	public Button(PImage image, String pressCallback) {
+		this(image, image.width, image.height);
+		addMouseListener("press", pressCallback);
+	}
+
+	/**
+	 * Create an image button and provide a mouse press callback method name, width
+	 * and height of button will be set to dimensions of image multiplied by given
+	 * scale factor.
+	 * 
+	 * @param image         background image for button
+	 * @param scale         scale factor for image
+	 * @param pressCallback callback for press event
+	 */
+	public Button(PImage image, float scale, String pressCallback) {
+		this(image, scale);
+		addMouseListener("press", pressCallback);
 	}
 
 	/**
@@ -102,12 +128,14 @@ public class Button extends Control {
 
 
 	@Override
-	protected void autosizeRule() {
-		setWidthImpl((int) (textWidth(text) + paddingLeft + paddingRight));
-		int numLines = text.split("\n").length;
-		setHeightImpl((int) (numLines * textLeading() + paddingTop + paddingBottom));
+	protected int autoHeight() {
+		return (int) textHeight(text) + paddingTop + paddingBottom;
 	}
 
+	@Override
+	protected int autoWidth() {
+		return (int) textWidth(text) + paddingLeft + paddingRight;
+	}
 
 
 	/*

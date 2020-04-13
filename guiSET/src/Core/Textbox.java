@@ -77,12 +77,12 @@ public class Textbox extends HScrollContainer {
 	public Textbox(int width, int fontSize) {
 		super(width, 20); // height does not matter
 
-		setForegroundColor(BLACK);
 		setBackgroundColor(-2302756);
 		setFontSize(fontSize);
 		setCursor(PApplet.TEXT);
 		setPadding(5);
 		setSlimScrollHandle(true);
+		setTextAlign(LEFT);
 
 		overridesFrameShortcuts = true;
 
@@ -113,7 +113,7 @@ public class Textbox extends HScrollContainer {
 		/*
 		 * prepare text style
 		 */
-		pg.textSize(fontSize);
+		pg.textSize(getFontSize());
 		pg.textAlign(PApplet.LEFT, PApplet.TOP);
 
 		// do this before drawing cursor!! - needs new fullScrollWidth
@@ -136,8 +136,8 @@ public class Textbox extends HScrollContainer {
 				int selectionWidth = (int) pg.textWidth(text.substring(selectionStart, selectionEnd));
 				pg.fill(selectionColor);
 				pg.noStroke();
-				pg.rect(paddingLeft - scrollPosition + selectionX + fontSize / 40f, paddingTop, selectionWidth + fontSize / 40f,
-						fontSize + pg.textDescent());
+				pg.rect(paddingLeft - scrollPosition + selectionX + getFontSize() / 40f, paddingTop, selectionWidth + getFontSize() / 40f,
+						getFontSize() + pg.textDescent());
 			}
 		}
 
@@ -145,7 +145,7 @@ public class Textbox extends HScrollContainer {
 		 * draw text
 		 */
 		if (!text.equals("")) {
-			pg.fill(foregroundColor);
+			pg.fill(getTextColor());
 			pg.text(text, paddingLeft - scrollPosition, paddingTop);
 		} else {
 			pg.fill(120);
@@ -188,9 +188,9 @@ public class Textbox extends HScrollContainer {
 		cursorPosition = Math.max(0, Math.min(text.length(), cursorPosition));
 
 		// get width of text before cursor in pixels; add little extra space
-		float wordWidth = pg.textWidth(text.substring(0, cursorPosition)) + fontSize / 40f;
+		float wordWidth = pg.textWidth(text.substring(0, cursorPosition)) + getFontSize() / 40f;
 
-		float cursorHeight = fontSize;
+		float cursorHeight = getFontSize();
 
 		// do this before drawing the cursor - scrollPositionX has to be set first!!
 		if (needsScrolling) {
@@ -203,7 +203,7 @@ public class Textbox extends HScrollContainer {
 		}
 		pg.stroke(cursorColor);
 		pg.line(paddingLeft + wordWidth - scrollPosition, paddingTop, wordWidth + paddingLeft - scrollPosition,
-				cursorHeight + paddingTop /* + pg.textDescent() */);
+				cursorHeight + paddingTop /* + textDescent() */);
 	}
 
 	@Override
@@ -276,7 +276,7 @@ public class Textbox extends HScrollContainer {
 
 	// called whenether the text has been altered through user interaction
 	protected void textChanged() {
-		handleEvent(textChangeListener, null);
+		handleEvent(textChangeListener);
 		cursorPositionChanged();
 	}
 
@@ -428,11 +428,15 @@ public class Textbox extends HScrollContainer {
 
 
 
-	@Override
-	protected void autosizeRule() {
-		setHeight((int) fontSize + paddingTop + paddingBottom);
-	}
+//	@Override
+//	protected void autosizeRule() {
+//		setHeight((int) getFontSize() + paddingTop + paddingBottom);
+//	}
 
+	@Override
+	protected int autoHeight() {
+		return (int) getFontSize() + paddingTop + paddingBottom;
+	}
 
 	protected static final String wordDelimiters = " \n+-()[] {}().,:;_*\"\'$%&/=?!";
 
@@ -521,7 +525,7 @@ public class Textbox extends HScrollContainer {
 	 * @param target     object that declares callback method.
 	 */
 	public void addTextChangeListener(String methodName, Object target) {
-		textChangeListener = createEventListener(methodName, target, null);
+		textChangeListener = createEventListener(methodName, target);
 	}
 
 	public void addTextChangeListener(String methodName) {
@@ -541,7 +545,7 @@ public class Textbox extends HScrollContainer {
 	 * @param target     object that declares callback method.
 	 */
 	public void addSubmitListener(String methodName, Object target) {
-		submitListener = createEventListener(methodName, target, null);
+		submitListener = createEventListener(methodName, target);
 	}
 
 	public void addSubmitListener(String methodName) {
@@ -622,6 +626,12 @@ public class Textbox extends HScrollContainer {
 				setScrollPosition(scrollPosition + 10);
 			}
 		}
+	}
+	
+	@Override
+	protected void release(MouseEvent e) {
+		super.release(e);
+		Control.drop = false; // induce no drop events on Frame
 	}
 
 	@Override
@@ -750,7 +760,7 @@ public class Textbox extends HScrollContainer {
 			case PApplet.ENTER:
 				if (submitOnEnter) {
 					blur(); // this first, in case the event callback wants to focus this again
-					handleEvent(submitListener, null);
+					handleEvent(submitListener);
 				}
 				break;
 

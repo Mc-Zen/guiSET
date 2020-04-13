@@ -3,6 +3,7 @@ package guiSET.core;
 import processing.event.*;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 
 
 /**
@@ -46,11 +47,12 @@ public class ListView extends VScrollContainer {
 
 	public ListView(int width, int height) {
 		super(width, height);
-		selectedItems = new ArrayList<Control>();
+		selectedItems = new ArrayList<Control>(0);
 
-		setBackgroundColor(-3618616); // light grey
-		setSelectionColor(-12171706);
-		setNewItemBackgroundColor(WHITE); // color(255)
+		setBorderWidth(1);
+		setBackgroundColor(WHITE); // light grey
+		setSelectionColor(SELECTION_BLUE);
+		setNewItemBackgroundColor(TRANSPARENT); // color(255)
 	}
 
 
@@ -73,7 +75,7 @@ public class ListView extends VScrollContainer {
 
 		} else { // if (multiSelect)
 
-			if (Frame.frame0.isControlDown()) {
+			if (getFrame().isControlDown()) {
 
 				// if control pressed: add to selection if not yet selected, else deselect
 
@@ -83,7 +85,7 @@ public class ListView extends VScrollContainer {
 					selectImpl(item);
 				}
 
-			} else if (Frame.frame0.isShiftDown()) {
+			} else if (getFrame().isShiftDown()) {
 
 				// if shift pressed: select all items between this and previously selected item
 
@@ -276,25 +278,36 @@ public class ListView extends VScrollContainer {
 		 * itself doesn't use.
 		 */
 		newListItem.setText(newItem);
-		newListItem.setFontSize(fontSize);
-		newListItem.setTextAlign(textAlign);
+		newListItem.setFontSize(getFontSize());
+		newListItem.setTextAlign(getTextAlign());
 		newListItem.setSelectionColor(selectionColor);
 		newListItem.setSelectionHoverColor(selectionHoverColor);
-		newListItem.setWidthImpl(this.width);
+		newListItem.setTextColor(foregroundColor);
 
-		// newListItem.setBackgroundColor(itemBackgroundColor);
-		newListItem.setForegroundColor(foregroundColor);
 		this.add(newListItem);
 	}
 
 
+	@Override
+	public void add(Control... newItems) {
+		for (Control c : newItems) {
+			if (c instanceof ListItem) {
+				c.setWidth(getAvailableWidth());
+			}
+			addItemImpl(items.size(), c);
+		}
+		// no sorting
+		update();
+	}
+
+
 	/**
-	 * Remove all items.
+	 * Remove all items
 	 */
+	@Override
 	public void clear() {
 		deselectAll();
-		items.clear();
-		update();
+		super.clear();
 	}
 
 	/**
@@ -302,22 +315,59 @@ public class ListView extends VScrollContainer {
 	 * 
 	 * @param index position
 	 */
+	@Override
 	public void remove(int index) {
 		deselect(index);
-		items.remove(index);
-		update();
+		super.remove(index);
 	}
 
 	/**
 	 * Remove a specific item from item list.
 	 * 
-	 * @param c item to remove.
+	 * @param container item to remove.
 	 */
-	public boolean remove(Control c) {
-		deselect(c);
-		boolean result = items.remove(c);
-		update();
-		return result;
+	@Override
+	public boolean remove(Control item) {
+		deselect(item);
+		return super.remove(item);
+	}
+
+	@Override
+	protected boolean setWidthNoUpdate(int width) {
+		if (super.setWidthNoUpdate(width)) {
+			for (Control c : items)
+				c.setWidth(getAvailableWidth());
+			return true;
+		} else {
+			return false;
+		}
+	}
+
+	/**
+	 * Sort items alphanumerically.
+	 */
+	public void sortAlphaNumerically() {
+		sortAlphaNumerically(false);
+	}
+
+	/**
+	 * Sort items alphanumerically. If argument is false then the items are sorted
+	 * backwards.
+	 * 
+	 * 
+	 * @param reversed sort reversed
+	 */
+	public void sortAlphaNumerically(boolean reversed) {
+		sortItems(new Comparator<Control>() {
+			@Override
+			public int compare(Control c1, Control c2) {
+				if (c1 instanceof TextBased && c2 instanceof TextBased) {
+					return ((TextBased) c1).getText().compareTo(((TextBased) c2).getText()) * (reversed ? -1 : 1);
+				} else {
+					return 0;
+				}
+			}
+		});
 	}
 
 

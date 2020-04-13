@@ -2,10 +2,7 @@
 package guiSET.core;
 
 
-
-
-import processing.core.*;
-import processing.event.*;
+import processing.event.MouseEvent;
 
 
 /**
@@ -23,7 +20,7 @@ import processing.event.*;
  * @author Mc-Zen
  *
  */
-public class Checkbox extends Control {
+public class Checkbox extends TextBased {
 
 	protected int uncheckedBackgroundColor;
 	protected int checkedBackgroundColor;
@@ -67,12 +64,14 @@ public class Checkbox extends Control {
 	public Checkbox(String text, boolean checked) {
 		super();
 
-		setBackgroundColor(0); // tranparent
+		setBackgroundColor(TRANSPARENT); // tranparent
 		setUncheckedBackgroundColor(-6250336); // grey
 		setCheckedBackgroundColor(-13732742); // greenish
 		setCheckmarkColor(-328966); // almost white
-
 		setText(text);
+		setTextAlign(LEFT);
+		setPaddingLeft(checkboxSize + checkboxSize / 4);
+		setPaddingRight(2);
 		this.checked = checked; // no setChecked()
 	}
 	
@@ -104,23 +103,33 @@ public class Checkbox extends Control {
 			pg.line(checkboxSize / 4, checkboxSize / 2 + paddingTop, checkboxSize / 2.5f, 3 * checkboxSize / 4 + paddingTop);
 			pg.line(checkboxSize / 2.5f, 3 * checkboxSize / 4 + paddingTop, 3 * checkboxSize / 4, checkboxSize / 4 + paddingTop);
 		}
-		pg.noStroke();
 
 		// draw text
-		pg.textSize(fontSize);
-		pg.fill(foregroundColor);
-		pg.textAlign(37, 3);
-		pg.text(text, checkboxSize + paddingLeft + checkboxSize / 4, height / 2 - 0.05f * fontSize);
+		drawDefaultText();
 
-		// grey out disabled checkbox
+		// grey out checkbox if disabled
 		if (!enabled) {
+			pg.noStroke();
 			pg.fill(150, 150);
 			pg.rect(1, 1 + paddingTop, checkboxSize - 2, checkboxSize - 2, 2);
 		}
-
 	}
 
+	
+//	@Override
+//	protected void autosizeRule() {
+//		setWidthImpl((int) (textWidth(text) + paddingLeft + paddingRight));
+//		setHeightImpl((int) (Math.max(checkboxSize, getFontSize() + textDescent()) + paddingTop + paddingBottom));
+//	}
+	@Override
+	protected int autoHeight() {
+		return (int) (Math.max(checkboxSize, textHeight(text)) + paddingTop + paddingBottom);
+	}
 
+	@Override
+	protected int autoWidth() {
+		return (int) textWidth(text) + paddingLeft + paddingRight;
+	}
 
 
 
@@ -165,16 +174,12 @@ public class Checkbox extends Control {
 	 * @param checkboxSize checkbox scale factor
 	 */
 	public void setCheckboxSize(int checkboxSize) {
-		this.checkboxSize = checkboxSize;
+		this.checkboxSize = Math.max(checkboxSize, 0);
+		setPaddingLeft(this.checkboxSize + this.checkboxSize / 4);
 		update();
 		autosize();
 	}
 
-	@Override
-	protected void autosizeRule() {
-		setWidthImpl((int) (checkboxSize + checkboxSize / 4 + 2 + textWidth(text) + paddingLeft + paddingRight));
-		setHeightImpl((int) (PApplet.max(checkboxSize, fontSize + textDescent(), 1) + paddingTop + paddingBottom));
-	}
 
 	/**
 	 * Set checked state.
@@ -185,7 +190,7 @@ public class Checkbox extends Control {
 		if (this.checked == checked)
 			return;
 		this.checked = checked;
-		handleEvent(toggleListener, null);
+		handleEvent(toggleListener, this);
 		update();
 	}
 
@@ -193,8 +198,8 @@ public class Checkbox extends Control {
 
 
 	/**
-	 * If set to true pressing anywhere on the Component toggles the checkbox, else
-	 * only the box itself is active.
+	 * If set to true, pressing anywhere on the element toggles the checkbox, else
+	 * only the box itself reacts to clicking.
 	 * 
 	 * @param reactToEntireField reactToEntireField
 	 */
@@ -249,7 +254,7 @@ public class Checkbox extends Control {
 	 * @param target     object
 	 */
 	public void addToggleListener(String methodName, Object target) {
-		toggleListener = createEventListener(methodName, target, null);
+		toggleListener = createEventListener(methodName, target, Checkbox.class);
 	}
 
 	public void addToggleListener(String methodName) {
@@ -262,14 +267,13 @@ public class Checkbox extends Control {
 
 	
 	
-	
 
 	@Override
 	protected void press(MouseEvent e) {
 		if (!reactToEntireField) {
 			int x_ = e.getX() - getOffsetXWindow();
 			int y_ = e.getY() - getOffsetYWindow();
-			if (!(x_ > 0 && x_ < checkboxSize && y_ > paddingTop && y_ < checkboxSize + paddingTop))
+			if (!(x_ < checkboxSize && y_ > paddingTop && y_ < checkboxSize + paddingTop))
 				return;
 		}
 		setChecked(!checked);
