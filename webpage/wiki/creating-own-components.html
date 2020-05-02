@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Creating own components</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="../css/main.css">
+    <link rel="stylesheet" href="../css/examples.css">
+    <link rel="stylesheet" href="../css/wiki.css">
+    <script src="https://cdn.jsdelivr.net/gh/google/code-prettify@master/loader/run_prettify.js"></script>
+    <script src="../js/main.js"></script>
+</head>
+
+<body>
+    <nav>
+        <li><a class="mlink" href="../../index.html">Home</a></li>
+        <li><a class="mlink sel" href="wiki.html">Wiki</a></li>
+        <li><a class="mlink" href="../examples.html">Examples</a></li>
+        <li><a class="mlink" href="../../guiSET/reference/index.html" target="_blank">Documentation</a>
+        <li><a class="mlink" href="https://github.com/Mc-Zen/guiSET" target="_blank">Source Code</a>
+    </nav>
+
+    <div id="sidebar">
+        <div id="sidebar_label">Wiki Content</div>
+        <div id="sidebar_content">
+            <p>Wiki Pages</p>
+            <ul>
+                <li><a href="wiki.html">Wiki Start</a></li>
+                <li><a href="animations.html">Animations</a></li>
+                <li><a href="help,-something-doesn't-work.html">Common errors</a></li>
+                <li><a href="creating-own-components.html">Creating own components</a></li>
+                <li><a href="draw-modes.html">Draw modes</a></li>
+                <li><a href="dynamic-resizing-and-anchors.html">Dynamic resizing and anchors</a></li>
+                <li><a href="global-keyboard-shortcuts.html">Global keyboard shortcuts</a></li>
+                <li><a href="installing-guiset.html">Installing guiSET</a></li>
+                <li><a href="introduction-for-beginners.html">Introduction for Beginners</a></li>
+                <li><a href="list-of-components.html">List of components</a></li>
+                <li><a href="the-box-model.html">The box model</a></li>
+                <li><a href="the-deep-shit.html">The deep shit</a></li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="main_container wiki_main_container">
+        <h1 id="header">Introduction</h1>
+        <p>
+            At some point you might want to create your own component. This can be just to create some uniquely styled
+            button but also a complex new component for displaying data or anything.
+        </p>
+        <p>
+            To do this you need to subclass <code>Control</code> or other classes from <b>guiSET</b>. Here I'll give
+            your a short guide through the main aspects, methods to implement or override and we'll also mention (some)
+            basic concepts of this library. You might also want to read this <a href="the-deep-shit.html">article</a>
+            which goes deeper into core ideas and implementation of <b>guiSET</b>.
+        </p>
+
+        <p>
+            Alright, let's just dive in and start with examples. I recommend to read them in order to get all the
+            necessary information for creating your own component. In the last part there is an overview of things to
+            beware when creating certain types of components.
+        </p>
+
+        Outline:
+        <ul>
+            <li><a href="#first-own-component">First own component</a></li>
+            <li><a href="#vertical-label">A vertical label</a></li>
+            <li><a href="#vflowcontainer">Vertical-Flow-Container</a></li>
+        </ul>
+
+
+
+
+        <h1 id="first-own-component">First own component</h1>
+        <p>
+            To learn the basics, first we want to create a button that just displays its background color.
+            We create a new class and let it extend <code>Control</code> - the base class for all guiSET components.
+            Also let's add a constructor that allows setting the background and foreground color (NOTE: in Processing we
+            get the impression there
+            is a <code>color</code> type, but it is literally really just an <code>int</code>).
+        </p>
+
+        <pre class="prettyprint">
+public class ColorButton extends Control {
+    ColorButton(int backgroundColor, int foregroundColor) { 
+        setBackgroundColor(backgroundColor);
+        setForegroundColor(foregroundColor);
+    }
+}</pre>
+        <p>
+            Now the IDE should complain that we do not implement a certain abstract <code>render()</code> method. The
+            <code>render()</code> method is the key method that determines how our button will look like and all drawing
+            takes place here. In the <code>Control</code> class there is a <code>PGraphics</code> object called
+            <code>pg</code> on which we can draw. In case you are used to using off-screen <code>PGraphics</code>: don't
+            worry about calling <code>pg.beginDraw()</code> or <code>pg.endDraw()</code> as this is already dealt with
+            by the library. Best is to start with:
+        </p>
+        <pre class="prettyprint">
+// It is not necessary to write "@Override" but better, because so you a) know you overrode 
+// something here and b) can check if you got the name of the method right. You
+// can't compile if this method does not override any method from its parent class.
+@Override
+void render() {
+    drawDefaultBackground();
+}</pre>
+        <p>
+            <code>drawDefaultBackground()</code> is already implemented in <b>guiSET</b> and will draw:
+        </p>
+        <ul>
+            <li>The background color set for this element</li>
+            <li>The border including border color, border radius and border width</li>
+            <li>The background image or gradient if set</li>
+        </ul>
+
+        <p>
+            We could now come up with ideas to change the look of the button and add some stuff:
+        </p>
+        <pre class="prettyprint">
+@Override
+void render() {
+    drawDefaultBackground();
+    if (enabled) {
+        pg.fill(foregroundColor); // set fill color to foregroundColor
+    } else {
+        pg.fill(color(0));        // set fill color to black if the component is disabled. 
+    }
+    pg.noStroke();                // no border 
+    pg.rect(4, 4, width-8, height-8); // draw a rectangle in the center with foregroundColor
+}</pre>
+
+        <p>
+            Now there will be a (somewhat random) rectangle inside the button that fills most of the area and is colored
+            with the
+            <code>foregroundColor</code> of the element. If the button is disabled however - the rectangle will be
+            black.
+        </p>
+        <p>
+            Also, as this shall be a button, we might want to change the color when the mouse hovers over the component
+            or
+            presses it. To achieve this, we set the <code>hoverColor</code> and <code>pressedColor</code> attribute. We
+            can do this either manually or use the built-in method
+            <code>setStatusBackgroundColorsAutomatically(int backgroundColor)</code> which not only sets background
+            color but also hover and pressed color according to the given value. The latter two will be set a bit darker
+            than the
+            background (or lighter if the background is too dark).
+        </p>
+
+        <pre class="prettyprint">
+public class ColorButton extends Control {
+    ColorButton(int backgroundColor, int foregroundColor) { 
+        setStatusBackgroundColorsAutomatically(backgroundColor);
+        setForegroundColor(foregroundColor);
+    }
+
+    @Override
+    void render() {
+        drawDefaultBackground();
+        if (enabled) {
+            pg.fill(foregroundColor); 
+        } else {
+            pg.fill(color(0)); 
+        }
+        pg.noStroke();
+        pg.rect(4, 4, width-8, height-8);
+    }
+}
+</pre>
+
+
+
+
+
+
+
+
+
+
+
+        <h1 id="vertical-label">Vertical label</h1>
+        <p>
+            Now, next I want to create a fancy label that displays text not horizontally but vertically. For this
+            purpose we
+            subclass <code>Label</code> instead of <code>Control</code> because the latter has no functionality for text
+            implemented. Instead, there is the (abstract) class <code>TextBased</code> which can be subclassed for any
+            components
+            that have text. <code>Label</code> also subclasses <code>TextBased</code>.
+        </p>
+        <p>
+            The easiest (or maybe only) way to achieve the rotated text is to use
+            2D-Transformations (nice <a href="https://processing.org/tutorials/transform2d/">article</a> about that on
+            the Processing website). We do:
+        </p>
+        <pre class="prettyprint">
+public class FancyLabel extends Label {
+    FancyLabel(String text) {
+        // this.text = text; // bad -> use setter (!):
+        setText(text);
+    }
+
+    @Override
+    void render() {
+        drawDefaultBackground();
+    
+        pg.pushMatrix();               // saves the current position of the coordinate system
+        pg.translate(this.width, 0);   // move by width to the left so rotation is right
+        pg.rotate(radians(90));        // rotate by 90 degrees (around left top corner)
+    
+        drawDefaultText();             // guiSET default text drawing method (sets foregroundColor, textSize etc.)
+        pg.popMatrix();                // restore the transformation to before when we called pushMatrix()
+    }
+}
+</pre>
+
+        <p>
+            Ok, now that kind of works but the text is just cut off. In the constructor we would better call
+            <code>setText(text)</code> which in turn calls an autosize routine within the class. You can specify
+            special rules for automatic resizing when text, font size or paddings have changed. All you
+            need to do is implement the method <code>autoWidth()</code> and/or <code>autoHeight()</code> and
+            return the desired width/height.
+        </p>
+
+        <pre class="prettyprint">
+@Override
+void autoWidth() {
+    return (int)textHeight(text) + paddingLeft + paddingRight;
+}
+@Override
+void autoHeight(){}
+    return (int)textWidth(text) + paddingTop + paddingBottom;
+}</pre>
+
+
+
+        <p>
+            We set the width to the text height (might be multiple lines) and the height to the text width. Also, the
+            paddings are
+            added.
+        </p>
+        <p>
+            The only problem is that <code>drawDefaultText()</code> expects the text to be drawn horizontally and uses
+            the elements <code>width</code> and <code>height</code> to calcutate the best position. Therefore, we need
+            to swap width and height temporarily.
+        </p>
+        <p>
+            The full code:
+        </p>
+        <pre class="prettyprint">
+public class FancyLabel extends Label {
+    FancyLabel(String text) {
+        setText(text); // will call autosize 
+    }
+
+    @Override
+    void render() {
+        drawDefaultBackground();
+    
+        pg.pushMatrix();               // saves the current position of the coordinate system
+        pg.translate(this.width, 0);   // move by width to the left so rotation is right
+        pg.rotate(radians(90));        // rotate by 90 degrees (around left top corner)
+    
+        int tempWidth = width;
+        int tempHeight = height;
+        height = tempWidth;
+        width = tempHeight;
+    
+        drawDefaultText();             // guiSET default text drawing method (sets foregroundColor, textSize etc.)
+        pg.popMatrix();                // restore the transformation to before when we called pushMatrix()
+    
+        width = tempWidth;
+        height = tempHeight;
+    }
+ 
+    // autosize is also called by setPadding(), setFontSize() and various others 
+    @Override
+    void autoWidth() {
+        return (int)textHeight(text) + paddingLeft + paddingRight;
+    }
+    @Override
+    void autoHeight()
+        return (int)textWidth(text) + paddingTop + paddingBottom;
+    }
+}
+</pre>
+
+
+
+
+
+
+
+
+
+
+        <h1 id="vflowcontainer">Vertical-Flow-Container</h1>
+
+        <p>
+            We'll now take a look at containers - components that group other elements.
+            This example uses the actual implementation of <code>VFlowContainer</code>. This container ignores the
+            position specified for its item and just rows them up vertically one below the other.
+        </p>
+        <p>
+            We start off by creating constructors and overriding <code>void render()</code>. In our constructor we need
+            to
+            write <code>containerMakesAutoLayout = true;</code> because as just mentioned we apply some sort of a new
+            layout and ignore the items <code>x</code> and <code>y</code> (This is important!). In <code>render()</code>
+            we start off by calling <code>drawDefaultBackground()</code> which is always a good idea.
+        </p>
+
+        <pre class="prettyprint">
+class VFlowContainer extends Container {
+    public VFlowContainer() {
+        this(100, 100);
+    }
+
+    public VFlowContainer(int width, int height) {
+        super(width, height);
+        containerMakesAutoLayout = true;
+    }
+
+    @Override
+    protected void render() {
+        drawDefaultBackground();
+    }
+}</pre>
+
+        <p>
+            Now the interesting part: to place one item below the other we keep track of the "used" space and intialize
+            it
+            with the containers <code>paddingTop</code>. Then iteratively we go through all items, render them and add
+            the
+            height of the item (and the margins) to <code>usedSpace</code>:
+        </p>
+
+        <pre class="prettyprint">
+@Override
+protected void render() {
+    drawDefaultBackground();
+
+    int usedSpace = paddingTop;
+
+    for (Control c : items) {
+        if (c.visible) {
+            renderItem(c, c.marginLeft + paddingLeft, usedSpace + c.marginTop);
+            usedSpace += (c.height + c.marginTop + c.marginBottom);
+        }
+    }
+    drawDefaultDisabled();
+}</pre>
+
+        <p>
+            A container should always use <code>renderItem(Control item, int x, int y)</code> to render its items
+            because this prepared function applies a bunch of necessary settings. With <code>x</code> and <code>y</code>
+            we specify the position of the item relative to the top left corner of the container.
+        </p>
+        <p>
+            Some further details include taking care of paddings and margins as well as calling
+            <code>drawDefaultDisabled()</code> to gray out the container in case <code>enabled</code> is set to false.
+        </p>
+
+
+
+
+
+
+
+        <h1 id="crucial">Crucial things to be aware of</h1>
+
+        <p>
+            In general, when changing visual properties (like <code>text</code> or <code>width</code>), use the setter.
+            I.e. the setters for <code>width</code> and <code>height</code> take care that neither exceeds maximum size
+            nor is less than minimum size. Also some concepts like resizing and updating the graphics are handled by
+            setters.
+        </p>
+        <p>
+            And also (!), always, when writing a setter for a new property that affects how the component looks
+            like on the screen, call <code>update()</code> in the setter !!
+        </p>
+
+        <h3>Implementing a new container</h3>
+        <p>
+            Your really should subclass the class <code>Container</code> or another container class! A lot of things a
+            different for containers (such as event handling). Plus, containers need to render their items in some way.
+        </p>
+        <p>
+            In <code>render()</code>, use the provided method <code>renderItem(Control item, int x, int y)</code>
+        </p>
+        <p>
+            Also, if your container ignores the <code>x</code> and <code>y</code> coordinates of its items and places
+            them in some different way (like the flow- and scroll containers do), be sure to write
+            <code>containerMakesAutoLayout = true;</code> in each constructor.
+        </p>
+        <p>
+            You also might want to override the <code>fitContent()</code> method which resizes the container to fit its
+            content.
+        </p>
+        <p>
+            When overriding or creating new methods for adding items, use the already provided <code>add(Control...c)</code> method.
+        </p>
+
+        <h3 id="using-mouse-event">Using mouse events</h3>
+        <p>
+            You can go ahead and override one or more of these internal class-specific methods:
+        </p>
+        <ul>
+            <li><code>void enter(MouseEvent e)</code></li>
+            <li><code>void exit(MouseEvent e)</code></li>
+            <li><code>void press(MouseEvent e)</code></li>
+            <li><code>void release(MouseEvent e)</code></li>
+            <li><code>void move(MouseEvent e)</code></li>
+            <li><code>void drag(MouseEvent e)</code></li>
+            <li><code>void wheel(MouseEvent e)</code></li>
+        </ul>
+        <p>
+            It is recommended to call the super method in case the superclass does something important here:
+        </p>
+
+        <pre class="prettyprint">
+@Override
+protected void rpess(MouseEvent e) {
+    super.press(e);
+
+    // do your stuff 
+}</pre>
+
+        <p>
+            Mind, you can call <code>stopPropagation()</code> in a mouse event routine to prevent further elements of
+            the gui to possibly receive the current mouse event.
+        </p>
+
+        <h3 id="using-key-events">Using key events</h3>
+        <p>
+            Just override:
+        </p>
+        <ul>
+            <li><code>void keyPress(KeyEvent e)</code></li>
+            <li><code>void keyRelease(KeyEvent e)</code></li>
+            <li><code>void keyTyped(KeyEvent e)</code></li>
+        </ul>
+        <p>
+            Maybe you also to call the super method here too (especially when subclassing a textbox).
+        </p>
+        <p>
+            What really might be useful is the <code>overridesFrameShortcts</code> property. The standard value for this
+            is false (except for textboxes). If this property is true, then shortcuts registered at <code>Frame</code>
+            will not be handled if an instance of your component is focused at the moment. I.e. it would be irrating
+            when typing text into a textbox and every time you hit 'E', a shortcut that is by chance
+            <kbd>Shift</kbd>+<kbd>E</kbd> is executed.
+        </p>
+
+
+        <h3 id="using-mouse-event">Methods you might want to override</h3>
+        <p>
+            <code>render()</code>, <code>intialize()</code>, <code>int autoWidth()</code>, <code>int autoHeight</code>,
+            <code>fitContent</code>, <code>int getAvailableWidth()</code>, <code>int getAvailableHeight</code>, internal
+            event methods.
+        </p>
+
+
+    </div>
+    <div id="footer"><a href="https://github.com/Mc-Zen/guiSET"><img
+                src="../media/GitHub-Mark-32px.png"><span>GitHub</span></a></div>
+
+</body>
+
+</html>
