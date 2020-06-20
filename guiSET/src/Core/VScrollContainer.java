@@ -92,24 +92,43 @@ public class VScrollContainer extends VFlowContainer {
 		drawScrollbar();
 		drawDefaultDisabled();
 	}
-
-
+//
+//
+//	// draw vertical scrollbar if needed
+//	protected void drawScrollbar() {
+//		if (needsScrollbarV()) { // don't display scroll-bar when there's nothing to scroll
+//
+//			pg.fill(130);
+//			pg.noStroke();
+//
+//			if (slim_scrollhandle) {
+//				pg.rect(width - 1 - scrollHandleStrength, scrollhandle_posY(), scrollHandleStrength, scrollhandle_height(), 15);
+//			} else {
+//				pg.stroke(0);
+//				pg.rect(width - 2 - scrollHandleStrength, 0, scrollHandleStrength + 3, scrollbar_height());
+//				pg.fill(startHandleDragPos > -1 ? 170 : 190);
+//				pg.rect(width - 1 - scrollHandleStrength, scrollhandle_posY(), scrollHandleStrength, scrollhandle_height(), 3);
+//			}
+//		}
+//	}
 	// draw vertical scrollbar if needed
-	protected void drawScrollbar() {
-		if (needsScrollbarV()) { // don't display scroll-bar when there's nothing to scroll
+		protected void drawScrollbar() {
+			if (needsScrollbarV()) { // don't display scroll-bar when there's nothing to scroll
 
-			pg.fill(130);
-			pg.noStroke();
+				pg.fill(SCROLL_BAR_COLOR);
+				pg.noStroke();
 
-			if (slim_scrollhandle) {
-				pg.rect(width - 1 - scrollHandleStrength, scrollhandle_posY(), scrollHandleStrength, scrollhandle_height(), 15);
-			} else {
-				pg.rect(width - 2 - scrollHandleStrength, 0, scrollHandleStrength + 3, scrollbar_height());
-				pg.fill(startHandleDragPos > -1 ? 170 : 190);
-				pg.rect(width - 1 - scrollHandleStrength, scrollhandle_posY(), scrollHandleStrength, scrollhandle_height(), 3);
+				if (slim_scrollhandle) {
+					pg.rect(width - 1 - scrollHandleStrength, scrollhandle_posY(), scrollHandleStrength, scrollhandle_height(), 15);
+				} else {
+					
+					pg.rect(width - 2 - scrollHandleStrength, 0, scrollHandleStrength + 3, scrollbar_height());
+					pg.fill(startHandleDragPos > -1 ? SCROLL_HANDLE_COLOR : SCROLL_HANDLE_PRESSED_COLOR);
+					pg.stroke(SCROLL_HANDLE_BORDER_COLOR);
+					pg.rect(width - 2 - scrollHandleStrength, scrollhandle_posY(), scrollHandleStrength+1, scrollhandle_height(), SCROLL_HANDLE_BORDER_RADIUS);
+				}
 			}
 		}
-	}
 
 	/*
 	 * some methods needed for controlling and drawing the scrollbars

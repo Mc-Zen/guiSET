@@ -1,7 +1,7 @@
 import guiSET.core.*;
 
 /*
- * Example for a border layout. 
+ * Example for a border layout and a demonstration for 
  * The window is split into a header, footer, two sidebars and the main area - a.k.a. 
  * north, south, west, east, and center.
  *

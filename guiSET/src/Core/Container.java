@@ -74,6 +74,13 @@ public class Container extends TextBased {
 
 	// for scroll container sub classes
 	protected final static int minScrollHandleLength = 15;
+	
+	// For containers with scroll bars
+	public static int SCROLL_HANDLE_BORDER_RADIUS = 0;
+	public static int SCROLL_BAR_COLOR = Color.create(150);
+	public static int SCROLL_HANDLE_COLOR = Color.create(170);
+	public static int SCROLL_HANDLE_PRESSED_COLOR = Color.create(190);
+	public static int SCROLL_HANDLE_BORDER_COLOR = Color.create(90);
 
 	/**
 	 * Default constructor sets width and height to 100

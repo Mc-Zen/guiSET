@@ -101,15 +101,21 @@ public class HScrollContainer extends HFlowContainer {
 	protected void drawScrollbar() {
 		if (needsScrollbarH()) { // don't display scroll-bar when there's nothing to scroll
 
-			pg.fill(150);
+			pg.fill(SCROLL_BAR_COLOR);
 			pg.noStroke();
 
 			if (slim_scrollhandle) {
 				pg.rect(scrollhandle_posX(), height - 1 - scrollHandleStrength, scrollhandle_width(), scrollHandleStrength, 15);
 			} else {
-				pg.rect(0, height - 2 - scrollHandleStrength, scrollbar_width(), scrollHandleStrength + 3); // height is one more than necessary (just)
-				pg.fill(startHandleDragPos > -1 ? 170 : 190);
-				pg.rect(scrollhandle_posX(), height - 1 - scrollHandleStrength, scrollhandle_width(), scrollHandleStrength, 3);
+//				pg.rect(0, height - 2 - scrollHandleStrength, scrollbar_width(), scrollHandleStrength + 3); // height is one more than necessary (just)
+//				pg.fill(startHandleDragPos > -1 ? SCROLL_HANDLE_COLOR : SCROLL_HANDLE_PRESSED_COLOR);
+//				pg.rect(scrollhandle_posX(), height - 1 - scrollHandleStrength, scrollhandle_width(), scrollHandleStrength, SCROLL_HANDLE_BORDER_RADIUS);
+
+				pg.rect(0, height - 2 - scrollHandleStrength, scrollbar_width(), scrollHandleStrength + 3);
+				pg.fill(startHandleDragPos > -1 ? SCROLL_HANDLE_COLOR : SCROLL_HANDLE_PRESSED_COLOR);
+				pg.stroke(SCROLL_HANDLE_BORDER_COLOR);
+				pg.rect(scrollhandle_posX(), height - 2 - scrollHandleStrength, scrollhandle_width(), scrollHandleStrength, SCROLL_HANDLE_BORDER_RADIUS);
+
 			}
 		}
 	}

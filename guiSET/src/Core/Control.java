@@ -5,8 +5,6 @@ import processing.event.*;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 
-import guiSET.core.Frame.Initialization_State;
-
 import java.lang.reflect.InvocationTargetException;
 
 
@@ -2578,13 +2576,15 @@ public abstract class Control implements PConstants {
 
 	/**
 	 * Enable user of the library to adopt a set of visual style properties from
-	 * another element.
-	 * 
+	 * another element. <br>
 	 * Call copyStyle(Control, attribs) to read given attributes (separated by
-	 * bitwise OR) from given element c:
+	 * bitwise OR) from given element c: <br>
+	 * <br>
 	 * 
-	 * myElement.copyStyle(otherElement, PADDING_LEFT | MARGIN_BOTTOM,
-	 * FOREGROUND_COLOR);
+	 * <code><pre>myElement.copyStyle(otherElement, PADDING_LEFT | MARGIN_BOTTOM, FOREGROUND_COLOR);</pre></code>
+	 * <br>
+	 * <br>
+	 * <br>
 	 * 
 	 * Options are: {@link #PADDING_LEFT}, {@link #PADDING_RIGHT},
 	 * {@link #PADDING_TOP}, {@link #PADDING_BOTTOM}, {@link #MARGIN_LEFT},
@@ -2593,16 +2593,20 @@ public abstract class Control implements PConstants {
 	 * {@link #FOREGROUND_COLOR}, {@link #BORDER_WIDTH}, {@link #BORDER_RADIUS},
 	 * {@link #BORDER_COLOR}, {@link #OPACITY},
 	 * 
+	 * <br>
+	 * <br>
 	 * Only if source and target have text properties: {@link #TEXT_COLOR},
 	 * {@link #TEXT_ALIGN}, {@link #TEXT_ALIGN_Y}, {@link #FONT_SIZE},
 	 * {@link #LINE_HEIGHT}.
 	 * 
+	 * <br>
+	 * <br>
 	 * There some shortcuts to include several properties, like {@link #ALL},
 	 * {@link #COLORS}, {@link #MARGIN} (all margins), {@link #PADDING} (all
 	 * paddings), {@link #SPACING} (all margins and paddings),
 	 * {@link #BACKGROUND_COLORS} (background-, hover-, and pressedColor),
-	 * {@link #BORDER} (border-width, -color and -radius), {@link #TEXT} (all text
-	 * properties).
+	 * {@link #BORDER} (border-width, -color and -radius), {@link #TEXT_PROPERTIES}
+	 * (all text properties).
 	 * 
 	 * 
 	 * @param source  element to adopt properties from.
@@ -2656,7 +2660,7 @@ public abstract class Control implements PConstants {
 
 
 	/**
-	 * @see {@link Control#doForAll(Setter, Object...)
+	 * @see {@link Control#doForAll(Setter, Object...)}
 	 *
 	 * @param <T> type
 	 */
@@ -2669,41 +2673,51 @@ public abstract class Control implements PConstants {
 	 * necessarily UI elements). The idea is to apply setters to several elements
 	 * without boilerplate code.
 	 * 
+	 * <br>
 	 * You can pass an instance of Control.Setter<T>, override its run() method and
 	 * then pass any number of elements.
 	 * 
+	 * <br>
 	 * You need to specify an object class, i.e. Control if you only need to use
 	 * methods from Control or Textbox, if you would like to use setters individual
-	 * to Textbox.
-	 *
+	 * to Textbox. <br>
 	 * Example:
 	 * 
-	 * <code>
-	 * Control.doForAll( new Control.Setter<Control>() {
-	 *     &#64;Override 
-	 *     public void run(Control c) {
-	 *         c.setBackgroundColor(color(0)); 
-	 *     }
-	 * }, myButton, byLabel, myTextbox);
-	 * </code>
+	 * <br>
+	 * <br>
+	 * 
+	 * <code><pre>
+	Control.doForAll(new Control.Setter<Control>() {
+	  &#64;Override 
+	  public void run(Control c) {
+	    c.setBackgroundColor(color(0)); 
+	  }
+	}, myButton, byLabel, myTextbox);
+	</pre></code>
 	 * 
 	 * 
+	 * 
+	 * <br>
+	 * <br>
 	 * or:
 	 * 
-	 * <code>
-	 * Control.doForAll( new Control.Setter<Container>() {
-	 *     &#64;Override 
-	 *     public void run(Container c) {
-	 *         c.fitContent();
-	 *     }
-	 * }, myContainer, myHScrollContainer, myScrollArea, myFlowContainer);
-	 * </code>
+	 * <br>
+	 * <code><pre>
+	Control.doForAll( new Control.Setter<Control>() {
+	  &#64;Override 
+	  public void run(Control c) {
+	    c.fitContent();
+	  }
+	}, myContainer, myHScrollContainer, myScrollArea, myFlowContainer);
+	</pre></code>
 	 * 
+	 * @param T        type of object
 	 * @param setter   a setter (need to override the run() method and specify
 	 *                 template type)
 	 * @param elements arbitrary number of elements that are of the given template
 	 *                 type
 	 */
+
 	public static <T> void doForAll(Setter<T> setter, T... elements) {
 		for (T c : elements) {
 			setter.run(c);
@@ -3077,6 +3091,13 @@ public abstract class Control implements PConstants {
 	// drag of this element will induce no drop event
 	protected static boolean drop = true;
 
+	// A class can set this to true upon press event if the following dragging
+	// should be treated as a normal mouse movement and not a drag. Frame will set
+	// this to false anytime a release is detected. This feature is used by MenuItem
+	// to make it possible to press on a menu header, hold the mouse and navigate
+	// through the menu without releasing the mouse as commonly possible with GUIs
+	// (in windows at least).
+	protected static boolean notDragging = false;
 
 
 	/*
@@ -3253,6 +3274,9 @@ public abstract class Control implements PConstants {
 
 	protected void release(MouseEvent e) {
 		setVisualBackgroundColor(hoverColor);
+	}
+
+	protected void dragRelease(MouseEvent e) {
 	}
 
 

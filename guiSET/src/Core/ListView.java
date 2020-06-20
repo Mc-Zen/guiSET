@@ -324,7 +324,7 @@ public class ListView extends VScrollContainer {
 	/**
 	 * Remove a specific item from item list.
 	 * 
-	 * @param container item to remove.
+	 * @param item item to remove.
 	 */
 	@Override
 	public boolean remove(Control item) {

@@ -76,12 +76,21 @@ class MenuSurface extends Container {
 		staticMS.add(t);
 	}
 
-	protected static void openMenu() {
+	protected static void openMenuSurface() {
+		if (staticMS == null)
+			return;
 		staticMS.setVisible(true);
 	}
 
-	protected static void closeMenu() {
+	protected static void closeMenuSurface() {
+		if (staticMS == null)
+			return;
 		staticMS.setVisible(false);
+	}
+
+	protected static void closeAllMenus() {
+		MenuItem.closeOpenHeaders();
+		closeMenuSurface();
 	}
 
 
@@ -90,8 +99,7 @@ class MenuSurface extends Container {
 	// been pressed.
 	@Override
 	protected void press(MouseEvent e) {
-		MenuItem.closeOpenHeaders();
-		closeMenu();
+		closeAllMenus();
 
 		// now that the menu has closed, allow pressing immediately with the same
 		// click on other elements (even dragging works this way).
@@ -413,15 +421,19 @@ public class MenuItem extends TextBased {
 	protected void open() {
 		if (items.size() > 0) { // has subitems itself -> open them
 
-			// first close all potentially open siblings
-			try {
-				for (Control c : ((MenuStrip) parent).items) {
-					((MenuItem) c).close();
+			if (type == MENU_HEADER) {
+				closeOpenHeaders();
+			} else {
+				// first close all potentially open siblings
+				try {
+					for (Control c : ((MenuStrip) parent).items) {
+						((MenuItem) c).close();
+					}
+				} catch (ClassCastException cce) {
+					// ignore casting errors
+				} catch (NullPointerException e) {
+					//
 				}
-			} catch (ClassCastException cce) {
-				// ignore casting errors
-			} catch (NullPointerException e) {
-				//
 			}
 
 			open = true;
@@ -490,7 +502,7 @@ public class MenuItem extends TextBased {
 			// headers need to stop the timer and close the surface
 			if (type == MENU_HEADER) {
 
-				MenuSurface.closeMenu();
+				MenuSurface.closeMenuSurface();
 
 				if (hoverTimerTask != null) {
 					hoverTimerTask.cancel();
@@ -704,9 +716,9 @@ public class MenuItem extends TextBased {
 	 * @return sub items
 	 */
 	public Control[] getItems() {
-		Control c[] = new Control[items.size()];
+		MenuItem c[] = new MenuItem[items.size()];
 		for (int i = 0; i < items.size(); i++) {
-			c[i] = items.get(i);
+			c[i] = (MenuItem) items.get(i);
 		}
 		return c;
 	}
@@ -717,9 +729,9 @@ public class MenuItem extends TextBased {
 	 * @param index index of item to get
 	 * @return item
 	 */
-	public Control getItem(int index) {
+	public MenuItem getItem(int index) {
 		if (index >= 0 && index < items.size()) {
-			return items.get(index);
+			return (MenuItem) items.get(index);
 		} else {
 			return null;
 		}
@@ -765,7 +777,7 @@ public class MenuItem extends TextBased {
 		selectListener = null;
 	}
 
-	
+
 
 	/**
 	 * Add a listener for when a child of this header has been selected.
@@ -873,7 +885,12 @@ public class MenuItem extends TextBased {
 
 	@Override
 	protected void press(MouseEvent e) {
-		// if item is menu header open and close on press
+		// enable user to select a nested item after pressing and holding a menu header
+		// without releasing the mouse in between. We act like this was a move event.
+		// notDragging is set to false again in Frame when the next release happens
+		notDragging = true;
+
+		// if item is menu header, open and close on press
 		if (type == MENU_HEADER) {
 			if (open) {
 				close();
@@ -887,14 +904,20 @@ public class MenuItem extends TextBased {
 		stopPropagation();
 	}
 
+
+
 	@Override
 	protected void release(MouseEvent e) {
+
+
 		// if item is subitem, open and close on release
 		if (type == MENU_ITEM) {
 			open();
+			print(text);
 		}
 		update();
 		stopPropagation();
+		drop = false;
 	}
 
 
@@ -978,7 +1001,7 @@ class MenuStrip extends Container {
 	 * Show this MenuStrip.
 	 */
 	public void show() {
-		MenuSurface.openMenu();
+		MenuSurface.openMenuSurface();
 		setVisible(true);
 	}
 

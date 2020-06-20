@@ -97,16 +97,21 @@ public class ScrollArea extends Container {
 	protected void drawScrollbarV() {
 		if (needsScrollbarV()) { // don't display scroll-bar when there's nothing to scroll
 
-			pg.fill(150);
+			pg.fill(SCROLL_BAR_COLOR);
 			pg.noStroke();
 
 			if (slim_scrollhandle) {
 				pg.rect(width - 4, scrollhandle_posY(), scrollHandleStrength, scrollhandle_height(), 15);
 
 			} else {
-				pg.rect(width - 2 - scrollHandleStrength, 0, scrollHandleStrength + 2, scrollbar_height());
-				pg.fill((startHandleDragPos > -1 && whichScrollBar == V_SCROLLBAR) ? 170 : 190);
-				pg.rect(width - 1 - scrollHandleStrength, scrollhandle_posY(), scrollHandleStrength, scrollhandle_height(), 3);
+				pg.rect(width - 2 - scrollHandleStrength, 0, scrollHandleStrength + 3, scrollbar_height());
+				pg.fill(startHandleDragPos > -1 ? SCROLL_HANDLE_COLOR : SCROLL_HANDLE_PRESSED_COLOR);
+				pg.stroke(SCROLL_HANDLE_BORDER_COLOR);
+				pg.rect(width - 2 - scrollHandleStrength, scrollhandle_posY(), scrollHandleStrength + 1, scrollhandle_height(), SCROLL_HANDLE_BORDER_RADIUS);
+
+//				pg.rect(width - 2 - scrollHandleStrength, 0, scrollHandleStrength + 2, scrollbar_height());
+//				pg.fill((startHandleDragPos > -1 && whichScrollBar == V_SCROLLBAR) ? 170 : 190);
+//				pg.rect(width - 1 - scrollHandleStrength, scrollhandle_posY(), scrollHandleStrength, scrollhandle_height(), 3);
 			}
 		}
 	}
@@ -116,16 +121,22 @@ public class ScrollArea extends Container {
 	protected void drawScrollbarH() {
 		if (needsScrollbarH()) { // don't display scroll-bar when there's nothing to scroll
 
-			pg.fill(150);
+			pg.fill(SCROLL_BAR_COLOR);
 			pg.noStroke();
 
 			if (slim_scrollhandle) {
 				pg.rect(scrollhandle_posX(), height - 4, scrollhandle_width(), 3, 15);
 			} else {
 				pg.rect(0, height - 2 - scrollHandleStrength, scrollbar_width(), scrollHandleStrength + 3); // height is one more than necessary
-																											 // (just) // a buffer)
-				pg.fill((startHandleDragPos > -1 && whichScrollBar == H_SCROLLBAR) ? 170 : 190);
-				pg.rect(scrollhandle_posX(), height - 1 - scrollHandleStrength, scrollhandle_width(), scrollHandleStrength, 3);
+//																											 // (just) // a buffer)
+//				pg.fill((startHandleDragPos > -1 && whichScrollBar == H_SCROLLBAR) ? 170 : 190);
+//				pg.rect(scrollhandle_posX(), height - 1 - scrollHandleStrength, scrollhandle_width(), scrollHandleStrength, 3);
+
+				pg.rect(0, height - 2 - scrollHandleStrength, scrollbar_width(), scrollHandleStrength + 3);
+				pg.fill((startHandleDragPos > -1 && whichScrollBar == H_SCROLLBAR) ? SCROLL_HANDLE_COLOR : SCROLL_HANDLE_PRESSED_COLOR);
+				pg.stroke(SCROLL_HANDLE_BORDER_COLOR);
+				pg.rect(scrollhandle_posX(), height - 2 - scrollHandleStrength, scrollhandle_width(), scrollHandleStrength, SCROLL_HANDLE_BORDER_RADIUS);
+
 			}
 		}
 	}

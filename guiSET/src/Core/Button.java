@@ -41,6 +41,19 @@ public class Button extends TextBased {
 	}
 
 	/**
+	 * Constructor for specifying button text, font size an background color.
+	 * 
+	 * @param text            text
+	 * @param fontSize        font size
+	 * @param backgroundColor background color
+	 */
+	public Button(String text, int fontSize, int backgroundColor) {
+		this(text);
+		this.setFontSize(fontSize);
+		this.setBackgroundColor(backgroundColor);
+	}
+
+	/**
 	 * Constructor for specifying button text and press callback method name.
 	 * 
 	 * @param text          text

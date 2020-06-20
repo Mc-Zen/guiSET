@@ -70,6 +70,21 @@ public class Textbox extends HScrollContainer {
 		this(100, 12);
 	}
 
+	public Textbox(String hint) {
+		this(100, 12);
+		setHint(hint);
+	}
+
+	public Textbox(String hint, int width) {
+		this(width, 12);
+		setHint(hint);
+	}
+
+	public Textbox(String hint, int width, int fontSize) {
+		this(width, fontSize);
+		setHint(hint);
+	}
+
 	public Textbox(int width) {
 		this(width, 12);
 	}
@@ -415,7 +430,7 @@ public class Textbox extends HScrollContainer {
 		return selectionEnd;
 	}
 
-	public String getSelection() {
+	public String getSelectedText() {
 		return text.substring(selectionStart, selectionEnd);
 	}
 
@@ -627,7 +642,7 @@ public class Textbox extends HScrollContainer {
 			}
 		}
 	}
-	
+
 	@Override
 	protected void release(MouseEvent e) {
 		super.release(e);
@@ -787,7 +802,8 @@ public class Textbox extends HScrollContainer {
 	 */
 	public void copy() {
 		if (selectionStart < selectionEnd) {
-			StringSelection selection = new StringSelection(text.substring(selectionStart, selectionEnd));
+			print(selectionStart, selectionEnd);
+			StringSelection selection = new StringSelection(getSelectedText());
 			Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
 			clipboard.setContents(selection, selection);
 		}

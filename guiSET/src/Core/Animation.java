@@ -168,14 +168,13 @@ public class Animation {
 	 * @return false if animation finished
 	 */
 
-	@SuppressWarnings("static-access")
 	protected boolean animate() {
 		if (cancel)
 			return false;
 
 		// immediately finish animation if NO_LOOP is the drawMode (these do not work
 		// together)
-		if (target.getFrame().drawMode == Frame.NO_LOOP) {
+		if (Control.getFrame().drawMode == Frame.NO_LOOP) {
 			//counter = numberOfSteps;
 			Frame.noLoopAfterAnimation();
 		}

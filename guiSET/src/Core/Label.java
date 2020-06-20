@@ -25,6 +25,16 @@ public class Label extends TextBased {
 		this(text, 12);
 	}
 
+	/**
+	 * Constructor for specifying text to display. Default font size is 12 and
+	 * background is transparent.
+	 * 
+	 * @param text text for label
+	 */
+	public Label(String text, int x, int y) {
+		this(text, 12);
+		setPosition(x, y);
+	}
 
 
 	/**

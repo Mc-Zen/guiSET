@@ -1,6 +1,15 @@
 import guiSET.core.*; //<>//
-import processing.serial.*;
 
+import processing.serial.*; // for usb connection
+
+/*
+ * This examples implements a console for displaying messages send through
+ * a USB port, for example by an arduino. Sending text back is also possible. 
+ *
+ * The "serialEvent(Serial port)" catches all arriving messages and appends them to
+ * a mulitline-textbox - the output. 
+ * A single-line "input" textbox allows sending the entered message when pressing return. 
+ */
 
 
 /*
@@ -60,14 +69,15 @@ void setup() {
   outputControls = new HFlowContainer(wrapperWidth, 30);
   outputControls.setBackgroundColor(color(80));
 
-
+  // button for clearing the output
   Button clearConsoleButton = new Button("Clear output");
   clearConsoleButton.setMargin(0, 10); // left and right distance to surroundings 10px
   clearConsoleButton.addMouseListener("press", "clearConsole");
 
+  // checkbox for enabling autoscroll to bottom
   autoscrollCheckbox = new Checkbox("Auto scroll", true);
   autoscrollCheckbox.addToggleListener("setAutoScroll");
-  autoscrollCheckbox.setPadding(4, 0); // padding top and bottom to 4px
+  autoscrollCheckbox.setPaddingTop(4); // padding top to 4px
   autoscrollCheckbox.setForegroundColor(color(255));
 
   outputControls.add(clearConsoleButton, autoscrollCheckbox);
@@ -120,6 +130,7 @@ void setup() {
   currentPortLabel.addAutoAnchors(LEFT); // just prevent label from autosizing when changing text
   portList.addAutoAnchors(TOP, BOTTOM);
   portList.setMaxHeight(400);
+
   // update port list
   getAvailablePorts();
 }
@@ -144,10 +155,16 @@ void getAvailablePorts() {
 
 
 
+
+/*
+ * Event callback methods - the methods are registered to some gui events. 
+ */
+
+
 // Executed when an item (a port name) from the list view has been selected
 
 void portSelected(Control item) {
-  setupPort(item.getText());
+  setupPort(((ListItem)item).getText());
 }
 
 
@@ -265,9 +282,9 @@ void scrollOutput(MouseEvent e) {
 /*
  * Read out serial port when received bytes
  */
-String inputString = "";
 
 void serialEvent(Serial port) {
+  String inputString = "";
   while (port.available() > 0) {
     char inChar = port.readChar(); 
     inputString += inChar;

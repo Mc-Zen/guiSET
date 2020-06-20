@@ -69,6 +69,8 @@ public class Frame extends Container {
 
 	/**
 	 * Get the one and only Frame.
+	 * 
+	 * @return Frame
 	 */
 	public static Frame getFrame() {
 		return frame0;
@@ -208,6 +210,7 @@ public class Frame extends Container {
 				@Override
 				public void windowLostFocus(java.awt.event.WindowEvent e) {
 					handleEvent(windowFocusLostListener);
+					MenuSurface.closeAllMenus();
 				}
 
 				@Override
@@ -233,6 +236,7 @@ public class Frame extends Container {
 				@Override
 				public void windowLostFocus(com.jogamp.newt.event.WindowEvent e) {
 					handleEvent(windowFocusLostListener);
+					MenuSurface.closeAllMenus();
 				}
 
 				@Override
@@ -1068,7 +1072,7 @@ public class Frame extends Container {
 	 * 
 	 * - 1. int that describes data type (Frame.DROP_STRING or Frame.DROP_FILE) - 2.
 	 * Object instance that is the dropped data (needs casting to String or File) -
-	 * 3. Control instance -> the element that the data has been dropped on
+	 * 3. Control instance - the element that the data has been dropped on
 	 * 
 	 * 
 	 * @param methodName method name
@@ -1085,7 +1089,6 @@ public class Frame extends Container {
 	public void removeExternalDropListener() {
 		externalDropListener = null;
 	}
-
 
 	/*
 	 * Mouse event uniqe to the Frame class. 
@@ -1113,20 +1116,26 @@ public class Frame extends Container {
 		// not beautiful to call super.mouseEvents() in each case but anyway
 		switch (e.getAction()) {
 		case MouseEvent.DRAG:
-			if (draggedElement != null) {
-				stopPropagation(); // not even necessary, we dont call mouseEvent()
-				hoveredElement = draggedElement;
-				draggedElement.drag(e);
-				draggedElement.handleEvent(draggedElement.dragListener, e);
+			if (notDragging) { // treat event as move and not drag
+				mouseEvent(mousex, mousey);
+			} else {
+				if (draggedElement != null) {
+					stopPropagation(); // not even necessary, we dont call mouseEvent()
+					hoveredElement = draggedElement;
+					draggedElement.drag(e);
+					draggedElement.handleEvent(draggedElement.dragListener, e);
+				}
 			}
 			break;
 		case MouseEvent.RELEASE:
+			notDragging = false; // reset this in case it has been set to true during a drag
+			
 			if (draggedElement != null) {
 
 				// release after drag: Only draggedElement should receive this event.
 				stopPropagation(); // not even necessary, we dont call mouseEvent()
 
-				draggedElement.release(e);
+				draggedElement.dragRelease(e);
 				draggedElement.pPressed = false;
 				draggedElement.handleEvent(draggedElement.releaseListener, e);
 

@@ -35,7 +35,7 @@ abstract public class TextBased extends Control {
 	protected void drawDefaultText() {
 		textRenderer.draw(text);
 	}
-	
+
 	protected void drawDefaultText(String text) {
 		textRenderer.draw(text);
 	}
@@ -79,9 +79,21 @@ abstract public class TextBased extends Control {
 	}
 
 	/**
+	 * If the second parameter is true, then the element will not be resized to fit
+	 * the text.
+	 * 
+	 * @param text       text
+	 * @param noautosize noautosize
+	 */
+	public void setText(String text, boolean noautosize) {
+		this.text = text;
+		update();
+	}
+
+	/**
 	 * Set the font size for the displayed text.
 	 * 
-	 * @param fontSize
+	 * @param fontSize font size
 	 */
 	public void setFontSize(float fontSize) {
 		textRenderer.setFontSize(Math.max(0, fontSize));
@@ -113,11 +125,34 @@ abstract public class TextBased extends Control {
 		update();
 	}
 
+	/**
+	 * For multiline text, set the line height in pixel.
+	 * 
+	 * @param lineHeight line height in pixel
+	 */
 	public void setLineHeight(int lineHeight) {
-		textRenderer.setLineHeight(lineHeight);
+		// user should use setLineHeightPercent(), but for copyStyle() this is
+		// convenient.
+		if (lineHeight >= 0) {
+			textRenderer.setLineHeight(lineHeight);
+		} else {
+			textRenderer.setLineHeightPercent(lineHeight);
+		}
+		autosize();
 		update();
 	}
 
+	/**
+	 * For multiline text, set the line height in literal percent: for 100% pass 100
+	 * and not 1.
+	 * 
+	 * @param lineHeight line height in percent
+	 */
+	public void setLineHeightPercent(int lineHeight) {
+		textRenderer.setLineHeightPercent(lineHeight);
+		autosize();
+		update();
+	}
 
 	/*
 	 * Getter
@@ -189,6 +224,9 @@ abstract public class TextBased extends Control {
 
 		public void setLineHeight(int lineHeight);
 
+		// Set the line height in literal percent: 100% not 1
+		public void setLineHeightPercent(int lineHeight);
+
 
 		float textWidth(String text);
 
@@ -207,7 +245,15 @@ abstract public class TextBased extends Control {
 		protected int color = Control.defaultTextColor;
 		protected int textAlign = CENTER;
 		protected int textAlignY = CENTER;
-		protected int lineHeight = 18;
+
+		/*
+		 * If positive, then this dscribes the line height in pixel. 
+		 * If negative, then it is considered as percentage of font size.
+		 * So this default would make it (1.5 * fontSize).   
+		 */
+		private int lineHeight = -150;
+
+		protected final static float TEXTHEIGHT_FACTOR = .8f;
 
 		@Override
 		public void draw(String text) {
@@ -218,12 +264,13 @@ abstract public class TextBased extends Control {
 			pg.fill(color);
 			pg.textSize(size);
 
-			String[] lines = text.split("\n");
+			float realLineHeight = getActualLineHeight();
 
 			// textAscent=size is not the real size, depending on font, this is actually
 			// smaller, 0.8 is jst a guess that seems to work good.
-			float posY = paddingTop + size * 0.8f;
-			float textHeight = lineHeight * (lines.length - 1) + size * .8f; // descent is ignored
+			float posY = paddingTop + size * TEXTHEIGHT_FACTOR;
+			String[] lines = text.split("\n");
+			float textHeight = realLineHeight * (lines.length - 1) + size * TEXTHEIGHT_FACTOR; // descent is ignored
 
 			switch (textAlignY) {
 			case CENTER:
@@ -235,7 +282,7 @@ abstract public class TextBased extends Control {
 			}
 
 			for (int i = 0; i < lines.length; ++i) {
-				textLineAlignImpl(lines[i], 0, (int) posY + i * lineHeight);
+				textLineAlignImpl(lines[i], 0, (int) posY + (int) (i * realLineHeight));
 			}
 		}
 
@@ -254,6 +301,10 @@ abstract public class TextBased extends Control {
 				break;
 			}
 			pg.text(text.toCharArray(), 0, text.length(), posX, posY);
+		}
+
+		protected float getActualLineHeight() {
+			return lineHeight > 0 ? lineHeight : -lineHeight / 100f * size;
 		}
 
 		@Override
@@ -278,7 +329,16 @@ abstract public class TextBased extends Control {
 
 		@Override
 		public void setLineHeight(int lineHeight) {
-			this.lineHeight = lineHeight;
+			if (lineHeight >= 0) {
+				this.lineHeight = Math.max(0, lineHeight);
+			} else {
+				setLineHeightPercent(-lineHeight);
+			}
+		}
+
+		@Override
+		public void setLineHeightPercent(int lineHeight) {
+			this.lineHeight = -Math.max(0, lineHeight);
 		}
 
 		@Override
@@ -303,7 +363,7 @@ abstract public class TextBased extends Control {
 
 		@Override
 		public int getLineHeight() {
-			return lineHeight;
+			return (int) getActualLineHeight();
 		}
 
 		/**
@@ -333,7 +393,7 @@ abstract public class TextBased extends Control {
 			String[] lines = text.split("\n");
 			// this is a bit more than the actual size but thats even good, because
 			// vertically centered text will look better.
-			return (int) (lineHeight * (lines.length - 1) + (size + textDescent()));
+			return (int) (getActualLineHeight() * (lines.length - 1) + (size + textDescent()));
 		}
 	}
 
@@ -360,10 +420,13 @@ abstract public class TextBased extends Control {
 			pg.strokeWeight(borderWidth);
 			pg.stroke(color);
 			pg.textSize(size);
+			float realLineHeight = getActualLineHeight();
 
 			String[] lines = text.split("\n");
-			float posY = paddingTop + textAscent() * 0.8f; // textAscent if not the real size - depending on font, this is actually smaller
-			float textHeight = lineHeight * (lines.length - 1) + size * .8f;
+			// textAscent if not the real size - depending on font, this is actually
+			// smaller, this is a compromise
+			float posY = paddingTop + textAscent() * TEXTHEIGHT_FACTOR;
+			float textHeight = realLineHeight * (lines.length - 1) + size * TEXTHEIGHT_FACTOR;
 
 			switch (textAlignY) {
 			case CENTER:
@@ -373,12 +436,17 @@ abstract public class TextBased extends Control {
 				posY += getAvailableHeight() - textHeight - textDescent(); // cant ignore descent here
 				break;
 			}
+
 			for (int i = 0; i < lines.length; ++i) {
-				textLineAlignImpl(lines[i], 0, (int) posY + i * lineHeight);
+				textLineAlignImpl(lines[i], 0, (int) posY + (int) (i * realLineHeight));
 			}
 		}
 
 
+		@Override
+		public void setFontSize(float fontSize) {
+			this.size = fontSize;
+		}
 		/*
 		 * ExtendedTextRenderer specific setters/getters
 		 */
@@ -394,7 +462,6 @@ abstract public class TextBased extends Control {
 			case ITALIC:
 				if (pfont == null) {
 					pfont = createFont(new Font("Lucida Sans", Font.PLAIN, 12), 12, true, null, false);
-
 				}
 				@SuppressWarnings("deprecation")
 				Font formerFont = pfont.getFont();
@@ -424,7 +491,7 @@ abstract public class TextBased extends Control {
 
 		@Override
 		protected void textLineAlignImpl(String text, int posX, int posY) {
-			float tw = textWidth(text);
+			float tw = textWidthDuringDraw(text);
 			posX += paddingLeft;
 			switch (textAlign) {
 			case CENTER:
@@ -444,14 +511,34 @@ abstract public class TextBased extends Control {
 			}
 		}
 
-		@Override
-		public float textWidth(String text) {
+		// complicated:
+		// in ExtendedTextRenderer.draw() we call pg.setFont(). Then we set
+		// pg.setTextSize() -> this seems to change settings in the font. When we
+		// compute textWidth here, apparently the size is already correct
+		// however this view is wrong if we call textWidth from anywhere outside
+		// ExtendedTextRenderer.draw().
+		// So we got a separate method here
+		private float textWidthDuringDraw(String text) {
 			if (pfont == null) // no specific font - use standardtext implementation
 				return super.textWidth(text);
 			PFont temp = textInfo_graphics.textFont;
 			textInfo_graphics.textFont = pfont;
+			float width = textInfo_graphics.textWidth(text);
+			textInfo_graphics.textFont = temp;
+
+			return width;
+		}
+
+		@Override
+		public float textWidth(String text) {
+			if (pfont == null) // no specific font - use standardtext implementation
+				return super.textWidth(text);
+
+			PFont temp = textInfo_graphics.textFont;
+			textInfo_graphics.textFont = pfont;
 			float width = textInfo_graphics.textWidth(text) / textInfo_graphics.textSize * size;
 			textInfo_graphics.textFont = temp;
+
 			return width;
 		}
 	}
@@ -590,6 +677,7 @@ abstract public class TextBased extends Control {
 	 */
 	public void setUnderlined(boolean underline) {
 		ensureExtendedTextRenderer().setStyle(ExtendedTextRenderer.UNDERLINE, underline);
+		autosize();
 	}
 
 	/**

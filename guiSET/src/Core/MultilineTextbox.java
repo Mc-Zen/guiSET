@@ -51,7 +51,7 @@ public class MultilineTextbox extends VScrollContainer {
 	protected int cursorPosition = 0;
 	protected boolean clickSetsCursor = true;
 
-	protected int lineHeight;
+	// protected int lineHeight;
 	protected boolean needsScrolling; 		// autoscroll to cursor when text changed, dont set it
 
 	// measure time to create blink animation
@@ -86,7 +86,7 @@ public class MultilineTextbox extends VScrollContainer {
 		setPadding(3);
 		setFontSize(fontSize);
 		setTextAlign(LEFT);
-		setLineHeight((int) (fontSize * 0.2f));
+//		setLineHeight((int) (fontSize * 0.2f));
 		setCursor(TEXT);
 
 		overridesFrameShortcuts = true;
@@ -122,6 +122,8 @@ public class MultilineTextbox extends VScrollContainer {
 			pg.line(0, 0, 0, height);
 		}
 
+		int lineHeight = getLineHeight();
+
 		/*
 		 * turn 'Text'-String to lines-list. Also compute line breaks.
 		 * 
@@ -132,7 +134,7 @@ public class MultilineTextbox extends VScrollContainer {
 		/*
 		 * do this before drawing cursor
 		 */
-		fullScrollHeight = (int) (lines.size() * (getFontSize() + lineHeight) + paddingTop + paddingBottom);
+		fullScrollHeight = lines.size() * (/*getFontSize() + */lineHeight) + paddingTop + paddingBottom;
 		scrollPosition = PApplet.constrain(scrollPosition, 0, PApplet.max(0, fullScrollHeight - height));
 
 		/*
@@ -158,7 +160,7 @@ public class MultilineTextbox extends VScrollContainer {
 					int selectionX = (int) (pg.textWidth(lines.get(i).substring(0, start - breakPositions.get(i))) + getFontSize() / 40f);
 
 					int selectionWidth = (int) pg.textWidth(lines.get(i).substring(start - breakPositions.get(i), end - breakPositions.get(i)));
-					pg.rect(lineStart(lines.get(i)) + selectionX, i * (lineHeight + getFontSize()) + paddingTop - scrollPosition, selectionWidth,
+					pg.rect(lineStart(lines.get(i)) + selectionX, i * (lineHeight/* + getFontSize()*/) + paddingTop - scrollPosition, selectionWidth,
 							getFontSize() + pg.textDescent());
 				}
 			}
@@ -173,10 +175,10 @@ public class MultilineTextbox extends VScrollContainer {
 
 			float posX = getTextAlign() == PApplet.LEFT ? paddingLeft
 					: (getTextAlign() == PApplet.RIGHT ? getAvailableWidth() + paddingLeft : getAvailableWidth() / 2 + paddingLeft);
-			int i0 = (int) ((-paddingTop + scrollPosition) / (lineHeight + getFontSize())); // first (partly) visible line
+			int i0 = ((-paddingTop + scrollPosition) / (lineHeight/* + getFontSize()*/)); // first (partly) visible line
 
 			for (int i = i0; i < lines.size(); i++) {
-				float posY = i * (lineHeight + getFontSize()) + paddingTop - scrollPosition;
+				float posY = i * (lineHeight/* + getFontSize()*/) + paddingTop - scrollPosition;
 				if (posY > height) // all further lines not visible
 					break;
 				pg.text(lines.get(i), posX, posY);
@@ -190,7 +192,7 @@ public class MultilineTextbox extends VScrollContainer {
 			pg.fill(120);
 			boxedText(hint);
 			for (int i = 0; i < lines.size(); ++i) {
-				pg.text(lines.get(i), posX, i * (lineHeight + getFontSize()) + paddingTop - scrollPosition);
+				pg.text(lines.get(i), posX, i * (lineHeight/* + getFontSize()*/) + paddingTop - scrollPosition);
 			}
 			boxedText(""); // important
 		}
@@ -397,7 +399,7 @@ public class MultilineTextbox extends VScrollContainer {
 		int lineNumber = getLineToCursor();
 		float posX = lineWidthUntilCursor() + lineStart(lines.get(lineNumber)) + getFontSize() / 40f;
 		// position of upper left corner of cursor relative to first character of text
-		int posY = (int) ((lineNumber) * (lineHeight + getFontSize()));
+		int posY = ((lineNumber) * (getLineHeight()/* + getFontSize()*/));
 		float cursorHeight = getFontSize();
 
 		// perform autoscroll (i.e. when created new line)
@@ -471,7 +473,8 @@ public class MultilineTextbox extends VScrollContainer {
 	protected void setCursorByClick(int mX, int mY) { // mX, mY being coordinates relative to parent
 		// determine which line clicked on
 		int textY = mY - paddingTop + scrollPosition; // clicked y position on text (max(), because when drag, lines can be exceeded)
-		int lineNumber = (int) ((textY + lineHeight / 2) / (lineHeight + getFontSize())); // clickedPosY+lineHeight/2, to switch between two lines
+		int lineHeight = getLineHeight();
+		int lineNumber = (int) ((textY + (lineHeight - getFontSize()) / 2) / (lineHeight/* + getFontSize()*/)); 
 
 		setCursorByXAndLine(mX, Math.max(lineNumber, 0));
 	}
@@ -716,15 +719,6 @@ public class MultilineTextbox extends VScrollContainer {
 		this.clickSetsCursor = clickSetsCursor;
 	}
 
-	/**
-	 * Set the line height (distance between to lines).
-	 * 
-	 * @param lineHeight line height
-	 */
-	public void setLineHeight(int lineHeight) {
-		this.lineHeight = Math.max(0, lineHeight);
-		update();
-	}
 
 
 
@@ -837,11 +831,6 @@ public class MultilineTextbox extends VScrollContainer {
 	public boolean getClickSetsCursor() {
 		return clickSetsCursor;
 	}
-
-	public int getLineHeight() {
-		return this.lineHeight;
-	}
-
 
 
 

@@ -10,9 +10,9 @@ package guiSET.core;
  * @author Mc-Zen
  *
  */
-public class ToolStrip extends MenuItem {
+public class ContextMenu extends MenuItem {
 
-	public ToolStrip() {
+	public ContextMenu() {
 		dropDown = new MenuStrip();
 		// sync DropDown content with items
 		dropDown.items = items;

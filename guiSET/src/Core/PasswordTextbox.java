@@ -1,5 +1,8 @@
 package guiSET.core;
 
+import java.awt.Toolkit;
+import java.awt.datatransfer.Clipboard;
+import java.awt.datatransfer.StringSelection;
 
 /**
  * This is a textbox where all chars will be displayed with the passwordChar
@@ -11,6 +14,30 @@ package guiSET.core;
 public class PasswordTextbox extends Textbox {
 
 	protected char passwordChar = '*';
+
+
+	public PasswordTextbox() {
+	}
+
+	public PasswordTextbox(String hint) {
+		super(hint);
+	}
+
+	public PasswordTextbox(String hint, int width) {
+		super(hint, width);
+	}
+
+	public PasswordTextbox(String hint, int width, int fontSize) {
+		super(hint, width, fontSize);
+	}
+
+	public PasswordTextbox(int width) {
+		super(width);
+	}
+
+	public PasswordTextbox(int width, int fontSize) {
+		super(width, fontSize);
+	}
 
 
 	public char getPasswordChar() {
@@ -46,20 +73,26 @@ public class PasswordTextbox extends Textbox {
 
 	@Override
 	public void copy() {
-		String placeholder = text;
-		text = "";
-		for (int i = 0; i < placeholder.length(); i++)
-			text += passwordChar;
-		super.copy();
-		text = placeholder;
+		if (selectionStart < selectionEnd) {
+			String placeholder = "";
+			for (int i = 0; i < getSelectedText().length(); i++)
+				placeholder += passwordChar;
+
+			StringSelection selection = new StringSelection(placeholder);
+			Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+			clipboard.setContents(selection, selection);
+		}
 	}
+
 	@Override
 	public void cut() {
-		String placeholder = text;
-		text = "";
-		for (int i = 0; i < text.substring(selectionStart, selectionEnd).length(); i++)
-			text += passwordChar;
-		super.cut();
-		text = placeholder;
+		if (selectionStart < selectionEnd) {
+			copy();
+			int selStart = selectionStart;
+			deleteRange(selectionStart, selectionEnd);
+			moveCursorTo(selStart);
+			selectionStart = 0;
+			selectionEnd = 0;
+		}
 	}
 }
