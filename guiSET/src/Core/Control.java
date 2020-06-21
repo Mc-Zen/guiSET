@@ -1787,6 +1787,10 @@ public abstract class Control implements PConstants {
 	protected void setHeightImpl(int height) {
 		this.height = Math.max(Math.min(height, maxHeight), minHeight);
 	}
+	protected void setSizeImpl(int width, int height) {
+		setWidthImpl(width);
+		setHeightImpl(height);
+	}
 
 	/*
 	 * Open questions: 
@@ -2674,7 +2678,7 @@ public abstract class Control implements PConstants {
 	 * without boilerplate code.
 	 * 
 	 * <br>
-	 * You can pass an instance of Control.Setter<T>, override its run() method and
+	 * You can pass an instance of Control.Setter&#62;T&#62;, override its run() method and
 	 * then pass any number of elements.
 	 * 
 	 * <br>
@@ -2687,7 +2691,7 @@ public abstract class Control implements PConstants {
 	 * <br>
 	 * 
 	 * <code><pre>
-	Control.doForAll(new Control.Setter<Control>() {
+	Control.doForAll(new Control.Setter&#62;Control&#62;() {
 	  &#64;Override 
 	  public void run(Control c) {
 	    c.setBackgroundColor(color(0)); 
@@ -2703,7 +2707,7 @@ public abstract class Control implements PConstants {
 	 * 
 	 * <br>
 	 * <code><pre>
-	Control.doForAll( new Control.Setter<Control>() {
+	Control.doForAll( new Control.Setter&#62;Control&#62;() {
 	  &#64;Override 
 	  public void run(Control c) {
 	    c.fitContent();
@@ -2711,7 +2715,7 @@ public abstract class Control implements PConstants {
 	}, myContainer, myHScrollContainer, myScrollArea, myFlowContainer);
 	</pre></code>
 	 * 
-	 * @param T        type of object
+	 * @param <T>        type of object
 	 * @param setter   a setter (need to override the run() method and specify
 	 *                 template type)
 	 * @param elements arbitrary number of elements that are of the given template

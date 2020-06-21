@@ -11,7 +11,13 @@ import processing.event.*;
 
 
 /**
- * A value slider/progress bar.
+ * A value slider/progress bar based on the data type float.
+ * 
+ * The orientation can either be set to horizontally or vertically. The value is
+ * changed through dragging or clicking on a position on the slider. Also, by
+ * setting {@link #setWheelEnabled(boolean)}, the mouse wheel can be used to
+ * increment or decrement the value stepwise (amount can be set through
+ * scrollSpeed).
  * 
  * 
  * @author Mc-Zen
@@ -54,7 +60,7 @@ public class Slider extends Control {
 
 
 	public Slider(float minValue, float maxValue) {
-		this(minValue, maxValue, 0);
+		this(minValue, maxValue, minValue);
 	}
 
 	public Slider(float minValue, float maxValue, float value) {
@@ -68,6 +74,7 @@ public class Slider extends Control {
 	@Override
 	protected void render() {
 		pg.noStroke();
+		float intervalLength = getIntervalLength();
 
 		if (orientation == HORIZONTAL) {
 			int sliderWidth = width - ballSize - 1; // width - 2 * 0.5 * ballSize - buffer (1)
@@ -81,11 +88,10 @@ public class Slider extends Control {
 
 			// slider active background
 			pg.fill(foregroundColor);
-			pg.rect(1 + ballSize / 2, height / 2 - lineHeight / 2, (float) (sliderWidth) / Math.abs(maxValue - minValue) * (value - minValue),
-					lineHeight);
+			pg.rect(1 + ballSize / 2, height / 2 - lineHeight / 2, (float) (sliderWidth) / intervalLength * (value - minValue), lineHeight);
 
 			// slider ball
-			pg.ellipse(1 + (float) (sliderWidth) / Math.abs(maxValue - minValue) * (value - minValue) + ballSize / 2, height / 2, ballSize, ballSize);
+			pg.ellipse(1 + (float) (sliderWidth) / intervalLength * (value - minValue) + ballSize / 2, height / 2, ballSize, ballSize);
 
 
 		} else {
@@ -99,13 +105,12 @@ public class Slider extends Control {
 			pg.rect(width / 2 - lineWidth / 2, 1 + ballSize / 2, lineWidth, sliderHeight);
 
 			// slider active background
-			float activePartHeight = (float) (sliderHeight) / Math.abs(maxValue - minValue) * (value - minValue);
+			float activePartHeight = (float) (sliderHeight) / intervalLength * (value - minValue);
 			pg.fill(foregroundColor);
 			pg.rect(width / 2 - lineWidth / 2, height - (1 + ballSize / 2) - activePartHeight, lineWidth, activePartHeight);
 
 			// slider ball
-			pg.ellipse(width / 2, height - (1 + (float) (sliderHeight) / Math.abs(maxValue - minValue) * (value - minValue) + ballSize / 2), ballSize,
-					ballSize);
+			pg.ellipse(width / 2, height - (1 + (float) (sliderHeight) / intervalLength * (value - minValue) + ballSize / 2), ballSize, ballSize);
 
 		}
 	}
@@ -309,6 +314,9 @@ public class Slider extends Control {
 	}
 
 
+	protected float getIntervalLength() {
+		return Math.abs(maxValue - minValue);
+	}
 
 
 
@@ -317,15 +325,13 @@ public class Slider extends Control {
 	 */
 	protected void setBallPosition(float position) {
 		if (orientation == Orientation.HORIZONTAL) {
-			setValue(((position - ballSize / 2) * Math.abs(maxValue - minValue) / (float) (width - ballSize)) + minValue);
+			setValue(((position - ballSize / 2) * getIntervalLength() / (float) (width - ballSize)) + minValue);
 		} else {
-			setValue(((height - position - ballSize / 2) * Math.abs(maxValue - minValue) / (float) (height - ballSize)) + minValue);
+			setValue(((height - position - ballSize / 2) * getIntervalLength() / (float) (height - ballSize)) + minValue);
 
 		}
 
 	}
-
-	protected boolean startedDrag = false;
 
 	@Override
 	protected void drag(MouseEvent e) {

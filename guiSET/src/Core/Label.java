@@ -16,8 +16,8 @@ public class Label extends TextBased {
 	}
 
 	/**
-	 * Constructor for specifying text to display. Default font size is 12 and
-	 * background is transparent.
+	 * Constructor for specifying text to display; font size 12, background
+	 * transparent.
 	 * 
 	 * @param text text for label
 	 */
@@ -26,10 +26,12 @@ public class Label extends TextBased {
 	}
 
 	/**
-	 * Constructor for specifying text to display. Default font size is 12 and
-	 * background is transparent.
+	 * Constructor for specifying text and position; font size 12, background
+	 * transparent.
 	 * 
 	 * @param text text for label
+	 * @param x    x position
+	 * @param y    y position
 	 */
 	public Label(String text, int x, int y) {
 		this(text, 12);
@@ -38,7 +40,7 @@ public class Label extends TextBased {
 
 
 	/**
-	 * Constructor for specifying text to display and font size. Background is
+	 * Constructor for specifying text to display and font size; background is
 	 * transparent.
 	 * 
 	 * @param text     text for label
@@ -53,7 +55,7 @@ public class Label extends TextBased {
 	}
 
 	/**
-	 * Create an image label. Width and height of label will be set to dimensions of
+	 * Create an image label; width and height of label will be set to dimensions of
 	 * image.
 	 * 
 	 * @param image background image for label
@@ -63,7 +65,7 @@ public class Label extends TextBased {
 	}
 
 	/**
-	 * Create an image label. Width and height of label will be set to dimensions of
+	 * Create an image label; width and height of label will be set to dimensions of
 	 * image multiplied by given scale factor.
 	 * 
 	 * @param image image background image for label

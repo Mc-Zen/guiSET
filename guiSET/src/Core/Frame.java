@@ -753,6 +753,7 @@ public class Frame extends Container {
 		for (int i = 0; i < animations.size(); i++) {
 			if (animations.get(i).compare(newAnimation)) {
 				animations.remove(i);
+				break; // we shoule have finished now
 			}
 		}
 		animations.add(newAnimation);
@@ -1129,13 +1130,13 @@ public class Frame extends Container {
 			break;
 		case MouseEvent.RELEASE:
 			notDragging = false; // reset this in case it has been set to true during a drag
-			
+
 			if (draggedElement != null) {
 
 				// release after drag: Only draggedElement should receive this event.
 				stopPropagation(); // not even necessary, we dont call mouseEvent()
 
-				draggedElement.dragRelease(e);
+				draggedElement.release(e);
 				draggedElement.pPressed = false;
 				draggedElement.handleEvent(draggedElement.releaseListener, e);
 

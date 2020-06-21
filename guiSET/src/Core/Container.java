@@ -91,8 +91,7 @@ public class Container extends TextBased {
 
 
 	public Container(int width, int height) {
-		setWidthImpl(width);
-		setHeightImpl(height);
+		setSizeImpl(width, height);
 
 
 		// It seems that ArrayList has a default capacity of 10 at first. This might be

@@ -6,7 +6,7 @@ import processing.core.PApplet;
 
 /**
  * Parse a string as menu. This can be a lot easier than creating a menu by
- * hand. Items are wrapped by "<>" and start with their text, followed by an
+ * hand. Items are wrapped by "&#60;&#62;" and start with their text, followed by an
  * optional ":" after which the callback method comes. Finally a shortcut can be
  * specified by starting with "-".
  * 

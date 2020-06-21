@@ -889,6 +889,7 @@ public class MenuItem extends TextBased {
 		// without releasing the mouse in between. We act like this was a move event.
 		// notDragging is set to false again in Frame when the next release happens
 		notDragging = true;
+		draggedElement = null;
 
 		// if item is menu header, open and close on press
 		if (type == MENU_HEADER) {
@@ -909,15 +910,12 @@ public class MenuItem extends TextBased {
 	@Override
 	protected void release(MouseEvent e) {
 
-
 		// if item is subitem, open and close on release
 		if (type == MENU_ITEM) {
 			open();
-			print(text);
 		}
 		update();
 		stopPropagation();
-		drop = false;
 	}
 
 
