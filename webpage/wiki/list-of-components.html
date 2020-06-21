@@ -53,11 +53,12 @@
             <li><a href="#HFlowContainer">HFlowContainer</a>, <a href="#HScrollContainer">HScrollContainer</a></li>
             <li><a href="#FlowContainer">FlowContainer</a>, <a href="#ScrollArea">ScrollArea</a></li>
             <li><a href="#Checkbox">Checkbox</a>, <a href="#Switch">Switch</a></li>
-            <li><a href="#Slider">Slider</a></li>
+            <li><a href="#Slider">Slider</a>, <a href="#Knob">Knob</a></li>
             <li><a href="#Textbox">Textbox</a>, <a href="#PasswordTextbox">PasswordTextbox</a>, <a
                     href="#MultilineTextbox">MultilineTextbox</a></li>
             <li><a href="#ListView">ListView</a>, <a href="#ListItem">ListItem</a></li>
-            <li><a href="#MenuBar">MenuBar</a>, <a href="#MenuItem">MenuItem</a>, <a href="#ToolStrip">ToolStrip</a>
+            <li><a href="#MenuBar">MenuBar</a>, <a href="#MenuItem">MenuItem</a>, <a
+                    href="#MenuTextbox">MenuTextbox</a>, <a href="#ContextMenu">ContextMenu</a>
             </li>
 
         </ul>
@@ -119,7 +120,8 @@
                 href="https://mc-zen.github.io/guiSET/guiSET/reference/guiSET/core/VFlowContainer.html">reference</a>)
         </h4>
         <ul>
-            <li>Added items are automatically placed one below the other. Ignores coordinates of items. Paddings and margins are honoured, </li>
+            <li>Added items are automatically placed one below the other. Ignores coordinates of items. Paddings and
+                margins are honoured, </li>
         </ul>
 
         <h4 id="VScrollContainer">VScrollContainer &nbsp; &nbsp; (<a
@@ -188,6 +190,15 @@
             <li><span class="events">Events: valueChange</span></li>
         </ul>
 
+        <h4 id="Knob">Knob &nbsp; &nbsp; (<a
+                href="https://mc-zen.github.io/guiSET/guiSET/reference/guiSET/core/Knob.html">reference</a>)</h4>
+        <ul>
+            <li>A floating point value knob. User can set value by clicking, pulling or scrolling. Minimum and maximum
+                can be set freely. Drag orientation can be set to <code>Knob.HORIZONTAL</code> or
+                <code>Knob.VERTICAL</code> with <code>knob.setOrientation(int orientation)</code>. </li>
+            <li><span class="events">Events: valueChange</span></li>
+        </ul>
+
         <h4 id="Textbox">Textbox &nbsp; &nbsp; (<a
                 href="https://mc-zen.github.io/guiSET/guiSET/reference/guiSET/core/Textbox.html">reference</a>)</h4>
         <ul>
@@ -230,7 +241,7 @@
         <h4 id="ListItem">ListItem &nbsp; &nbsp; (<a
                 href="https://mc-zen.github.io/guiSET/guiSET/reference/guiSET/core/ListItem.html">reference</a>)</h4>
         <ul>
-            <li>Look at <a href="#ListView">ListView</a>).</li>
+            <li>Look at <a href="#ListView">ListView</a>.</li>
         </ul>
 
         <h4 id="MenuBar">MenuBar &nbsp; &nbsp; (<a
@@ -247,8 +258,14 @@
             <li><span class="events">Events: select, itemSelect</span></li>
         </ul>
 
-        <h4 id="ToolStrip">ToolStrip &nbsp; &nbsp; (<a
-                href="https://mc-zen.github.io/guiSET/guiSET/reference/guiSET/core/ToolStrip.html">reference</a>)</h4>
+        <h4 id="MenuTextbox">MenuTextbox &nbsp; &nbsp; (<a
+                href="https://mc-zen.github.io/guiSET/guiSET/reference/guiSET/core/MenuTextbox.html">reference</a>)</h4>
+        <ul>
+            <li>Experimental</li>
+        </ul>
+
+        <h4 id="ContextMenu">ContextMenu &nbsp; &nbsp; (<a
+                href="https://mc-zen.github.io/guiSET/guiSET/reference/guiSET/core/ContextMenu.html">reference</a>)</h4>
         <ul>
             <li>Can be used to create menu strips that are independent from the main menu, such as appear on right click
                 on some area.</li>
