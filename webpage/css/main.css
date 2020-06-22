@@ -66,7 +66,16 @@ nav li {
 .main_container a {
     color: #1493b9;
 }
+.main_container a:visited {
+    color: #0a5c96;
+}
+.main_container a:active {
+    color: #0b3858;
+}
 
+.main_container a:hover {
+    color: #0c3858;
+}
 .main_container ul{
     text-align: left;
 }
@@ -142,7 +151,7 @@ nav li {
 code {
     padding: .2em .4em;
     font-size: 85%;
-    background-color: rgba(27,31,35,.05);
+    background-color: rgba(27,31,35,.07);
     border-radius: 3px;
 }
 
