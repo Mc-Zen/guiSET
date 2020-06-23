@@ -1,5 +1,5 @@
 # guiSET - Preparing the docs and registration at the moment
-The REAL good GUIs for the Processing language ;)  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;    ([Website](https://mc-zen.github.io/guiSET/), [Wiki](https://mc-zen.github.io/guiSET/webpage/wiki/wiki.html), [Getting started](https://mc-zen.github.io/guiSET/webpage/wiki/introduction-for-beginners.html))
+Create advanced graphical user interfaces in Processing  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;    ([Website](https://mc-zen.github.io/guiSET/), [Wiki](https://mc-zen.github.io/guiSET/webpage/wiki/wiki.html), [Getting started](https://mc-zen.github.io/guiSET/webpage/wiki/introduction-for-beginners.html))
 
 ### Little Introduction:
 
