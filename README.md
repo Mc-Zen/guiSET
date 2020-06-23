@@ -8,7 +8,7 @@ Ok, so once I was working on a rather complex project with Processing and badly 
 
 ### What is this
 
-_guiSET_ is a large library to include proper _graphical user interfaces_ in Processing sketches. It features quite a few classes to create Buttons, Textboxes, Lists, nested Containers and many more (for a complete list look [here](../../wiki/List-of-available-Components)).
+_guiSET_ is a large library to include proper _graphical user interfaces_ in Processing sketches. It features quite a few classes to create Buttons, Textboxes, Lists, nested Containers and many more (for a complete list look [here](https://mc-zen.github.io/guiSET/webpage/wiki/list-of-components.html)).
 The main goals of _guiSET_ are:
 - Highly customizable styles
 - Listeners and a lot of functionality
@@ -16,5 +16,5 @@ The main goals of _guiSET_ are:
 
 
 
-If you're new to _guiSET_ take a look at the [Introduction](../../wiki/Introduction-for-beginners) and the [Examples](../../wiki/Examples). 
-Further elaborations and the main concept can be found [here](../../wiki/The-deep-shit) if you want to develop own Components or contribute to the library. 
+If you're new to _guiSET_ take a look at the [Introduction](https://mc-zen.github.io/guiSET/webpage/wiki/introduction-for-beginners.html) and the [Examples](https://mc-zen.github.io/guiSET/webpage/examples/examples.html). 
+Further elaborations and the main concept can be found [here](https://mc-zen.github.io/guiSET/webpage/wiki/creating-own-components.html) and [here](https://mc-zen.github.io/guiSET/webpage/wiki/the-deep-shit.html) if you want to develop own components or contribute to the library. 
