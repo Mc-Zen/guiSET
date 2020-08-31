@@ -88,18 +88,24 @@
 
         <h1 id="s1">Short summary about the inheritance of the component classes</h1>
         <p>
-            Control is the (abstract) base class for all visual components. Container subclasses Control. As do Button,
-            Label, Checkbox, MenuItem, ListItem and Slider.
+            <code>Control</code> is the (abstract) base class for all visual components. <code>Container</code>
+            subclasses <code>Control</code>. As do <code>Slider</code> and the again abstract <code>TextBased</code>
+            class. It is the base for all components that feature text in some form. These are <code>Button</code>,
+            <code>Label</code>, <code>Checkbox</code>, <code>MenuItem</code> and <code>ListItem</code>.
         </p>
         <p>
-            <code>Frame</code>, VFlowContainer, HFlowContainer, ScrollArea, ListView and FlowContainer all extend
-            Container.
+            <code>Frame</code>, <code>VFlowContainer</code>, <code>HFlowContainer</code>, <code>ScrollArea</code>,
+            <code>ListView</code> and <code>FlowContainer</code> all extend <code>Container</code>.
         </p>
         <p>
-            V- and HScrollContainer subclass the according FlowContainers and MultilineTextbox and Textbox are
-            extensions of these two.
+            <code>VFlowContainer</code> and <code>HScrollContainer</code> subclass the according flow containers and
+            <code>MultilineTextbox</code> and <code>Textbox</code> are extensions of these two.
         </p>
-
+        <p>
+            Finally we have <code>Knob</code> (inherits from <code>Slider</code>), <code>ContextMenu</code>
+            (<code>MenuItem</code>), <code>MenuBar</code> (<code>HFlowContainer</code>) and <code>MenuTextbox</code> as
+            well as <code>MenuSeparator</code> (both from <code>MenuItem</code>).
+        </p>
 
 
 
@@ -108,25 +114,33 @@
         <p>
             Each instance of a component has a <code>PGraphics</code> object that stores the current look as pixel
             image. Its content
-            is only changed within the <code>render()</code> method. Containers draw the <code>PGraphics</code> of their
+            is only changed within the <code>render()</code> method. Containers draw the <code>PGraphics</code> of
+            their
             children onto their own
-            <code>PGraphics</code> and so on. The <code>Frame</code> instance finally draws itself onto the sketch (the
+            <code>PGraphics</code> and so on. The <code>Frame</code> instance finally draws itself onto the sketch
+            (the
             <code>PApplet</code>).
         </p>
         <p>
-            This way of rendering and storing is chosen to keep the number of drawing processes as low as possible. If
-            an element is changed visually, <code>render()</code> will be called and thus the graphics updated. But any
+            This way of rendering and storing is chosen to keep the number of drawing processes as low as possible.
+            If
+            an element is changed visually, <code>render()</code> will be called and thus the graphics updated. But
+            any
             siblings or
             children do not need to be re-rendered as their look is still stored in their own <code>PGraphics</code>
             object. However,
-            this comes at a prize of memory. This is not a problem with modern computers and moderate or even generous
-            numbers of elements. If, nevertheless, you aspire to have a list with a few thousand items displayed on the
-            screen, this technique can get expensive. I'm thinking about adding functionalty to enable rendering every
+            this comes at a prize of memory. This is not a problem with modern computers and moderate or even
+            generous
+            numbers of elements. If, nevertheless, you aspire to have a list with a few thousand items displayed on
+            the
+            screen, this technique can get expensive. I'm thinking about adding functionalty to enable rendering
+            every
             time the graphics are required, without storing the image. This descision could be per-item.
         </p>
         <p>
             Each time the user of the library sets the state of a property that changes the look of the element, the
-            setter will call the <code>update()</code> method which sets a <code>dirty</code> flag and also initiates a
+            setter will call the <code>update()</code> method which sets a <code>dirty</code> flag and also
+            initiates a
             propagation through the
             tree structure way up to <code>Frame</code>, setting the <code>dirty</code> flag for every parent,
             'grand'-parent etc.
@@ -147,7 +161,8 @@
             for visibility). Here is also where i.e. flow or scroll containers give their items a new location.
         </p>
         <p>
-            For example this is what the implementation of <code>render()</code> in <code>Container</code> looks like.
+            For example this is what the implementation of <code>render()</code> in <code>Container</code> looks
+            like.
         </p>
         <pre class="prettyprint">
 @Override
@@ -162,7 +177,8 @@ protected void render() {
   drawDefaultDisabled();
 }</pre>
         <p>
-            In <code>VFlowContainer</code> the <code>x</code> and <code>y</code> properties of the item are ignored and
+            In <code>VFlowContainer</code> the <code>x</code> and <code>y</code> properties of the item are ignored
+            and
             replaced by other rules:
         </p>
         <pre class="prettyprint">
@@ -175,7 +191,7 @@ protected void render() {
   for (Control c : items) {
     if (c.visible) {
       renderItem(c, c.marginLeft + paddingLeft, usedSpace + c.marginTop);
-      usedSpace += (c.height + c.marginTop + c.marginBottom);
+      usedSpace += (c.getHeight() + c.marginTop + c.marginBottom);
     }
   }
   drawDefaultDisabled();
@@ -187,17 +203,20 @@ protected void render() {
 
         <h1 id="s3">More details about the render procedure</h1>
         <p>
-            The actual rendering takes place like this: the container usually draws its own background and then calls
+            The actual rendering takes place like this: the container usually draws its own background and then
+            calls
             <code>renderItem(Control c, int x ,int y)</code>. This method sets the
             <code>offsetX</code>/<code>offsetY</code> properties of
             <code>c</code> according to given
-            coordinates and sets them outside the container if the opacity is 0. This is not necessary if visibility is
+            coordinates and sets them outside the container if the opacity is 0. This is not necessary if visibility
+            is
             set to false because <code>mouseEvent(int, int)</code> already checks for visiblity. If the graphics of
             <code>c</code>
             are "dirty",
             <code>preRender()</code> is called which creates the <code>PGraphics</code> instance (only if size has
             changed) and calls
-            <code>pg.beginDraw()</code>. Then the items custom <code>render()</code> method is executed and finally tint
+            <code>pg.beginDraw()</code>. Then the items custom <code>render()</code> method is executed and finally
+            tint
             applied for
             opacity.
         </p>
@@ -212,17 +231,22 @@ protected void render() {
         <p>
             Generally, mouse events are received by <code>Frame</code> from the sketch (<code>PApplet</code>). As a
             container it checks if the
-            mouse is currently locally within the space it takes up and if so, passes the event on to all children which
+            mouse is currently locally within the space it takes up and if so, passes the event on to all children
+            which
             in turn do the same.
         </p>
         <p>
-            In fact, it is sort of the other way round: After checking if mouse coordinates are within the containers
-            bounds rectangle, it first gives the children the chance to process the event as they are always on top of
+            In fact, it is sort of the other way round: After checking if mouse coordinates are within the
+            containers
+            bounds rectangle, it first gives the children the chance to process the event as they are always on top
+            of
             and not below the container. Afterwards the container calls its own event routine.
         </p>
         <p>
-            This way the topmost elements (high z-coordinate) in the application get the event first. They can then call
-            <code>stopPropagation()</code> which sets a flag that no more mouse events should be processed. This way you
+            This way the topmost elements (high z-coordinate) in the application get the event first. They can then
+            call
+            <code>stopPropagation()</code> which sets a flag that no more mouse events should be processed. This way
+            you
             can click on
             a menu item without firing a button beneath the menu strip. PRESS, RELEASE and DRAG always stop the
             propagation.
@@ -230,28 +254,36 @@ protected void render() {
         <p>
             Still, containers can override the method boolean <code>containerPreItemsMouseEvent(int x, int y)</code>
             which is called
-            before the event is passed on to the children and if returns false, will prevent the children from receiving
+            before the event is passed on to the children and if returns false, will prevent the children from
+            receiving
             the event. Scroll containers i.e. use this to implement a scroll bar.
         </p>
         <p>
-            As mentioned above, containers use the method <code>renderItem(Control c, int x, int y)</code>. This method
+            As mentioned above, containers use the method <code>renderItem(Control c, int x, int y)</code>. This
+            method
             also stores
-            the given x and y in the elements properties <code>offsetX</code> and <code>offsetY</code>. These are the
+            the given x and y in the elements properties <code>offsetX</code> and <code>offsetY</code>. These are
+            the
             actual coordinates relative
-            to the parent and they are the ones that are checked when this element receives a mouse event and it needs
+            to the parent and they are the ones that are checked when this element receives a mouse event and it
+            needs
             to decide whether the mouse is within itself or not.
         </p>
         <p>
-            When a container receives a mouse event (parent calls <code>mouseEvent(int x, int y)</code>), it passes x
+            When a container receives a mouse event (parent calls <code>mouseEvent(int x, int y)</code>), it passes
+            x
             and y on to the
             children but subtracting the own offset coordinates. During setup <code>Frame</code> registers a
             <code>mouseEvent(MouseEvent)</code>
-            method at Processings <code>PApplet</code>. This is called by <code>PApplet</code> before draw() each time
+            method at Processings <code>PApplet</code>. This is called by <code>PApplet</code> before draw() each
+            time
             there is a new mouse event.
-            <code>Frame</code> then starts the mouse event propagation within <b>guiSET</b>. The <code>MouseEvent</code>
+            <code>Frame</code> then starts the mouse event propagation within <b>guiSET</b>. The
+            <code>MouseEvent</code>
             object is stored in
             the static
-            field <code>Control.currentMouseEvent</code>, is not passed around while the event is recursively handled
+            field <code>Control.currentMouseEvent</code>, is not passed around while the event is recursively
+            handled
             but every
             element can access it.
         </p>
@@ -266,7 +298,8 @@ protected void render() {
 
         <h1 id="s5">Events in general</h1>
         <p>
-            The programmer can add certain listeners to his objects. Mouse listeners are available for all classes. They
+            The programmer can add certain listeners to his objects. Mouse listeners are available for all classes.
+            They
             can be assigned and given a callback method
             with the <code>addMouseListener()</code> method, specifying the type with a string
             ("press", "release"...). If no target is specified with the overloaded
@@ -323,17 +356,17 @@ protected void someFunctionThatChangesObervedState(){
         <pre class="prettyprint">
 protected EventListener myListener;
 public void addMyListener(String methodName, Object target) {
-myListener = createEventListener(methodName, target, MouseEvent.class);
+    myListener = createEventListener(methodName, target, MouseEvent.class);
 }
 public void addMyListener(String methodName) {
-addMyListener(methodName, getPApplet());
+    addMyListener(methodName, getPApplet());
 }
 public void removeMyListener(){
-myListener = null; // setting listener to null is the way to do it
+    myListener = null; // setting listener to null is the way to do it
 }
 protected void someFunctionThatChangesObervedState(){
-// do stuff
-MouseEvent eventThatWeGotFromSomewhere;
+    // do stuff
+    MouseEvent eventThatWeGotFromSomewhere;
 handleEvent(myListener, eventThatWeGotFromSomewhere);
 }</pre>
 
@@ -347,22 +380,29 @@ handleEvent(myListener, eventThatWeGotFromSomewhere);
         <h1 id="s6">PApplet and the static Frame</h1>
         <p>
             No big deal: for creating the <code>PGraphics</code> instances we need to call <code>PApplet</code>s
-            <code>createGraphics(int, int)</code> method. Therefore we always need a reference to the sketch class which
+            <code>createGraphics(int, int)</code> method. Therefore we always need a reference to the sketch class
+            which
             is solved by passing <code>this</code> to the <code>Frame</code> constructor in the sketch code.
         </p>
         <p>
             Big deal: for getting things like text-width or text-leading we also need the <code>PApplet</code> or at
             least
-            a functioning <code>PGraphics</code> which can only be achieved properly by having the <code>PApplet</code>
-            (at least to my knowledge). Unfortunately, textWidth is needed for autosizing <i>before</i> the graphics are
-            created for the first time during rendering. Autosizing may be performed multiple times during setup when
-            setting text or padding of an element. In the current solution, a static <code>PFont</code> is created at
-            the time that <code>PApplet</code> is know and it can be used by every element. Somehow, though the values
+            a functioning <code>PGraphics</code> which can only be achieved properly by having the
+            <code>PApplet</code>
+            (at least to my knowledge). Unfortunately, textWidth is needed for autosizing <i>before</i> the graphics
+            are
+            created for the first time during rendering. Autosizing may be performed multiple times during setup
+            when
+            setting text or padding of an element. In the current solution, a static <code>PFont</code> is created
+            at
+            the time that <code>PApplet</code> is know and it can be used by every element. Somehow, though the
+            values
             differs just a little from the results of <code>pg.textWidth(String)</code> although I copied my
             implementation from Processings source code. If anyone knows the solution, please tell me.
         </p>
         <p>
-            Now, as we only need one instance of <code>Frame</code> per sketch and as every element needs access to it,
+            Now, as we only need one instance of <code>Frame</code> per sketch and as every element needs access to
+            it,
             it is stored in the static <code>Frame.frame0</code> variable. This one is never null as it is filled
             by a dummy (called <i>nullFrame</i>) and replaced when using the <code>Frame(PApplet parent)</code>
             constructor.
