@@ -31,7 +31,7 @@ void draw() {
  */
 public class VerticalLabel extends Label {
   VerticalLabel(String text) {
-    setText(text); // calls autosize
+    setText(text); // calls autosizing
   }
 
 
@@ -51,14 +51,14 @@ public class VerticalLabel extends Label {
     // temporarily switch width and height for drawDefaultText() to work out nicely
     int tempWidth = width;
     int tempHeight = height;
-    height = tempWidth;
-    width = tempHeight;
+    setHeightNoUpdate(tempWidth);  // Set height to width without updating
+    setWidthNoUpdate(tempHeight);  // Set width to height without updating
 
     drawDefaultText();
     pg.popMatrix();    // return to intial transformation
 
-    width = tempWidth;  // reset width and height
-    height = tempHeight;
+    setHeightNoUpdate(tempHeight); // reset width and height
+    setWidthNoUpdate(tempWidth);
   }
 
   /*

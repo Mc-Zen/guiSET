@@ -42,8 +42,8 @@ import java.lang.reflect.InvocationTargetException;
 /**
  * (Abstract) Base class for all other visual components.
  * 
- * It provides all basic style attributes and methods. It also comes with the
- * essential event handling and some rendering methods.
+ * It provides all basic style attributes and methods. It also comes with the essential event
+ * handling and some rendering methods.
  * 
  */
 
@@ -58,19 +58,17 @@ public abstract class Control implements PConstants {
 
 
 	/**
-	 * Parent container of this element. The Frame itself is the master container
-	 * and every element that should be visible has to be a child of Frame in some
-	 * nested way.
+	 * Parent container of this element. The Frame itself is the master container and every element that
+	 * should be visible has to be a child of Frame in some nested way.
 	 */
 	protected Control parent;
 
 
 
 	/**
-	 * Image object that always contains the updated looks of this element. When
-	 * parents are rendered they project the PGraphics of their children onto
-	 * themselves. In this way only the changed parts have to be re-rendered and not
-	 * the entire gui.
+	 * Image object that always contains the updated looks of this element. When parents are rendered
+	 * they project the PGraphics of their children onto themselves. In this way only the changed parts
+	 * have to be re-rendered and not the entire gui.
 	 */
 	protected PGraphics pg;
 
@@ -94,41 +92,37 @@ public abstract class Control implements PConstants {
 	/*
 	 * Status properties
 	 */
-	protected boolean focusable = true; 		// determines if this control can be focused at all
-	protected boolean focused = false; 			// Dont'change focused from outside
-	protected boolean stickyFocus = false; 		// when true than its focused state can't be overridden by other elements
-											 		// requesting focus, only when itself calls blur
+	protected boolean focusable = true; 		// Determines if this control can be focused at all
+	protected boolean focused = false; 			// Don't change focused, Frame does that
+	protected boolean stickyFocus = false; 		// If true, then its focused state can't be overridden by other elements requesting focus, only when
+											 		// itself calls blur
 
-	protected boolean enabled = true; 			// if false, then will not receive mouse events, also different look
+	protected boolean enabled = true; 			// If false, then will not receive mouse events, also different look can be implemented
 	protected boolean visible = true;
 
 
-	/*
-	 * Coordinates and size relative to container (won't be changed by
-	 * flowContainer!).
-	 */
+
+	// Coordinates and size relative to container (won't be changed by a flow/scroll container!).
 	protected int x;
 	protected int y;
-	// z-index of element; only has an effect when element is in a
-	// panelcontainer (not a flow- or scroll container)
+	// z-index of element; only has an effect when element is in a panelcontainer (not a flow- or scroll
+	// container)
 	protected int z;
 
-	protected int width; 				// is always between minWidth and maxWidth
-	protected int height; 				// is always between minHeight and maxHeight
+	private int width; 					// Is always between minWidth and maxWidth
+	private int height; 				// Is always between minHeight and maxHeight
 
-	protected int minWidth = 1; 		// never below 1
+	protected int minWidth = 1; 		// Never below 1
 	protected int maxWidth = 100000;
-	protected int minHeight = 1; 		// never below 1
+	protected int minHeight = 1; 		// Never below 1
 	protected int maxHeight = 100000;
 
-	protected int marginLeft; 			// margins are not included in width/height and honored by containers when
-								 			// layouting their items
+	protected int marginLeft; 			// Margins are not included in width/height and honored by containers when layouting their items
 	protected int marginTop;
 	protected int marginRight;
 	protected int marginBottom;
 
-	protected int paddingLeft; 			// paddings are included in width/height and i.e. regarded when performing
-								 			// autosize
+	protected int paddingLeft; 			// Paddings are included in width/height and regarded when performing autosize
 	protected int paddingRight;
 	protected int paddingTop;
 	protected int paddingBottom;
@@ -155,22 +149,21 @@ public abstract class Control implements PConstants {
 	public static final ImageMode FILL = ImageMode.FILL_DISTORT;
 
 	/**
-	 * Image mode: enlarge image so it fills out entire object centered, parts of
-	 * the image might be hidden; fits the larger side
+	 * Image mode: enlarge image so it fills out entire object centered, parts of the image might be
+	 * hidden; fits the larger side
 	 */
 	public static final ImageMode FIT = ImageMode.FIT_FILL_ALL;
 
 	/**
-	 * Image mode: place image centered in the object without cropping it, so it
-	 * fits the smaller side
+	 * Image mode: place image centered in the object without cropping it, so it fits the smaller side
 	 */
 	public static final ImageMode FIT_INSIDE = ImageMode.FIT_INSIDE;
 
 	protected int backgroundColor;
 	protected int foregroundColor;
 	protected int borderColor;
-	protected int hoverColor; 			// first set automatically with backgroundColor, can be changed programatically
-	protected int pressedColor; 		// first set automatically with backgroundColor, can be changed programatically
+	protected int hoverColor; 			// First set automatically with backgroundColor, can be changed programatically
+	protected int pressedColor; 		// First set automatically with backgroundColor, can be changed programatically
 
 	/*
 	 * Visual background color is the actually displayed bg-color, while
@@ -184,9 +177,9 @@ public abstract class Control implements PConstants {
 	protected int borderWidth;
 	protected int borderRadius;
 
-	protected int cursor;				// type of cursor to display when hovering over this control
+	protected int cursor;				// Type of cursor to display when hovering over this control
 
-	protected float opacity = 1; 		// opacity in percent from 0 to 1
+	protected float opacity = 1.0f; 	// Opacity in percent from 0 to 1
 
 
 	/*
@@ -206,14 +199,6 @@ public abstract class Control implements PConstants {
 	 */
 	protected boolean overridesFrameShortcuts = false;
 
-	// Some useful colors
-	public static final int BLACK = -16777216;
-	public static final int WHITE = -1;
-	public static final int TRANSPARENT = 0;
-	public static final int SELECTION_BLUE = -13395457;
-	public static final int TEXT_CURSOR_COLOR = -12171706; // color(70)
-
-	protected static final int DEFAULT_SCROLL_SPEED = 40;
 
 
 	public enum RenderingMethod {
@@ -221,17 +206,15 @@ public abstract class Control implements PConstants {
 	}
 
 	/**
-	 * Elements graphics are drawn on a buffer image. This element needs to be
-	 * re-rendered only if it changed and not if siblings or parents changed. This
-	 * saves CPU resources but needs more memory.
+	 * Elements graphics are drawn on a buffer image. This element needs to be re-rendered only if it
+	 * changed and not if siblings or parents changed. This saves CPU resources but needs more memory.
 	 */
 	public static final RenderingMethod BUFFERED_RENDERING = RenderingMethod.BUFFERED_RENDERING;
 	/**
-	 * Elements graphics are drawn on parent buffer. Each change of any element
-	 * makes a re-rendering of this element necessary. There are exceptions though:
-	 * if this parents mode is {@link #BUFFERED_RENDERING} and a sibling of the
-	 * parent has changed, then the element that is buffered by the parent needs no
-	 * redrawing.
+	 * Elements graphics are drawn on parent buffer. Each change of any element makes a re-rendering of
+	 * this element necessary. There are exceptions though: if this parents mode is
+	 * {@link #BUFFERED_RENDERING} and a sibling of the parent has changed, then the element that is
+	 * buffered by the parent needs no redrawing.
 	 */
 	public static final RenderingMethod NON_BUFFERED_RENDERING = RenderingMethod.NON_BUFFERED_RENDERING;
 
@@ -243,9 +226,15 @@ public abstract class Control implements PConstants {
 
 
 
-	/*
-	 * default values
-	 */
+	// Some useful colors
+	public static final int BLACK = -16777216;
+	public static final int WHITE = -1;
+	public static final int TRANSPARENT = 0;
+	public static final int SELECTION_BLUE = -13395457;
+	public static final int TEXT_CURSOR_COLOR = -12171706; // color(70)
+
+	// default values
+
 	public static int defaultBackgroundColor = WHITE;
 	public static int defaultForegroudColor = BLACK;
 	public static int defaultTextColor = defaultForegroudColor;
@@ -265,6 +254,7 @@ public abstract class Control implements PConstants {
 	public static int defaultMarginTop = 0;
 	public static int defaultMarginBottom = 0;
 
+	protected static int defaultScrollSpeed = 40; // px per frame
 
 	public Control() {
 
@@ -289,10 +279,10 @@ public abstract class Control implements PConstants {
 
 		borderColor = defaultBorderColor;
 		borderRadius = defaultBorderRadius;
-		this.borderWidth = Math.max(0, borderWidth);
+		this.borderWidth = Math.max(0, defaultBorderWidth);
 
 		if (renderingMethod == RenderingMethod.BUFFERED_RENDERING) {
-			renderer = new BasicRenderer();
+			renderer = new BasicBufferedRenderer();
 		} else {
 			renderer = new ParentGraphicsRenderer();
 		}
@@ -325,10 +315,9 @@ public abstract class Control implements PConstants {
 
 
 	/**
-	 * Request the Frame component to focus this object. The Frame decides upon the
-	 * demand and can set this elements focused state to true. There can only be one
-	 * focused element at a time and it is stored in the Frames focusedElement
-	 * property.
+	 * Request the Frame component to focus this object. The Frame decides upon the demand and can set
+	 * this elements focused state to true. There can only be one focused element at a time and it is
+	 * stored in the Frames focusedElement property.
 	 * 
 	 * @see Frame#focusedElement focusedElement.
 	 */
@@ -347,8 +336,8 @@ public abstract class Control implements PConstants {
 	}
 
 	/**
-	 * Request the Frame component to blur this object (set focus to false),
-	 * duplicate of {@link #blur()}.
+	 * Request the Frame component to blur this object (set focus to false), duplicate of
+	 * {@link #blur()}.
 	 * 
 	 * @see Frame#focusedElement focusedElement.
 	 */
@@ -375,10 +364,10 @@ public abstract class Control implements PConstants {
 	 */
 	protected final void preRender() {
 		// only create graphics when size changed
-		if (width != pWidth || height != pHeight) {
-			pg = getPApplet().createGraphics(width, height);
-			pWidth = width;
-			pHeight = height;
+		if (getWidth() != pWidth || getHeight() != pHeight) {
+			pg = getPApplet().createGraphics(getWidth(), getHeight());
+			pWidth = getWidth();
+			pHeight = getHeight();
 			pg.beginDraw();
 		} else {
 			pg.beginDraw();
@@ -404,6 +393,7 @@ public abstract class Control implements PConstants {
 	 * attributes like backgroundColor, borderColor, borderWidth, image, imageMode,
 	 * ..., textAlign, fontColor, fontSize.
 	 * 
+	 * Containers need to check their items for visibility!
 	 */
 	protected abstract void render();
 
@@ -418,42 +408,98 @@ public abstract class Control implements PConstants {
 
 
 	/**
-	 * The renderers renderAll method is called by renderItem(). There are different
-	 * versions for best performance.
+	 * The renderers renderAll method is called by renderItem(). There are different versions for best
+	 * performance.
 	 * 
-	 * Standard is the basic renderer which does not implement opacity. If opacity
-	 * (or in future shadow) is set, the renderer is replaced by an
-	 * ExtendedRenderer.
+	 * Standard is the basic renderer which does not implement opacity. If opacity (or in future shadow)
+	 * is set, the renderer is replaced by an ExtendedRenderer.
 	 * 
+	 * Renderers do not check for visibility!
 	 */
 	protected Renderer renderer;
 
 	abstract class Renderer {
 		abstract void renderAll(int x, int y, PGraphics parentGraphics);
+
+		// only to be called by renderer
+		protected void drawBorder() {
+			if (borderWidth > 0) {
+				pg.noFill();
+				pg.strokeWeight(borderWidth);
+				pg.stroke(borderColor);
+				pg.rect(borderWidth / 2, borderWidth / 2, width - borderWidth, height - borderWidth, borderRadius);
+			}
+		}
 	}
+
+	abstract class NonBufferedRenderer extends Renderer {
+
+		// constrain drawing to this elements area and its parents area
+		protected void clip(PGraphics parentGraphics) {
+			int x0 = Math.max(0, offsetX), y0 = Math.max(0, offsetY);
+			int x1 = Math.min(offsetX + getWidth(), parent.getWidth()), y1 = Math.min(offsetY + getHeight(), parent.getHeight());
+			parentGraphics.clip(x0, y0, x1 - x0, y1 - y0);
+		}
+
+		protected void prepareGraphics(PGraphics parentGraphics) {
+			clip(parentGraphics);
+			parentGraphics.pushMatrix();
+			parentGraphics.translate(offsetX, offsetY);
+			pg = parentGraphics;
+		}
+
+
+	}
+
+	/*
+	 * All renderers:
+	 *  - call render()
+	 *  - draw border
+	 *  - set offsetX, offsetY
+	 *  
+	 * Buffer renderers:
+	 *  - call preRender
+	 * 	- project graphics onto parentGraphics
+	 * 
+	 * Non Buffer renderers:
+	 *  - clip, translate
+	 *  
+	 * Extended renderers:
+	 * 	- opacity
+	 * 	- future: shadow
+	 */
 
 	// The standard renderer. Draw looks on own buffer graphics. Can get expensive
 	// with memory if using a lot of elements.
-	class BasicRenderer extends Renderer {
+	class BasicBufferedRenderer extends Renderer {
 		void renderAll(int x, int y, PGraphics parentGraphics) {
+			offsetX = x;
+			offsetY = y;
+
+			// no need to check for opacity. If it weren't 1 this would be an ExtendedBufferedRenderer
+
 			if (dirty) {
-				dirty = false;
+				dirty = false; // before render(), maybe render() wants to call update for some reason
 				preRender();
 				render();
 				drawBorder();
 				pg.endDraw();
 			}
-			offsetX = x;
-			offsetY = y;
 			parentGraphics.image(pg, x, y);
 		}
 	}
 
 	// Renderer that implements opacity and in future also box-shadows. Also draw
 	// looks on own buffer graphics.
-	class ExtendedRenderer extends Renderer {
+	class ExtendedBufferedRenderer extends Renderer {
 		@Override
 		void renderAll(int x, int y, PGraphics parentGraphics) {
+			offsetX = x;
+			offsetY = y;
+
+			if (opacity == 0)
+				return;
+
 			if (dirty) {
 				dirty = false;
 				preRender();
@@ -461,48 +507,37 @@ public abstract class Control implements PConstants {
 				drawBorder();
 				pg.endDraw();
 			}
-			if (opacity == 0) { // make this thing inaccessible to mouse events
-				offsetX = width;
-				offsetY = height;
-				return;
-			}
+
 			// TODO: draw shadow
-			if (opacity < 1) {
+			if (opacity < 1.0f) {
 				parentGraphics.tint(255, (int) (opacity * 256));
 				parentGraphics.image(pg, x, y);
 				parentGraphics.tint = false;
 			} else {
 				parentGraphics.image(pg, x, y);
 			}
-
-			offsetX = x;
-			offsetY = y;
 		}
 	}
 
 	// This renderer doesn't use a buffer PGraphics -> save RAM
 	// Instead draw on parent graphics.
 	// Issues: Items can overflow parent and their own bounds
-	class ParentGraphicsRenderer extends Renderer {
+	class ParentGraphicsRenderer extends NonBufferedRenderer {
 		@Override
 		void renderAll(int x, int y, PGraphics parentGraphics) {
+			offsetX = x;
+			offsetY = y;
 
-			// constrain drawing to this elements area and its parents area
-			int x0 = Math.max(0, x), y0 = Math.max(0, y);
-			int x1 = Math.min(x + width, parent.width), y1 = Math.min(y + height, parent.height);
-			parentGraphics.clip(x0, y0, x1 - x0, y1 - y0);
+			// no need to check for opacity. If it weren't 1 this would be a ParentGraphicsExtendedRenderer
 
-			parentGraphics.pushMatrix();
-			parentGraphics.translate(x, y);
-			pg = parentGraphics;
+			prepareGraphics(parentGraphics);
 			PFont f = parentGraphics.textFont;
 
 			render(); // no preRender(), pg.endDraw() needed
 			drawBorder();
 			if (f != null)
 				parentGraphics.textFont(f); // might need to reset font if textRenderer is an extended one
-			offsetX = x;
-			offsetY = y;
+
 			parentGraphics.popMatrix();
 			parentGraphics.noClip();
 		}
@@ -510,41 +545,44 @@ public abstract class Control implements PConstants {
 
 
 	// As ParentGraphicsRenderer but implementing opactiy and in future box-shadows.
-	class ParentGraphicsExtendedRenderer extends Renderer {
+	class ParentGraphicsExtendedRenderer extends NonBufferedRenderer {
 		@Override
 		void renderAll(int x, int y, PGraphics parentGraphics) {
-			// constrain drawing to this elements area and its parents area
-			int x0 = Math.max(0, x), y0 = Math.max(0, y);
-			int x1 = Math.min(x + width, parent.width), y1 = Math.min(y + height, parent.height);
-			parentGraphics.clip(x0, y0, x1 - x0, y1 - y0);
-
-			parentGraphics.pushMatrix();
-			parentGraphics.translate(x, y);
-			pg = parentGraphics;
-			PFont f = parentGraphics.textFont;
-
-			// TODO: draw shadow
-			if (opacity == 0) { // make this thing inaccessible to mouse events
-				offsetX = width;
-				offsetY = height;
-				return;
-			}
-			if (opacity < 1) {
-				parentGraphics.tint(255, (int) (opacity * 256));
-				render(); // no preRender()/pg.endDraw() needed
-				drawBorder();
-				// parentGraphics.tint = false;
-			} else {
-				render(); // no preRender()/pg.endDraw() needed
-				drawBorder();
-			}
-
-			if (f != null)
-				parentGraphics.textFont(f); // might need to reset font if textRenderer is an extended one
 			offsetX = x;
 			offsetY = y;
-			parentGraphics.popMatrix();
-			parentGraphics.noClip();
+
+			if (opacity == 0)
+				return;
+
+
+			if (opacity < 1.0f) {
+				pg = getPApplet().createGraphics(getWidth(), getHeight());
+				pg.beginDraw();
+
+				// TODO: draw shadow
+				render(); // no preRender() needed
+				drawBorder();
+				pg.endDraw();
+
+
+				parentGraphics.tint(255, (int) (opacity * 256));
+				parentGraphics.image(pg, x, y);
+				parentGraphics.tint = false;
+
+				pg = null; // gc may delete the temporary graphics
+
+			} else {
+				prepareGraphics(parentGraphics);
+				PFont f = parentGraphics.textFont;
+
+				render(); // no preRender()/pg.endDraw() needed
+				drawBorder();
+
+				if (f != null)
+					parentGraphics.textFont(f); // might need to reset font if textRenderer is an extended one
+				parentGraphics.popMatrix();
+				parentGraphics.noClip();
+			}
 		}
 	}
 
@@ -577,8 +615,8 @@ public abstract class Control implements PConstants {
 	 */
 
 	/**
-	 * Method that is called when properties of a Component that influence the
-	 * appearance change, i.e. called in most setters.
+	 * Method that is called when properties of a Component that influence the appearance change, i.e.
+	 * called in most setters.
 	 */
 	protected void update() {
 		dirty = true;
@@ -587,9 +625,8 @@ public abstract class Control implements PConstants {
 		}
 	}
 
-	/*
-	 * Force a re-render of this Component. This shouldn't be needed, but just in
-	 * case.
+	/**
+	 * Force a re-render of this Component. This shouldn't be needed, but just in case.
 	 */
 	public void forceRender() {
 		update();
@@ -876,19 +913,10 @@ public abstract class Control implements PConstants {
 
 
 
-	private void drawBorder() {
-		if (borderWidth > 0) {
-			pg.noFill();
-			pg.strokeWeight(borderWidth);
-			pg.stroke(borderColor);
-			pg.rect(borderWidth / 2, borderWidth / 2, width - borderWidth, height - borderWidth, borderRadius);
-		}
-	}
 
 	/**
-	 * Standard background drawing method - this method can be used by any control
-	 * to draw its background. Features backgroundColors, borders, images and
-	 * transparency.
+	 * Standard background drawing method - this method can be used by any control to draw its
+	 * background. Features backgroundColors, images and transparency. Borders are drawn in renderer.
 	 */
 	protected void drawDefaultBackground() {
 		if (image == null) {
@@ -900,12 +928,6 @@ public abstract class Control implements PConstants {
 			} else {
 				pg.noFill();
 			}
-			/*if (borderWidth > 0) {
-				pg.strokeWeight(borderWidth);
-				pg.stroke(borderColor);
-			} else {
-				pg.noStroke();
-			}*/
 			pg.noStroke();
 			pg.rect(borderWidth / 2, borderWidth / 2, width - borderWidth, height - borderWidth, borderRadius);
 
@@ -966,7 +988,7 @@ public abstract class Control implements PConstants {
 
 			}
 
-			// is there is a border radius we need to mask the image
+			// If there is a border radius, we need to mask the image
 			if (borderRadius > 0) {
 				PGraphics maskImage = getPApplet().createGraphics(width, height);
 				maskImage.beginDraw();
@@ -976,7 +998,7 @@ public abstract class Control implements PConstants {
 				pg.mask(maskImage);
 			}
 
-			// still draw border
+			// Draw pressedColor/hoverColor over image.
 			if (borderWidth > 0) {
 				if (pPressed) {
 					pg.fill(pressedColor);
@@ -985,19 +1007,16 @@ public abstract class Control implements PConstants {
 				} else {
 					pg.noFill();
 				}
-				pg.strokeWeight(borderWidth);
-				pg.stroke(borderColor);
+				pg.noStroke();
 				pg.rect(borderWidth / 2, borderWidth / 2, width - borderWidth, height - borderWidth, borderRadius);
 			}
-
 		}
 	}
 
 
 	/**
-	 * Standard disabled-state drawing feature. If called at end of render() it will
-	 * draw a transparent grey rectangle upon the control to indicate its disabled
-	 * state.
+	 * Standard disabled-state drawing feature. If called at end of render() it will draw a transparent
+	 * grey rectangle upon the control to indicate its disabled state.
 	 */
 	protected void drawDefaultDisabled() {
 		if (!enabled) {
@@ -1011,7 +1030,6 @@ public abstract class Control implements PConstants {
 		if (color != visualBackgroundColor) {
 			visualBackgroundColor = color;
 			update();
-
 		}
 	}
 
@@ -1085,12 +1103,10 @@ public abstract class Control implements PConstants {
 
 
 	/**
-	 * Set an Anchor of type TOP BOTTOM, LEFT or RIGHT to a certain value. This also
-	 * immediately sets the position or size of this element if necessary according
-	 * to the anchors.
+	 * Set an Anchor of type TOP BOTTOM, LEFT or RIGHT to a certain value. This also immediately sets
+	 * the position or size of this element if necessary according to the anchors.
 	 * 
-	 * It is not possible to use this method if this element has not been added to a
-	 * parent.
+	 * It is not possible to use this method if this element has not been added to a parent.
 	 * 
 	 * This version sets the anchor without changing its type like
 	 * {@link #setPercentageAnchor(int, int)} and {@link #setPixelAnchor(int, int)}.
@@ -1141,8 +1157,8 @@ public abstract class Control implements PConstants {
 	}
 
 	/**
-	 * Set any number of anchors by passing first a direction and then the value
-	 * (more than four - one for each direction - don't make sense though).
+	 * Set any number of anchors by passing first a direction and then the value (more than four - one
+	 * for each direction - don't make sense though).
 	 * 
 	 * @param anchors_and_values anchors and values
 	 */
@@ -1155,8 +1171,8 @@ public abstract class Control implements PConstants {
 	}
 
 	/**
-	 * Set an anchor like with {@link #setAnchor(int, int)} but definitely use the
-	 * {@link #PIXEL_MODE}. The anchor will be set to @param value pixels.
+	 * Set an anchor like with {@link #setAnchor(int, int)} but definitely use the {@link #PIXEL_MODE}.
+	 * The anchor will be set to @param value pixels.
 	 * 
 	 * @param anchor LEFT, RIGHT, TOP or BOTTOM
 	 * @param value  value
@@ -1188,9 +1204,8 @@ public abstract class Control implements PConstants {
 	}
 
 	/**
-	 * Set an anchor like in {@link #PERCENTAGE_MODE}. This will place or resize the
-	 * element in percent relative to the size of the parent (give i.e. 100 for
-	 * 100%).
+	 * Set an anchor like in {@link #PERCENTAGE_MODE}. This will place or resize the element in percent
+	 * relative to the size of the parent (give i.e. 100 for 100%).
 	 * 
 	 * @param anchor anchor
 	 * @param value  value
@@ -1238,8 +1253,8 @@ public abstract class Control implements PConstants {
 
 
 	/**
-	 * Get anchor mode for given anchor direction. Returns a boolean
-	 * {@link #PIXEL_MODE} (false) or {@link #PERCENTAGE_MODE} (true).
+	 * Get anchor mode for given anchor direction. Returns a boolean {@link #PIXEL_MODE} (false) or
+	 * {@link #PERCENTAGE_MODE} (true).
 	 * 
 	 * @param anchor anchor direction
 	 * @return anchor mode
@@ -1260,8 +1275,7 @@ public abstract class Control implements PConstants {
 	}
 
 	/**
-	 * Get the value of an anchor. Returns {@link Control#ANCHOR_NOT_SET} if the
-	 * anchor is inactive.
+	 * Get the value of an anchor. Returns {@link Control#ANCHOR_NOT_SET} if the anchor is inactive.
 	 * 
 	 * @param anchor anchor direction
 	 * @return anchor value
@@ -1282,20 +1296,17 @@ public abstract class Control implements PConstants {
 	}
 
 	/**
-	 * Add an anchor (types are TOP, RIGHT, BOTTOM, LEFT). Anchors ensure the
-	 * element stays at fixed relative positions when the parent is resized. If
-	 * opposite anchors are set, the element will be resized as well. When this
-	 * function is called, the element will remember the CURRENT(!) distances to the
-	 * parents bounds. Multiple anchors can be set with this method.
+	 * Add an anchor (types are TOP, RIGHT, BOTTOM, LEFT). Anchors ensure the element stays at fixed
+	 * relative positions when the parent is resized. If opposite anchors are set, the element will be
+	 * resized as well. When this function is called, the element will remember the CURRENT(!) distances
+	 * to the parents bounds. Multiple anchors can be set with this method.
 	 * 
-	 * This currently only works with {@link #PIXEL_MODE} and not with
-	 * {@link #PERCENTAGE_MODE}.
+	 * This currently only works with {@link #PIXEL_MODE} and not with {@link #PERCENTAGE_MODE}.
 	 * 
-	 * It is not possible to use this method if this element has not been added to a
-	 * parent.
+	 * It is not possible to use this method if this element has not been added to a parent.
 	 * 
-	 * @param anchor accepts TOP, RIGHT, LEFT or BOTTOM. Pass up to four anchor
-	 *               types (order doesn't matter)
+	 * @param anchor accepts TOP, RIGHT, LEFT or BOTTOM. Pass up to four anchor types (order doesn't
+	 *               matter)
 	 */
 	public void addAutoAnchors(int... anchor) {
 		if (parent == null) {
@@ -1424,9 +1435,8 @@ public abstract class Control implements PConstants {
 
 
 	/**
-	 * Containers call this for all items to inform them that their size has
-	 * changed. Items might want to adjust their size or position according to that
-	 * if they have active anchors.
+	 * Containers call this for all items to inform them that their size has changed. Items might want
+	 * to adjust their size or position according to that if they have active anchors.
 	 */
 	protected final void parentResized() {
 		if (anchorMode != 0) {
@@ -1505,8 +1515,10 @@ public abstract class Control implements PConstants {
 
 
 
-	/*
+	/*__________________________________________________________________________________________________________
+	 * 
 	 * AUTO-SIZE
+	 * 
 	 * 
 	 * autosizeRule specifies actions that will set width/height new when i.e.
 	 * padding, text or fontSize is changed. Each class can override it to specify
@@ -1561,13 +1573,12 @@ public abstract class Control implements PConstants {
 
 
 	/**
-	 * Called indirectly through autosize(). This is the component-specific
-	 * implementation of autosizing.
+	 * Called indirectly through autosize(). This is the component-specific implementation of
+	 * autosizing.
 	 */
 	/**
-	 * Autosize width routine to be overriden by subclasses. Do not set the width,
-	 * just return the desired value. If a negative value is returned, then the
-	 * result is ignored.
+	 * Autosize width routine to be overriden by subclasses. Do not set the width, just return the
+	 * desired value. If a negative value is returned, then the result is ignored.
 	 * 
 	 * @return new desired width
 	 */
@@ -1576,23 +1587,18 @@ public abstract class Control implements PConstants {
 	}
 
 	/**
-	 * Autosize width routine to be overriden by subclasses. Do not set the height,
-	 * just return the desired value. If a negative value is returned, then the
-	 * result is ignored.
+	 * Autosize width routine to be overriden by subclasses. Do not set the height, just return the
+	 * desired value. If a negative value is returned, then the result is ignored.
 	 * 
 	 * @return new desired height
 	 */
 	protected int autoHeight() {
 		return -1;
 	}
-//	protected void autosizeRule() {
-//		
-//	}
-
 
 	/**
-	 * Called in setPadding, setText, setFontSize, setBold etc. Redirects to
-	 * autosizeRule() if autosizing is enabled
+	 * Called in setPadding, setText, setFontSize, setBold etc. Redirects to autoHeight()/autoWidth() if
+	 * autosizing is enabled
 	 */
 	protected final void autosize() {
 		if ((autosizing & AUTOSIZE_WIDTH) != 0) {
@@ -1607,25 +1613,21 @@ public abstract class Control implements PConstants {
 				setHeightNoUpdate(h);
 			}
 		}
-//		if (autosizing != AUTOSIZE_NONE) {
-//			 autosizeRule();
-//		}
 	}
 
 
 
 
 
-	/*
-	 * _______________________________________________________________________________________________________________
-	 * STYLE SETTER
-	 * _______________________________________________________________________________________________________________
+	/* __________________________________________________________________________________________________________
+	 * 
+	 * STYLE SETTERS
 	 * 
 	 */
 
 	/**
-	 * Set x-coordinate of element relative to parent. Does not apply if element is
-	 * added to containers that provide some own layout.
+	 * Set x-coordinate of element relative to parent. Does not apply if element is added to containers
+	 * that provide some own layout.
 	 * 
 	 * @param x pixel integer
 	 */
@@ -1649,8 +1651,8 @@ public abstract class Control implements PConstants {
 
 
 	/**
-	 * Set y-coordinate of element relative to parent. Does not apply if element is
-	 * added to containers that provide some own layout.
+	 * Set y-coordinate of element relative to parent. Does not apply if element is added to containers
+	 * that provide some own layout.
 	 * 
 	 * @param y pixel integer
 	 */
@@ -1672,8 +1674,7 @@ public abstract class Control implements PConstants {
 	}
 
 	/**
-	 * Set z-coordinate of element. Elements are sorted by z-index when overlapping
-	 * on the screen.
+	 * Set z-coordinate of element. Elements are sorted by z-index when overlapping on the screen.
 	 * 
 	 * @param z z-index
 	 */
@@ -1735,11 +1736,6 @@ public abstract class Control implements PConstants {
 	 *  4. minWidth/maxWidth (strongest)
 	 *  
 	 *  
-	 *  TODO 
-	 *  autosize is not called if ANY anchor is set. This way we can surpress autosize by setting 
-	 *  an anchor (f.e. only LEFT, which does nothing on its own). 
-	 *  
-	 * 
 	 * 
 	 * Changing width/height also needs to be followed by one or more of the
 	 * following actions (no pun intended^^), depending on who changes it:
@@ -1787,6 +1783,7 @@ public abstract class Control implements PConstants {
 	protected void setHeightImpl(int height) {
 		this.height = Math.max(Math.min(height, maxHeight), minHeight);
 	}
+
 	protected void setSizeImpl(int width, int height) {
 		setWidthImpl(width);
 		setHeightImpl(height);
@@ -1796,7 +1793,7 @@ public abstract class Control implements PConstants {
 	 * Open questions: 
 	 * - Update if position changed in this method?
 	 * TODO
-	 * - use parent.getAvailable height for anchors?
+	 * - use parent.getAvailableHeight for anchors?
 	 * 
 	 * Returns true if size has been changed
 	 */
@@ -1912,8 +1909,8 @@ public abstract class Control implements PConstants {
 
 
 	/**
-	 * Set minimum width of element in pixel. Width of element will never be less
-	 * than minWidth. Minimum width cannot be smaller than 1.
+	 * Set minimum width of element in pixel. Width of element will never be less than minWidth. Minimum
+	 * width cannot be smaller than 1.
 	 * 
 	 * @param minWidth minimum width in pixel
 	 */
@@ -1925,8 +1922,8 @@ public abstract class Control implements PConstants {
 	}
 
 	/**
-	 * Set maximum width of element in pixel. Width of element will never be greater
-	 * than maxWidth. Default is 100000.
+	 * Set maximum width of element in pixel. Width of element will never be greater than maxWidth.
+	 * Default is 100000.
 	 * 
 	 * @param maxWidth maximum width in pixel
 	 */
@@ -1938,8 +1935,8 @@ public abstract class Control implements PConstants {
 
 
 	/**
-	 * Set minimum height of element in pixel. Width of element will never be less
-	 * than minHeight. Minimum height cannot be smaller than 1.
+	 * Set minimum height of element in pixel. Width of element will never be less than minHeight.
+	 * Minimum height cannot be smaller than 1.
 	 * 
 	 * @param minHeight minimum height in pixel
 	 */
@@ -1951,8 +1948,8 @@ public abstract class Control implements PConstants {
 	}
 
 	/**
-	 * Set maximum height of element in pixel. Width of element will never be
-	 * greater than maxHeight. Default is 100000.
+	 * Set maximum height of element in pixel. Width of element will never be greater than maxHeight.
+	 * Default is 100000.
 	 * 
 	 * @param maxHeight maximum height in pixel
 	 */
@@ -1965,8 +1962,8 @@ public abstract class Control implements PConstants {
 
 
 	/**
-	 * Set the plain background color of the element. Actual displayed color can
-	 * vary if the element is i.e. hovered over.
+	 * Set the plain background color of the element. Actual displayed color can vary if the element is
+	 * i.e. hovered over.
 	 * 
 	 * @param clr integer rgb color
 	 */
@@ -2097,8 +2094,8 @@ public abstract class Control implements PConstants {
 	/**
 	 * Set the cursor displayed when mouse is over this element.
 	 * 
-	 * @param cursor Integer between 0 and 11. Can use constants like ARROW, CROSS,
-	 *               HAND, MOVE, TEXT, or WAIT.
+	 * @param cursor Integer between 0 and 11. Can use constants like ARROW, CROSS, HAND, MOVE, TEXT, or
+	 *               WAIT.
 	 */
 	public void setCursor(int cursor) {
 		if (cursor >= 0 && cursor < 12) {
@@ -2107,8 +2104,8 @@ public abstract class Control implements PConstants {
 	}
 
 	/**
-	 * Set the (background) image of the element. This is not implemented in all but
-	 * in most classes. The image is copied!
+	 * Set the (background) image of the element. This is not implemented in all but in most classes.
+	 * The image is copied!
 	 * 
 	 * @param image PImage or PGraphics object.
 	 */
@@ -2128,8 +2125,7 @@ public abstract class Control implements PConstants {
 	}
 
 	/**
-	 * Set the image filling mode. @see {@link #FILL}, @see {@link #FIT} @see
-	 * {@link #FIT_INSIDE}.
+	 * Set the image filling mode. @see {@link #FILL}, @see {@link #FIT} @see {@link #FIT_INSIDE}.
 	 * 
 	 * @param imageMode. Use Control.FILL, Control.FIT or Control.FIT_INSIDE
 	 */
@@ -2139,8 +2135,8 @@ public abstract class Control implements PConstants {
 	}
 
 	/**
-	 * Set background to a vertical gradient between the two given colors. This
-	 * removes the background image if set.
+	 * Set background to a vertical gradient between the two given colors. This removes the background
+	 * image if set.
 	 * 
 	 * @param clr1 top color
 	 * @param clr2 bottom color
@@ -2159,8 +2155,8 @@ public abstract class Control implements PConstants {
 	}
 
 	/**
-	 * Set the enabled state of this element. If false it will not receive any
-	 * events and be displayed in a different (mostly greyish) way.
+	 * Set the enabled state of this element. If false it will not receive any events and be displayed
+	 * in a different (mostly greyish) way.
 	 * 
 	 * @param enabled enabled state
 	 */
@@ -2172,8 +2168,7 @@ public abstract class Control implements PConstants {
 	}
 
 	/**
-	 * Set the visibility. Invisible elements will not be rendered and receive not
-	 * events.
+	 * Set the visibility. Invisible elements will not be rendered and receive not events.
 	 * 
 	 * @param visible visibility state
 	 */
@@ -2185,8 +2180,7 @@ public abstract class Control implements PConstants {
 	}
 
 	/**
-	 * Just in case someone expects a "setVisibility" method instead of
-	 * "setVisible".
+	 * Just in case someone expects a "setVisibility" method instead of "setVisible".
 	 * 
 	 * @param visible visibility state
 	 */
@@ -2212,8 +2206,8 @@ public abstract class Control implements PConstants {
 	public void setOpacity(float opacity) {
 		this.opacity = Math.max(0, Math.min(1, opacity));
 
-		if (renderer instanceof BasicRenderer) {
-			renderer = new ExtendedRenderer();
+		if (renderer instanceof BasicBufferedRenderer) {
+			renderer = new ExtendedBufferedRenderer();
 		} else if (renderer instanceof ParentGraphicsRenderer) {
 			renderer = new ParentGraphicsExtendedRenderer();
 		}
@@ -2221,9 +2215,8 @@ public abstract class Control implements PConstants {
 	}
 
 	/**
-	 * Apply margins to all sides of the element. In FlowContainers and similar
-	 * containers neighboring elements this determines the distance to neighbor
-	 * elements and the parents bounds.
+	 * Apply margins to all sides of the element. In FlowContainers and similar containers neighboring
+	 * elements this determines the distance to neighbor elements and the parents bounds.
 	 * 
 	 * @param all margin in pixel
 	 */
@@ -2310,8 +2303,8 @@ public abstract class Control implements PConstants {
 	}
 
 	/**
-	 * Apply individual padding to all sides of the element. Padding will create
-	 * space inside the element between borders and content.
+	 * Apply individual padding to all sides of the element. Padding will create space inside the
+	 * element between borders and content.
 	 * 
 	 * @param top    top padding in pixel
 	 * @param right  right padding in pixel
@@ -2362,10 +2355,9 @@ public abstract class Control implements PConstants {
 
 
 
-	/*
-	 * _______________________________________________________________________________________________________________
-	 * STYLE GETTER
-	 * _______________________________________________________________________________________________________________
+	/* __________________________________________________________________________________________________________
+	 * 
+	 * STYLE GETTERS
 	 * 
 	 */
 
@@ -2511,6 +2503,8 @@ public abstract class Control implements PConstants {
 		return paddingLeft;
 	}
 
+
+
 	/*
 	 * Enable user of the library to adopt a set of visual properties from another element. 
 	 * 
@@ -2567,8 +2561,8 @@ public abstract class Control implements PConstants {
 
 
 	/**
-	 * Enable user of the library to adopt a set of visual properties from another
-	 * element. @see {@link Control#copyStyle(Control, long)}.
+	 * Enable user of the library to adopt a set of visual properties from another element. @see
+	 * {@link Control#copyStyle(Control, long)}.
 	 * 
 	 * 
 	 * @param source element to adopt properties from.
@@ -2579,10 +2573,9 @@ public abstract class Control implements PConstants {
 
 
 	/**
-	 * Enable user of the library to adopt a set of visual style properties from
-	 * another element. <br>
-	 * Call copyStyle(Control, attribs) to read given attributes (separated by
-	 * bitwise OR) from given element c: <br>
+	 * Enable user of the library to adopt a set of visual style properties from another element. <br>
+	 * Call copyStyle(Control, attribs) to read given attributes (separated by bitwise OR) from given
+	 * element c: <br>
 	 * <br>
 	 * 
 	 * <code><pre>myElement.copyStyle(otherElement, PADDING_LEFT | MARGIN_BOTTOM, FOREGROUND_COLOR);</pre></code>
@@ -2590,27 +2583,23 @@ public abstract class Control implements PConstants {
 	 * <br>
 	 * <br>
 	 * 
-	 * Options are: {@link #PADDING_LEFT}, {@link #PADDING_RIGHT},
-	 * {@link #PADDING_TOP}, {@link #PADDING_BOTTOM}, {@link #MARGIN_LEFT},
-	 * {@link #MARGIN_RIGHT}, {@link #MARGIN_TOP}, {@link #MARGIN_BOTTOM},
-	 * {@link #BACKGROUND_COLOR}, {@link #HOVER_COLOR}, {@link #PRESSED_COLOR},
-	 * {@link #FOREGROUND_COLOR}, {@link #BORDER_WIDTH}, {@link #BORDER_RADIUS},
-	 * {@link #BORDER_COLOR}, {@link #OPACITY},
+	 * Options are: {@link #PADDING_LEFT}, {@link #PADDING_RIGHT}, {@link #PADDING_TOP},
+	 * {@link #PADDING_BOTTOM}, {@link #MARGIN_LEFT}, {@link #MARGIN_RIGHT}, {@link #MARGIN_TOP},
+	 * {@link #MARGIN_BOTTOM}, {@link #BACKGROUND_COLOR}, {@link #HOVER_COLOR}, {@link #PRESSED_COLOR},
+	 * {@link #FOREGROUND_COLOR}, {@link #BORDER_WIDTH}, {@link #BORDER_RADIUS}, {@link #BORDER_COLOR},
+	 * {@link #OPACITY},
 	 * 
 	 * <br>
 	 * <br>
-	 * Only if source and target have text properties: {@link #TEXT_COLOR},
-	 * {@link #TEXT_ALIGN}, {@link #TEXT_ALIGN_Y}, {@link #FONT_SIZE},
-	 * {@link #LINE_HEIGHT}.
+	 * Only if source and target have text properties: {@link #TEXT_COLOR}, {@link #TEXT_ALIGN},
+	 * {@link #TEXT_ALIGN_Y}, {@link #FONT_SIZE}, {@link #LINE_HEIGHT}.
 	 * 
 	 * <br>
 	 * <br>
-	 * There some shortcuts to include several properties, like {@link #ALL},
-	 * {@link #COLORS}, {@link #MARGIN} (all margins), {@link #PADDING} (all
-	 * paddings), {@link #SPACING} (all margins and paddings),
-	 * {@link #BACKGROUND_COLORS} (background-, hover-, and pressedColor),
-	 * {@link #BORDER} (border-width, -color and -radius), {@link #TEXT_PROPERTIES}
-	 * (all text properties).
+	 * There some shortcuts to include several properties, like {@link #ALL}, {@link #COLORS},
+	 * {@link #MARGIN} (all margins), {@link #PADDING} (all paddings), {@link #SPACING} (all margins and
+	 * paddings), {@link #BACKGROUND_COLORS} (background-, hover-, and pressedColor), {@link #BORDER}
+	 * (border-width, -color and -radius), {@link #TEXT_PROPERTIES} (all text properties).
 	 * 
 	 * 
 	 * @param source  element to adopt properties from.
@@ -2673,18 +2662,16 @@ public abstract class Control implements PConstants {
 	}
 
 	/**
-	 * (A bit more advanced!) Do a given method for all given objects (not
-	 * necessarily UI elements). The idea is to apply setters to several elements
-	 * without boilerplate code.
+	 * (A bit more advanced!) Do a given method for all given objects (not necessarily UI elements). The
+	 * idea is to apply setters to several elements without boilerplate code.
 	 * 
 	 * <br>
-	 * You can pass an instance of Control.Setter&#62;T&#62;, override its run() method and
-	 * then pass any number of elements.
+	 * You can pass an instance of Control.Setter&#62;T&#62;, override its run() method and then pass
+	 * any number of elements.
 	 * 
 	 * <br>
-	 * You need to specify an object class, i.e. Control if you only need to use
-	 * methods from Control or Textbox, if you would like to use setters individual
-	 * to Textbox. <br>
+	 * You need to specify an object class, i.e. Control if you only need to use methods from Control or
+	 * Textbox, if you would like to use setters individual to Textbox. <br>
 	 * Example:
 	 * 
 	 * <br>
@@ -2715,13 +2702,12 @@ public abstract class Control implements PConstants {
 	}, myContainer, myHScrollContainer, myScrollArea, myFlowContainer);
 	</pre></code>
 	 * 
-	 * @param <T>        type of object
-	 * @param setter   a setter (need to override the run() method and specify
-	 *                 template type)
-	 * @param elements arbitrary number of elements that are of the given template
-	 *                 type
+	 * @param          <T> type of object
+	 * @param setter   a setter (need to override the run() method and specify template type)
+	 * @param elements arbitrary number of elements that are of the given template type
 	 */
 
+	@SafeVarargs // well i guess an error could occur if the user passes a bad method
 	public static <T> void doForAll(Setter<T> setter, T... elements) {
 		for (T c : elements) {
 			setter.run(c);
@@ -2731,9 +2717,8 @@ public abstract class Control implements PConstants {
 
 
 	/**
-	 * Create a transition animation for a property of this Component. The
-	 * {@link Frame} will deal with changing this property in appropriate steps to
-	 * create the effect.
+	 * Create a transition animation for a property of this Component. The {@link Frame} will deal with
+	 * changing this property in appropriate steps to create the effect.
 	 * 
 	 * @param attribute    name of attribute to animate
 	 * @param aimedValue   final value for the attribute
@@ -2750,24 +2735,89 @@ public abstract class Control implements PConstants {
 
 
 
+
 	/*
-	 * _______________________________________________________________________________________________________________
-	 * EVENT METHODS
-	 * _______________________________________________________________________________________________________________
+	 * __________________________________________________________________________________________________________
+	 * 
+	 * EVENTS
+	 * 
+	 *
+	 * The programmer can add certain listeners to his objects. Mouse listeners are available for all
+	 * classes. They can be assigned and given a callback method with the addMouseListener() method,
+	 * specifying the type with a string ("press", "release"...). If no target is specified with the
+	 * overloaded addMouseListener() method, papplet will be assumed. Of each type, exactly one listener
+	 * can be assigned to each object. A listener is null if it is not set/active.
+	 * 
+	 * Moreover classes like Frame and Textbox feature key listeners or an itemchanged-listener
+	 * (ListView, MenuItem). These listeners are usually assigned with extra methods like
+	 * "addItemChangeListener()" etc.
+	 
+	 * 
+	 * 
+	 * 
+	 * 
+	 * How to make an event listener in a new class
+	 * --------------------------------------------
+	 * - In the class, create an EventListener with 
+	 *   an appropriate name (don't initialize it)
+	 * - Provide adding and removing methods 
+	 * - Also provide a simple adding method that 
+	 *   defaults target to papplet (the sketch)
+	 * 
+	 *   An example with no arguments. 
+	 *   
+	 *   
+	 
+		 protected EventListener myListener;
+		 
+		 public void addMyListener(String methodName, Object target) {
+		     myListener = createEventListener(methodName, target, null);
+		 }
+		 
+		 public void addMyListener(String methodName) {
+		     addMyListener(methodName, getPApplet());
+		 }
+		 
+		 public void removeMyListener(){
+	     	myListener = null; // setting listener to null is the way to do it
+		 }
+		 
+	  	 protected void someFunctionThatChangesObervedState(){
+	      	// do stuff
+	      	handleEvent(myListener, null);
+	     }  
+	     
+	
+	 *
+	 * If arguments shall be passed to the callback function, then pass their class to the
+	 * createEventListener() method as third argument. When handling the event, pass the argument here.
+	 * Look at the example from focusListener.
 	 * 
 	 */
 
-	class EventListener {
+	/*
+	 * Base listener object implementing the handle() method
+	 */
+	abstract class EventListener {
+		abstract void handle(Object... args);
+	}
+
+	/**
+	 * Listener object, storing a callback method, the target object and if the callback shall be called
+	 * with the optional args or without.
+	 */
+	protected class ReflectionEventListener extends EventListener {
 		Method method;
 		Object target;
 		boolean invokeWithArgs;
 
-		EventListener(Method m, Object t, boolean invokeWithArgs) {
+		ReflectionEventListener(Method m, Object t, boolean invokeWithArgs) {
 			method = m;
 			target = t;
 			this.invokeWithArgs = invokeWithArgs;
 		}
 
+		@Override
 		void handle(Object... args) {
 			try {
 				if (this.invokeWithArgs) { // might have no args
@@ -2783,31 +2833,72 @@ public abstract class Control implements PConstants {
 		}
 	}
 
-
-
-	protected void handleEvent(EventListener callback, Object... args) {
-		if (callback == null)
-			return;
-		callback.handle(args);
+	// Functional interface for a lambda with no parameters
+	public interface Predicate {
+		void run();
 	}
 
-	protected EventListener createEventListener(String methodName, Object target, Class<?>... args_class) {
-		Class<?> c = target.getClass();
-		try { // try with args
-			Method m = c.getMethod(methodName, args_class);
-			return new EventListener(m, target, true);
-		} catch (NoSuchMethodException nsme) {
-			try { // try without args (maybe user forgot or does not need them)
-				Method m = c.getMethod(methodName);
-				return new EventListener(m, target, false);
-			} catch (NoSuchMethodException nsme2) {
-				getPApplet().die("There is no public " + methodName + "() method with the right arguments.");
-			}
+	// Functional interface for a lambda with 1 parameter
+	public interface Predicate1<T> {
+		void run(T args);
+	}
+
+	// Functional interface for a lambda with 2 parameters
+	public interface Predicate2<T, U> {
+		void run(T arg1, U arg2);
+	}
+
+
+	// Listener object, storing the lambda callback with no parameters
+	protected class LambdaEventListener extends EventListener {
+		Predicate p;
+
+		LambdaEventListener(Predicate p) {
+			this.p = p;
 		}
-		return null;
+
+		@Override
+		void handle(Object... args) {
+			p.run();
+		}
+	}
+
+	// Listener object, storing the lambda callback with 1 parameter
+	protected class LambdaEventListener1<T> extends EventListener {
+		Predicate1<T> p;
+
+		LambdaEventListener1(Predicate1<T> p) {
+			this.p = p;
+		}
+
+		@SuppressWarnings("unchecked")
+		@Override
+		void handle(Object... args) {
+			p.run((T) args[0]); // This cast is ok because we only call with the right object
+		}
+	}
+
+	// Listener object, storing the lambda callback with 2 parameters
+	protected class LambdaEventListener2<T, U> extends EventListener {
+		Predicate2<T, U> p;
+
+		LambdaEventListener2(Predicate2<T, U> p) {
+			this.p = p;
+		}
+
+		@SuppressWarnings("unchecked")
+		@Override
+		void handle(Object... args) {
+			p.run((T) args[0], (U) args[1]); // These casts are ok because we only call with the right objects
+		}
 	}
 
 
+
+
+	/*
+	 * Standard Listeners (slots)
+	 */
 
 	protected EventListener pressListener;
 	protected EventListener releaseListener;
@@ -2819,35 +2910,66 @@ public abstract class Control implements PConstants {
 	protected EventListener resizeListener;
 	protected EventListener focusListener;
 
+	/*
+	 * Called by the several guiSET classes. When an event occurs, the callback can be handled by
+	 * calling this method with the listener and the arguments. If the listener is not set (null), the
+	 * call is ignored.
+	 */
+	protected void handleEvent(EventListener callback, Object... args) {
+		if (callback == null)
+			return;
+		callback.handle(args);
+	}
+
+
+	/*
+	 * Create a new listener instance to assign to one of the existing listener slots.  
+	 */
+	protected EventListener createEventListener(String methodName, Object target, Class<?>... args_class) {
+		Class<?> c = target.getClass();
+		try { // try with args
+			Method m = c.getMethod(methodName, args_class);
+			return new ReflectionEventListener(m, target, true);
+		} catch (NoSuchMethodException nsme) {
+			try { // try without args (maybe user forgot or does not need them)
+				Method m = c.getMethod(methodName);
+				return new ReflectionEventListener(m, target, false);
+			} catch (NoSuchMethodException nsme2) {
+				getPApplet().die("There is no public " + methodName + "() method with the right arguments.");
+			}
+		}
+		return null;
+	}
+
+
+
 
 
 	/**
-	 * Adds a mouse listener. The type can be "press", "release", "enter", "exit,
-	 * "move", "drag" and "wheel". Each Component allows one listener per type. The
-	 * given method can be implemented without arguments or with {@link MouseEvent}
-	 * as parameter. If it is defined in another class than in the main PApplet
-	 * scope use the overloaded method
-	 * {@link #addMouseListener(String, String, Object)} that allows passing a
-	 * target object.
+	 * Adds a mouse listener. The type can be "press", "release", "enter", "exit, "move", "drag" and
+	 * "wheel". Each Component allows one listener per type. The given method can be implemented without
+	 * arguments or with {@link MouseEvent} as parameter. If it is defined in another class than in the
+	 * main PApplet scope use the overloaded method {@link #addMouseListener(String, String, Object)}
+	 * that allows passing a target object.
 	 * 
 	 * @param type       String for event type
 	 * @param methodName Name of method to invoke
-	 * @return false if type is invalid, method is not accessible or a listener has
-	 *         already been registered for this type. Returns true if successful.
+	 * @return false if type is invalid, method is not accessible or a listener has already been
+	 *         registered for this type. Returns true if successful.
 	 */
 	public boolean addMouseListener(String type, String methodName) {
 		return addMouseListener(type, methodName, getPApplet());
 	}
 
 	/**
-	 * @see #addMouseListener(String, String) Allows to pass a target object where
-	 *      the given method is declared.
+	 * @see {@link Control#addMouseListener(String, String)}. Allows to pass a target object where the
+	 *      given method is declared.
 	 * 
 	 * @param type       String for event type
 	 * @param methodName name of callback method
 	 * @param target     Object where the callback method is declared.
-	 * @return false if type is invalid, method is not accessible or a listener has
-	 *         already been registered for this type. Returns true if successful.
+	 * @return false if type is invalid, method is not accessible or a listener has already been
+	 *         registered for this type. Returns true if successful.
 	 */
 	public boolean addMouseListener(String type, String methodName, Object target) {
 		switch (type) {
@@ -2874,6 +2996,76 @@ public abstract class Control implements PConstants {
 			return wheelListener == null;
 		}
 		return false;
+	}
+
+	/**
+	 * Add a mouse listener in form of a lambda expression. For possible types @see
+	 * {@link Control#addMouseListener(String, String)}.
+	 * 
+	 * Event parameters: none
+	 * 
+	 * @param type @see {@link Control#addMouseListener(String, Object)}
+	 * @param p    lambda expression
+	 */
+	public void addMouseListener(String type, Predicate p) {
+		switch (type) {
+		case "press":
+			pressListener = new LambdaEventListener(p);
+			return;
+		case "release":
+			releaseListener = new LambdaEventListener(p);
+			return;
+		case "enter":
+			enterListener = new LambdaEventListener(p);
+			return;
+		case "exit":
+			exitListener = new LambdaEventListener(p);
+			return;
+		case "move":
+			moveListener = new LambdaEventListener(p);
+			return;
+		case "drag":
+			dragListener = new LambdaEventListener(p);
+			return;
+		case "wheel":
+			wheelListener = new LambdaEventListener(p);
+			return;
+		}
+	}
+
+	/**
+	 * Add a mouse listener in form of a lambda expression with a {@link MouseEvent} as argument. For
+	 * possible types @see {@link Control#addMouseListener(String, String)}.
+	 * 
+	 * Event parameters: {@link MouseEvent}
+	 * 
+	 * @param type @see {@link Control#addMouseListener(String, Object)}
+	 * @param p    lambda expression with a {@link MouseEvent} as argument.
+	 */
+	public void addMouseListener(String type, Predicate1<MouseEvent> p) {
+		switch (type) {
+		case "press":
+			pressListener = new LambdaEventListener1<MouseEvent>(p);
+			return;
+		case "release":
+			releaseListener = new LambdaEventListener1<MouseEvent>(p);
+			return;
+		case "enter":
+			enterListener = new LambdaEventListener1<MouseEvent>(p);
+			return;
+		case "exit":
+			exitListener = new LambdaEventListener1<MouseEvent>(p);
+			return;
+		case "move":
+			moveListener = new LambdaEventListener1<MouseEvent>(p);
+			return;
+		case "drag":
+			dragListener = new LambdaEventListener1<MouseEvent>(p);
+			return;
+		case "wheel":
+			wheelListener = new LambdaEventListener1<MouseEvent>(p);
+			return;
+		}
 	}
 
 	/**
@@ -2910,8 +3102,9 @@ public abstract class Control implements PConstants {
 
 
 	/**
-	 * Add a resize listener that fires each time the element is resized by anchor
-	 * resizing. Event arguments: null
+	 * Add a resize listener that fires each time the element is resized by anchor resizing.
+	 * 
+	 * Event arguments: the {@link #Control()} that is resized
 	 * 
 	 * @param methodName name of callback method
 	 * @param target     Object where the callback method is declared.
@@ -2924,13 +3117,39 @@ public abstract class Control implements PConstants {
 		addResizeListener(methodName, getPApplet());
 	}
 
+	/**
+	 * Add a lambda focus listener with a {@link #Control()} as parameter that fires each time the
+	 * element is resized by anchor resizing.
+	 * 
+	 * Event arguments: the {@link #Control()} that is resized
+	 * 
+	 * @param p lambda expression with {@link #Control()} parameter
+	 */
+	public void addResizeListener(Predicate1<Control> p) {
+		resizeListener = new LambdaEventListener1<Control>(p);
+	}
+
+	/**
+	 * Add a lambda focus listener that fires each time the element is resized by anchor resizing.
+	 * 
+	 * Event arguments: none
+	 * 
+	 * @param p lambda expression
+	 */
+	public void addResizeListener(Predicate p) {
+		resizeListener = new LambdaEventListener(p);
+	}
+
 	public void removeResizeListener() {
 		resizeListener = null;
 	}
 
+
 	/**
-	 * Add a focus listener that fires when the element gets focus (through mouse
-	 * click, programmatically, ...). Event arguments: null
+	 * Add a focus listener that fires when the element gets focus (through mouse click or
+	 * programmatically).
+	 * 
+	 * Event arguments: The {@link #Control()} that got focus
 	 * 
 	 * @param methodName name of callback method
 	 * @param target     Object where the callback method is declared.
@@ -2943,6 +3162,30 @@ public abstract class Control implements PConstants {
 		addFocusListener(methodName, getPApplet());
 	}
 
+	/**
+	 * Add a lambda focus listener with a {@link #Control()} as parameter that fires when the element
+	 * gets focus (through mouse click, programmatically).
+	 * 
+	 * Event arguments: The {@link #Control()} that got focus
+	 * 
+	 * @param p lambda expression with {@link #Control()} parameter
+	 */
+	public void addFocusListener(Predicate1<Control> p) {
+		focusListener = new LambdaEventListener1<Control>(p);
+	}
+
+	/**
+	 * Add a lambda focus listener that fires when the element gets focus (through mouse click,
+	 * programmatically).
+	 * 
+	 * Event arguments: none
+	 * 
+	 * @param p lambda expression
+	 */
+	public void addFocusListener(Predicate p) {
+		focusListener = new LambdaEventListener(p);
+	}
+
 	public void removeFocusListener() {
 		focusListener = null;
 	}
@@ -2950,111 +3193,18 @@ public abstract class Control implements PConstants {
 
 
 
-	/*
-	 * WORKING WITH EVENTS IN guiSET :
+
+	/* __________________________________________________________________________________________________________
 	 * 
-	 *
-	 *
-	 *
-	 * The programmer can add certain listeners to his objects. Mouse listeners are
-	 * available for all classes. They can be assigned and given a callback method
-	 * with the addMouseListener() method, specifying the type with a string
-	 * ("press", "release"...). If no target is specified with the overloaded
-	 * addMouseListener() method, papplet will be assumed.
-	 * 
-	 * How MouseListener works: Frame registers a mouseEvent() method at papplet.
-	 * Every container (also Frame) calls the mouseEvent for all its items. When an
-	 * element gets a mouseEvent, it can decide to stop the propagation by calling
-	 * stopPropagation(). This way elements with high z-index, which will be checked
-	 * first and can prevent lower elements from getting the mouseEvent. This is
-	 * needed for example with menus, spinners, popups etc.
-	 *
-	 *
-	 * Moreover classes like Frame and Textbox feature key listeners or an
-	 * itemchanged-listener (ListView, MenuItem). These listeners are usually
-	 * assigned with extra methods like "addItemChangeListener()" etc.
+	 * HOW MOUSE EVENTS WORK INTERNALLY
 	 * 
 	 * 
+	 * Frame registers a mouseEvent() method at papplet. Every container (also
+	 * Frame) calls the mouseEvent for all its items. When an element gets a mouseEvent, it can decide
+	 * to stop the propagation by calling stopPropagation(). This way elements with high z-index, which
+	 * will be checked first and can prevent lower elements from getting the mouseEvent. This is needed
+	 * for example with menus, spinners, popups etc.
 	 * 
-	 * 
-	 * How to make an event listener in a new class
-	 * --------------------------------------------
-	 * - In the class, create an EventListener with 
-	 *   an appropriate name (don't initialize it)
-	 * - Provide adding and removing methods 
-	 * - Also provide a simple adding method that 
-	 *   defaults target to papplet (the sketch)
-	 * 
-	 *   An example with no arguments. 
-	 *   
-	 *   
-	 
-		 protected EventListener myListener;
-		 
-		 public void addMyListener(String methodName, Object target) {
-		     myListener = createEventListener(methodName, target, null);
-		 }
-		 
-		 public void addMyListener(String methodName) {
-		     addMyListener(methodName, getPApplet());
-		 }
-		 
-		 public void removeMyListener(){
-	     	myListener = null; // setting listener to null is the way to do it
-		 }
-		 
-	  	 protected void someFunctionThatChangesObervedState(){
-	      	// do stuff
-	      	handleEvent(myListener, null);
-	     }  
-	
-	
-	
-	 *   If arguments shall be passed to the callback function, then pass their 
-	 *   class to the createEventListener() method as third argument. When handling 
-	 *   the event, pass the argument here. Look at the example from focusListener. 
-	 *     
-	 * 
-	 */
-
-
-	// not used
-
-	// if zero do not process move events.
-	private static int moveListenersCount = 0;
-
-	protected static void incrementMoveListenersCount() {
-		moveListenersCount++;
-	}
-
-	protected static void decrementMoveListenersCount() {
-		moveListenersCount = Math.max(0, --moveListenersCount);
-	}
-
-	protected int moveListenersCount() {
-		return moveListenersCount;
-	}
-
-
-
-
-
-
-
-
-
-
-
-
-	// new mouse event stuff
-	/*
-	 * Replace bounds with offsetX, offsetY. Right and bottom bounds are not needed for an item
-	 * gets the mouse event only if mouse is over parent. This way no constraining
-	 * like in former calcbounds is needed. Instead of passing the mouseEvent, this is
-	 * stored globally (in Control.currentMouseEvent) and relative x,y coords are passed. Each
-	 * container subtracts its own offsetX,offsetY from them so the items only need to know
-	 * their relative position to parent and not absolute position in window to
-	 * determine if mouse is over the item.
 	 * 
 	 * offsetX,offsetY store computed position origin of item relative container it is
 	 * evaluated and set in renderItem(). Problem: Flowcontainers decide not to draw
@@ -3069,29 +3219,37 @@ public abstract class Control implements PConstants {
 	 * item. Similarily exit() is called if Control.hoveredElement has changed
 	 * through the event propagation.
 	 * 
+	 *
+	 * Only one element can be hovered on at one time. 
 	 * 
 	 * 
+	 * Note for me about changing the whole mouse event implementation:
 	 * 
-	 * - only one element can be hovered on (not really an issue)
+	 * Replaced bounds with offsetX, offsetY. Right and bottom bounds are not needed for an item
+	 * gets the mouse event only if mouse is over parent. This way no constraining
+	 * like in former calcbounds is needed. Instead of passing the mouseEvent, this is
+	 * stored globally (in Control.currentMouseEvent) and relative x,y coords are passed. Each
+	 * container subtracts its own offsetX,offsetY from them so the items only need to know
+	 * their relative position to parent and not absolute position in window to
+	 * determine if mouse is over the item.
 	 * 
 	 * 
 	 */
 
-	// origin coordinates relative to parent. Set by parent in
-	// containerRenderItem(Control, int, int)
+	// Origin coordinates relative to parent. Set by parent in containerRenderItem(Control, int, int)
 	protected int offsetX, offsetY;
 
-	// current mouse event is stored here by Frame, no need to carry it around
+	// Current mouse event is stored here by Frame, no need to carry it around
 	protected static MouseEvent currentMouseEvent;
 
-	// first control that notices that the mouse is over it sets this to itself.
+	// First control that notices that the mouse is over it sets this to itself.
 	// This is used for ENTER/EXIT as well as setting the cursor
 	protected static Control hoveredElement;
 
-	// currently dragged element
+	// Currently dragged element
 	protected static Control draggedElement;
 
-	// classes can set this to false in their release(MouseEvent) method. Then a
+	// Classes can set this to false in their release(MouseEvent) method. Then a
 	// drag of this element will induce no drop event
 	protected static boolean drop = true;
 
@@ -3112,12 +3270,11 @@ public abstract class Control implements PConstants {
 	 * get the click event.
 	 */
 
-	protected static boolean propagationStopped = false;
+	private static boolean propagationStopped = false;
 
 	/**
-	 * Stop mouse event propagation. If called then no Components lower or at the
-	 * same level in the Container hierachy will receive the currently processed
-	 * mouse event.
+	 * Stop mouse event propagation. If called then no Components lower or at the same level in the
+	 * Container hierachy will receive the currently processed mouse event.
 	 */
 	public static void stopPropagation() {
 		propagationStopped = true;
@@ -3130,6 +3287,10 @@ public abstract class Control implements PConstants {
 	 */
 	public static boolean isPropagationStopped() {
 		return propagationStopped;
+	}
+
+	protected static void resetPropagationState() {
+		propagationStopped = false;
 	}
 
 	// check if given coordinates (need to be relative to parent) are within this
@@ -3226,8 +3387,7 @@ public abstract class Control implements PConstants {
 				break;
 			case MouseEvent.RELEASE:
 				// Happens rarely here. Usually a release is preceded by a press and in between
-				// only
-				// drag events come. These and the final release event are handled by Frame.
+				// only drag events come. These and the final release event are handled by Frame.
 				// Still this code might be executed i.e. if user presses two buttons at once.
 				stopPropagation();
 				release(currentMouseEvent);
@@ -3236,8 +3396,7 @@ public abstract class Control implements PConstants {
 
 				break;
 			case MouseEvent.DRAG:
-				// this code wont be reached anymore for every drag event will be caught by
-				// frame
+				// This code wont be reached anymore for every drag event will be caught by frame
 				// drag(e);
 				// handleRegisteredEventMethod(DRAG_EVENT, e);
 				// Frame.stopPropagation();
@@ -3249,8 +3408,9 @@ public abstract class Control implements PConstants {
 
 
 
-	/*
-	 * EVENT METHODS
+	/* __________________________________________________________________________________________________________
+	 * 
+	 * INTERNAL EVENT METHODS
 	 * 
 	 * need to change some colors when hovered over or pressed.
 	 */
@@ -3281,6 +3441,13 @@ public abstract class Control implements PConstants {
 	}
 
 	protected void dragRelease(MouseEvent e) {
+	}
+
+
+	protected void focused() {
+	}
+
+	protected void blurred() {
 	}
 
 
@@ -3328,6 +3495,5 @@ public abstract class Control implements PConstants {
 	protected static Frame getFrame() {
 		return Frame.getFrame();
 	}
-
 
 }

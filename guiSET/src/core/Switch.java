@@ -62,7 +62,7 @@ public class Switch extends Checkbox {
 		// draw rounded rectangle as switch background
 		pg.noStroke();
 		pg.fill(checked ? checkedBackgroundColor : uncheckedBackgroundColor);
-		pg.rect(0, height / 2 - checkboxSize / 2, 1.75f * checkboxSize, checkboxSize, 100);
+		pg.rect(0, getHeight() / 2 - checkboxSize / 2, 1.75f * checkboxSize, checkboxSize, 100);
 
 		//
 		// create smooth animation from one to the other position
@@ -88,11 +88,11 @@ public class Switch extends Checkbox {
 
 		// draw shadow of switch "ball"
 		pg.fill(0);
-		pg.ellipse(currentPosition, height / 2 + 1, checkboxSize - checkboxSize / 4, checkboxSize - checkboxSize / 4);
+		pg.ellipse(currentPosition, getHeight() / 2 + 1, checkboxSize - checkboxSize / 4, checkboxSize - checkboxSize / 4);
 
 		// draw switch "ball"
 		pg.fill(checkmarkColor);
-		pg.ellipse(currentPosition, height / 2, checkboxSize - checkboxSize / 4, checkboxSize - checkboxSize / 4);
+		pg.ellipse(currentPosition, getHeight() / 2, checkboxSize - checkboxSize / 4, checkboxSize - checkboxSize / 4);
 
 		// draw text
 		drawDefaultText();
@@ -101,7 +101,7 @@ public class Switch extends Checkbox {
 		if (!enabled) {
 			pg.noStroke();
 			pg.fill(150, 150);
-			pg.rect(0, height / 2 - checkboxSize / 2, 1.75f * checkboxSize, checkboxSize, 100);
+			pg.rect(0, getHeight() / 2 - checkboxSize / 2, 1.75f * checkboxSize, checkboxSize, 100);
 		}
 
 	}
@@ -142,13 +142,6 @@ public class Switch extends Checkbox {
 
 
 
-//	@Override
-//	protected void autosizeRule() {
-//		setWidthImpl((int) (textWidth(text) + paddingLeft + paddingRight));
-//		setHeightImpl((int) (PApplet.max(checkboxSize, getFontSize() + textDescent(), 1) + paddingTop + paddingBottom));
-//	}
-
-
 	@Override
 	public void setCheckboxSize(int size) {
 		size = Math.max(size, 0);
@@ -166,7 +159,7 @@ public class Switch extends Checkbox {
 		if (!reactToEntireField) {
 			int x_ = e.getX() - getOffsetXWindow();
 			int y_ = e.getY() - getOffsetYWindow();
-			if (!(x_ < checkboxSize * 1.75f && y_ > height / 2 - checkboxSize / 2 && y_ < height / 2 + checkboxSize / 2))
+			if (!(x_ < checkboxSize * 1.75f && y_ > getHeight() / 2 - checkboxSize / 2 && y_ < getHeight() / 2 + checkboxSize / 2))
 				return;
 		}
 		setChecked(!checked);

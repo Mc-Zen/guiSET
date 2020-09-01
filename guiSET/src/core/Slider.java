@@ -6,18 +6,16 @@ package guiSET.core;
  * Orientation can be set to vertical or horizontal. 
  */
 
-
 import processing.event.*;
 
 
 /**
  * A value slider/progress bar based on the data type float.
  * 
- * The orientation can either be set to horizontally or vertically. The value is
- * changed through dragging or clicking on a position on the slider. Also, by
- * setting {@link #setWheelEnabled(boolean)}, the mouse wheel can be used to
- * increment or decrement the value stepwise (amount can be set through
- * scrollSpeed).
+ * The orientation can either be set to horizontally or vertically. The value is changed through
+ * dragging or clicking on a position on the slider. Also, by setting
+ * {@link #setWheelEnabled(boolean)}, the mouse wheel can be used to increment or decrement the
+ * value stepwise (amount can be set through scrollSpeed).
  * 
  * 
  * @author Mc-Zen
@@ -77,40 +75,40 @@ public class Slider extends Control {
 		float intervalLength = getIntervalLength();
 
 		if (orientation == HORIZONTAL) {
-			int sliderWidth = width - ballSize - 1; // width - 2 * 0.5 * ballSize - buffer (1)
+			int sliderWidth = getWidth() - ballSize - 1; // width - 2 * 0.5 * ballSize - buffer (1)
 
 			int lineHeight = thickness;
 
 
 			// slider background
 			pg.fill(backgroundColor);
-			pg.rect(1 + ballSize / 2, height / 2 - lineHeight / 2, sliderWidth, lineHeight);
+			pg.rect(1 + ballSize / 2, getHeight() / 2 - lineHeight / 2, sliderWidth, lineHeight);
 
 			// slider active background
 			pg.fill(foregroundColor);
-			pg.rect(1 + ballSize / 2, height / 2 - lineHeight / 2, (float) (sliderWidth) / intervalLength * (value - minValue), lineHeight);
+			pg.rect(1 + ballSize / 2, getHeight() / 2 - lineHeight / 2, (float) (sliderWidth) / intervalLength * (value - minValue), lineHeight);
 
 			// slider ball
-			pg.ellipse(1 + (float) (sliderWidth) / intervalLength * (value - minValue) + ballSize / 2, height / 2, ballSize, ballSize);
+			pg.ellipse(1 + (float) (sliderWidth) / intervalLength * (value - minValue) + ballSize / 2, getHeight() / 2, ballSize, ballSize);
 
 
 		} else {
-			int sliderHeight = height - ballSize - 1; // height - 2 * 0.5 * ballSize - buffer (1)
+			int sliderHeight = getHeight() - ballSize - 1; // height - 2 * 0.5 * ballSize - buffer (1)
 
 			int lineWidth = thickness;
 
 
 			// slider background
 			pg.fill(backgroundColor);
-			pg.rect(width / 2 - lineWidth / 2, 1 + ballSize / 2, lineWidth, sliderHeight);
+			pg.rect(getWidth() / 2 - lineWidth / 2, 1 + ballSize / 2, lineWidth, sliderHeight);
 
 			// slider active background
 			float activePartHeight = (float) (sliderHeight) / intervalLength * (value - minValue);
 			pg.fill(foregroundColor);
-			pg.rect(width / 2 - lineWidth / 2, height - (1 + ballSize / 2) - activePartHeight, lineWidth, activePartHeight);
+			pg.rect(getWidth() / 2 - lineWidth / 2, getHeight() - (1 + ballSize / 2) - activePartHeight, lineWidth, activePartHeight);
 
 			// slider ball
-			pg.ellipse(width / 2, height - (1 + (float) (sliderHeight) / intervalLength * (value - minValue) + ballSize / 2), ballSize, ballSize);
+			pg.ellipse(getWidth() / 2, getHeight() - (1 + (float) (sliderHeight) / intervalLength * (value - minValue) + ballSize / 2), ballSize, ballSize);
 
 		}
 	}
@@ -122,8 +120,7 @@ public class Slider extends Control {
 	 */
 
 	/**
-	 * Set the value of the slider. This triggers the valueChanged event if value
-	 * has actually changed.
+	 * Set the value of the slider. This triggers the valueChanged event if value has actually changed.
 	 * 
 	 * @param value value
 	 */
@@ -141,8 +138,8 @@ public class Slider extends Control {
 	}
 
 	/**
-	 * Set minimum value of the slider. If given value is greater the set maxmium
-	 * value, an error message is printed.
+	 * Set minimum value of the slider. If given value is greater the set maxmium value, an error
+	 * message is printed.
 	 * 
 	 * @param minValue minValue
 	 */
@@ -157,8 +154,8 @@ public class Slider extends Control {
 	}
 
 	/**
-	 * Set maximum value of the slider. If given value is greater the set minimum
-	 * value, an error message is printed.
+	 * Set maximum value of the slider. If given value is greater the set minimum value, an error
+	 * message is printed.
 	 * 
 	 * @param maxValue maxValue
 	 */
@@ -211,13 +208,13 @@ public class Slider extends Control {
 	public void setOrientation(Orientation orientation) {
 		if (orientation == Orientation.HORIZONTAL) {
 			if (this.orientation == Orientation.VERTICAL) {
-				setWidthImpl(height);
+				setWidthImpl(getHeight());
 				setHeightImpl((int) (Math.max(thickness, ballSize) * 1.3));
 			}
 			this.orientation = orientation;
 		} else {
 			if (this.orientation == Orientation.HORIZONTAL) {
-				setHeightImpl(width);
+				setHeightImpl(getWidth());
 				setWidthImpl((int) (Math.max(thickness, ballSize) * 1.3));
 			}
 			this.orientation = orientation;
@@ -227,8 +224,7 @@ public class Slider extends Control {
 
 
 	/**
-	 * Specify if scrolling while mouse is over the slider changes the value.
-	 * Default is false.
+	 * Specify if scrolling while mouse is over the slider changes the value. Default is false.
 	 * 
 	 * @param wheelEnabled wheelEnabled
 	 */
@@ -237,8 +233,7 @@ public class Slider extends Control {
 	}
 
 	/**
-	 * Set the scroll speed a.k.a the amount to scroll if wheelEnabled is set to
-	 * true.
+	 * Set the scroll speed a.k.a the amount to scroll if wheelEnabled is set to true.
 	 * 
 	 * @param scrollSpeed scrollSpeed
 	 */
@@ -295,18 +290,42 @@ public class Slider extends Control {
 
 
 	/**
-	 * Add a value changed listener. The event is also triggered when the value is
-	 * changed programatically.
+	 * Add a value-change listener. The event is also triggered when the value is changed
+	 * programatically.
 	 * 
 	 * @param methodName methodName
 	 * @param target     target
 	 */
 	public void addValueChangeListener(String methodName, Object target) {
-		valueChangeListener = createEventListener(methodName, target, Control.class);
+		valueChangeListener = createEventListener(methodName, target, Slider.class);
 	}
 
 	public void addValueChangeListener(String methodName) {
 		addValueChangeListener(methodName, getPApplet());
+	}
+
+	/**
+	 * Add a value-change listener lambda. The event is also triggered when the value is changed
+	 * programatically.
+	 * 
+	 * Event arguments: the {@link #Slider()} whose state has changed
+	 * 
+	 * @param p lambda expression with {@link #Slider()} parameter
+	 */
+	public void addValueChangeListener(Predicate1<Slider> p) {
+		valueChangeListener = new LambdaEventListener1<Slider>(p);
+	}
+
+	/**
+	 * Add a value-changed lambda listener. The event is also triggered when the value is changed
+	 * programatically.
+	 * 
+	 * Event arguments: none
+	 * 
+	 * @param p lambda expression
+	 */
+	public void addValueChangeListener(Predicate p) {
+		valueChangeListener = new LambdaEventListener(p);
 	}
 
 	public void removeValueChangeListener() {
@@ -325,9 +344,9 @@ public class Slider extends Control {
 	 */
 	protected void setBallPosition(float position) {
 		if (orientation == Orientation.HORIZONTAL) {
-			setValue(((position - ballSize / 2) * getIntervalLength() / (float) (width - ballSize)) + minValue);
+			setValue(((position - ballSize / 2) * getIntervalLength() / (float) (getWidth() - ballSize)) + minValue);
 		} else {
-			setValue(((height - position - ballSize / 2) * getIntervalLength() / (float) (height - ballSize)) + minValue);
+			setValue(((getHeight() - position - ballSize / 2) * getIntervalLength() / (float) (getHeight() - ballSize)) + minValue);
 
 		}
 

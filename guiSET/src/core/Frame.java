@@ -40,8 +40,8 @@ import com.jogamp.newt.opengl.GLWindow;
 
 /**
  * 
- * Master Container that fills out entire sketch and controls the flow of events
- * and rendering of the GUI.
+ * Master Container that fills out entire sketch and controls the flow of events and rendering of
+ * the GUI.
  *
  */
 public class Frame extends Container {
@@ -114,18 +114,17 @@ public class Frame extends Container {
 	}
 
 	/**
-	 * GUI Draw time Mode: Draw the GUI before the {@link PApplet#draw()} happens.
-	 * Useful when the user wants to image some own stuff upon the GUI. The draw
-	 * time mode needs to be specified at the beginning when Frame is created. This
-	 * is the default mode.
+	 * GUI Draw time Mode: Draw the GUI before the {@link PApplet#draw()} happens. Useful when the user
+	 * wants to image some own stuff upon the GUI. The draw time mode needs to be specified at the
+	 * beginning when Frame is created. This is the default mode.
 	 */
 	public static final DrawTime DRAW_PRE = DrawTime.PRE; 		// draw GUI before draw() takes place
 
 	/**
-	 * GUI Draw time Mode: Draw the GUI after the {@link PApplet#draw()} happens.The
-	 * draw time mode needs to be specified at the beginning when Frame is created.
-	 * Everything that is drawn during {@link PApplet#draw()} will be overwritten
-	 * without ever being visible, except when Frame is transparent.
+	 * GUI Draw time Mode: Draw the GUI after the {@link PApplet#draw()} happens.The draw time mode
+	 * needs to be specified at the beginning when Frame is created. Everything that is drawn during
+	 * {@link PApplet#draw()} will be overwritten without ever being visible, except when Frame is
+	 * transparent.
 	 */
 	public static final DrawTime DRAW_POST = DrawTime.POST; 		// draw GUI after draw() takes place
 
@@ -143,16 +142,16 @@ public class Frame extends Container {
 
 
 	/**
-	 * A private version without PApplet only needed for the static dummy before the
-	 * real Frame is created.
+	 * A private version without PApplet only needed for the static dummy before the real Frame is
+	 * created.
 	 */
 	private Frame() {
 		super();
 	}
 
 	/**
-	 * It is necessary to pass the sketch object here. In most cases (if not in
-	 * scope of a class) just use "this".
+	 * It is necessary to pass the sketch object here. In most cases (if not in scope of a class) just
+	 * use "this".
 	 * 
 	 * @param pa papplet
 	 */
@@ -183,8 +182,8 @@ public class Frame extends Container {
 
 
 		// default size fills out entire sketch window
-		width = papplet.width;
-		height = papplet.height;
+		setWidthNoUpdate(papplet.width);
+		setHeightNoUpdate(papplet.height);
 		offsetX = 0;
 		offsetY = 0;
 
@@ -222,13 +221,13 @@ public class Frame extends Container {
 			awtFrame.addComponentListener(new java.awt.event.ComponentAdapter() {
 				public void componentResized(java.awt.event.ComponentEvent evt) {
 					if (initialized == Initialization_State.INITIALIZED) {
-						resized();
+						resized(awtFrame.getWidth(), awtFrame.getHeight());
 					}
 				}
 			});
 
 			new DropTarget((Component) nativeWindow, new Guiset_Drop_Handler());
-			
+
 		} else if (nativeWindow instanceof GLWindow) {
 
 			glWindow = ((GLWindow) nativeWindow);
@@ -266,7 +265,7 @@ public class Frame extends Container {
 				@Override
 				public void windowResized(WindowEvent arg0) {
 					if (initialized == Initialization_State.INITIALIZED) {
-						resized();
+						resized(glWindow.getWidth(), glWindow.getHeight()); // in opengl mode, papplet does not know its size yet. Thus, we get it right from window
 					}
 				}
 			});
@@ -322,7 +321,7 @@ public class Frame extends Container {
 
 		public void post() {
 			if (no_loopUpdateAgain) {
-				papplet.redraw();
+				papplet.redraw(); // draw again because animation is not finished yet. See animations.
 				no_loopUpdateAgain = false;
 			}
 		}
@@ -367,32 +366,29 @@ public class Frame extends Container {
 	protected DrawMode drawMode = DrawMode.EFFICIENT;
 
 	/**
-	 * Draw frequency mode. Continous makes Frame draw the entire GUI EACH time
-	 * (standard is 60 times per sec) if it has changed or not. This is useful if
-	 * guiSET is combined with manual drawing on the sketch but it is the most
-	 * wasteful mode.This is the default and for many cases recommended mode.
+	 * Draw frequency mode. Continous makes Frame draw the entire GUI EACH time (standard is 60 times
+	 * per sec) if it has changed or not. This is useful if guiSET is combined with manual drawing on
+	 * the sketch but it is the most wasteful mode.This is the default and for many cases recommended
+	 * mode.
 	 */
 	public static final DrawMode CONTINOUS = DrawMode.CONTINOUS;
 
 	/**
-	 * Draw frequency mode. Only refresh if an element has changed. It still keeps
-	 * the {@link PApplet#draw()} loop running to check for some events but only
-	 * redraws if necessary.
+	 * Draw frequency mode. Only refresh if an element has changed. It still keeps the
+	 * {@link PApplet#draw()} loop running to check for some events but only redraws if necessary.
 	 */
 	public static final DrawMode EFFICIENT = DrawMode.EFFICIENT;
 
 
 	/**
-	 * Most efficient mode. The {@link PApplet#draw()} loop is interrupted and only
-	 * key and mouse events are still received and can change the state of the GUI.
-	 * Animation timing is not as good.
+	 * Most efficient mode. The {@link PApplet#draw()} loop is interrupted and only key and mouse events
+	 * are still received and can change the state of the GUI. Animation timing is not as good.
 	 */
 	public static final DrawMode NO_LOOP = DrawMode.NO_LOOP;
 
 
 	/**
-	 * Set draw frequency mode {@link #EFFICIENT} {@link #CONTINOUS}
-	 * {@link #NO_LOOP}
+	 * Set draw frequency mode {@link #EFFICIENT} {@link #CONTINOUS} {@link #NO_LOOP}
 	 * 
 	 * @param mode accepts Frame.EFFICIENT, Frame.CONTINOUS, Frame.NO_LOOP
 	 */
@@ -415,7 +411,7 @@ public class Frame extends Container {
 	// force another update to continue the animation to work. If this flag is set,
 	// then the
 	// Protected_Frame.post() method calls papplet.redraw();
-	private static boolean no_loopUpdateAgain;
+	private static boolean no_loopUpdateAgain = false;
 
 	// called by Animation if mode is NO_LOOP
 	protected static void noLoopAfterAnimation() {
@@ -491,7 +487,7 @@ public class Frame extends Container {
 		 * call redraw upon sketch when changed occured
 		 */
 		if (drawMode == NO_LOOP) {
-			no_loopUpdateAgain = true;
+			// no_loopUpdateAgain = true; // why did I ever do this? It makes no sense
 			papplet.redraw();
 		}
 	}
@@ -515,11 +511,13 @@ public class Frame extends Container {
 
 
 
-	protected void resized() {
+	protected void resized(int w, int h) {
 
 		// always resize frame to window size
-		this.width = papplet.width;
-		this.height = papplet.height;
+		// this.width = papplet.width;
+		// this.height = papplet.height;
+		setWidthNoUpdate(w);
+		setHeightNoUpdate(h);
 
 		handleEvent(windowResizeListener);
 
@@ -583,8 +581,8 @@ public class Frame extends Container {
 	}
 
 	/**
-	 * Register a shortcut to the sketch and fire the given method when the
-	 * combination is hit on the keyboard.
+	 * Register a shortcut to the sketch and fire the given method when the combination is hit on the
+	 * keyboard.
 	 * 
 	 * @param shortcut   shortcut to register
 	 * @param methodName method to execute when shortcut is pressed.
@@ -611,8 +609,8 @@ public class Frame extends Container {
 	/**
 	 * @see #registerShortcut(Shortcut, String, Object)
 	 * 
-	 *      If strong is set to true then this shortcut will even work when a
-	 *      textbox has focus! Default is false.
+	 *      If strong is set to true then this shortcut will even work when a textbox has focus! Default
+	 *      is false.
 	 * 
 	 * 
 	 * @param shortcut   shortcut to register
@@ -636,10 +634,9 @@ public class Frame extends Container {
 	}
 
 	/**
-	 * If the shortcut has been removed returns true. This is not the case if given
-	 * shortcut has never been registered. The given shortcut does not need to be
-	 * THE exact same as the registered one. It can be a new one with the same
-	 * attributes.
+	 * If the shortcut has been removed returns true. This is not the case if given shortcut has never
+	 * been registered. The given shortcut does not need to be THE exact same as the registered one. It
+	 * can be a new one with the same attributes.
 	 * 
 	 * @param shortcut shortcut to deregister
 	 * @return true if deregistering has been successful.
@@ -717,10 +714,12 @@ public class Frame extends Container {
 
 		if (control.focusable && !focusedElement.stickyFocus) {
 			focusedElement.focused = false;
+			focusedElement.blurred();
 			focusedElement.update();
 
 			focusedElement = control;
 			focusedElement.focused = true;
+			focusedElement.focused();
 			focusedElement.update();
 
 			focusedElement.handleEvent(focusedElement.focusListener, focusedElement);
@@ -730,6 +729,7 @@ public class Frame extends Container {
 	protected void requestBlur(Control control) {
 		if (focusedElement == control) {
 			focusedElement.focused = false;
+			focusedElement.blurred();
 			focusedElement.update();
 			focusedElement = this; // focusedElement should never be null!
 		}
@@ -875,22 +875,22 @@ public class Frame extends Container {
 
 	@Override
 	public void setWidth(int width) {
-		System.err.println("Use frame.setWindowSize() to set the size of the window. The Frame always fills out the entire window");
+		System.err.println("Use frame.setWindowSize() to set the size of the window. The Frame fills out the entire window");
 	}
 
 	@Override
 	public void setHeight(int height) {
-		System.err.println("Use frame.setWindowSize() to set the size of the window. The Frame always fills out the entire window");
+		System.err.println("Use frame.setWindowSize() to set the size of the window. The Frame fills out the entire window");
 	}
 
 	@Override
 	public void setX(int x) {
-		System.err.println("The Frame always fills out the entire window. It cannot be positioned");
+		System.err.println("The Frame fills out the entire window. It cannot be positioned");
 	}
 
 	@Override
 	public void setY(int y) {
-		System.err.println("The Frame always fills out the entire window. It cannot be positioned");
+		System.err.println("The Frame fills out the entire window. It cannot be positioned");
 	}
 
 	@Override
@@ -923,15 +923,25 @@ public class Frame extends Container {
 	/**
 	 * Add a key listener which fires on key press, type and release events.
 	 * 
+	 * Event arguments: {@link #KeyEvent}
+	 * 
 	 * @param methodName method name
 	 * @param target     object
 	 */
 	public void addKeyListener(String methodName, Object target) {
-		openKeyListener = createEventListener(methodName, target);
+		openKeyListener = createEventListener(methodName, target, KeyEvent.class);
 	}
 
 	public void addKeyListener(String methodName) {
 		addKeyListener(methodName, getPApplet());
+	}
+
+	public void addKeyListener(Predicate p) {
+		openKeyListener = new LambdaEventListener(p);
+	}
+
+	public void addKeyListener(Predicate1<KeyEvent> p) {
+		openKeyListener = new LambdaEventListener1<KeyEvent>(p);
 	}
 
 	public void removeKeyListener() {
@@ -940,6 +950,8 @@ public class Frame extends Container {
 
 	/**
 	 * Called when gui is initialized and draw() runs for the first time.
+	 * 
+	 * Event arguments: none
 	 * 
 	 * @param methodName method name
 	 * @param target     object
@@ -952,12 +964,18 @@ public class Frame extends Container {
 		addGuiInitializedListener(methodName, getPApplet());
 	}
 
+	public void addGuiInitializedListener(Predicate p) {
+		guiInitializedListener = new LambdaEventListener(p);
+	}
+
 	public void removeGuiInitializedListener() {
 		guiInitializedListener = null;
 	}
 
 	/**
 	 * Called when the application window is resized.
+	 * 
+	 * Event arguments: {@link #MouseEvent}
 	 * 
 	 * @param methodName method name
 	 * @param target     object
@@ -970,12 +988,22 @@ public class Frame extends Container {
 		addWindowResizeListener(methodName, getPApplet());
 	}
 
+	public void addWindowResizeListener(Predicate p) {
+		windowResizeListener = new LambdaEventListener(p);
+	}
+
+	public void addWindowResizeListener(Predicate1<MouseEvent> p) {
+		windowResizeListener = new LambdaEventListener1<MouseEvent>(p);
+	}
+
 	public void removeWindowResizeListener() {
 		windowResizeListener = null;
 	}
 
 	/**
 	 * Listen for the mouse entering the window.
+	 * 
+	 * Event arguments: {@link #MouseEvent}
 	 * 
 	 * @param methodName method name
 	 * @param target     object
@@ -988,12 +1016,22 @@ public class Frame extends Container {
 		addEnterWindowListener(methodName, getPApplet());
 	}
 
+	public void addEnterWindowListener(Predicate p) {
+		enterWindowListener = new LambdaEventListener(p);
+	}
+
+	public void addEnterWindowListener(Predicate1<MouseEvent> p) {
+		enterWindowListener = new LambdaEventListener1<MouseEvent>(p);
+	}
+
 	public void removeEnterWindowListener() {
 		enterWindowListener = null;
 	}
 
 	/**
 	 * Listen for the mouse exiting the window.
+	 * 
+	 * Event arguments: {@link #MouseEvent}
 	 * 
 	 * @param methodName method name
 	 * @param target     object
@@ -1006,6 +1044,14 @@ public class Frame extends Container {
 		addExitWindowListener(methodName, getPApplet());
 	}
 
+	public void addExitWindowListener(Predicate p) {
+		exitWindowListener = new LambdaEventListener(p);
+	}
+
+	public void addExitWindowListener(Predicate1<MouseEvent> p) {
+		exitWindowListener = new LambdaEventListener1<MouseEvent>(p);
+	}
+
 	public void removeExitWindowListener() {
 		exitWindowListener = null;
 	}
@@ -1013,8 +1059,10 @@ public class Frame extends Container {
 
 
 	/**
-	 * Internal drop listener for any element in the application. First arg: dropped
-	 * element, Second arg: target on which the first on has been dropped.
+	 * Internal drop listener for any element in the application. First arg: dropped element, Second
+	 * arg: target on which the first on has been dropped.
+	 * 
+	 * Event arguments: {@link #Control}, {@link #Control}
 	 * 
 	 * @param methodName method name
 	 * @param target     object
@@ -1027,12 +1075,22 @@ public class Frame extends Container {
 		addDropElementListener(methodName, getPApplet());
 	}
 
+	public void addDropElementListener(Predicate p) {
+		dropElementListener = new LambdaEventListener(p);
+	}
+
+	public void addDropElementListener(Predicate2<Control, Control> p) {
+		dropElementListener = new LambdaEventListener2<Control, Control>(p);
+	}
+
 	public void removeDropElementListener() {
 		dropElementListener = null;
 	}
 
 	/**
 	 * Fired when the window gained focus.
+	 * 
+	 * Event arguments: none
 	 * 
 	 * @param methodName method name
 	 * @param target     object
@@ -1045,6 +1103,10 @@ public class Frame extends Container {
 		addWindowFocusGainedListener(methodName, getPApplet());
 	}
 
+	public void addWindowFocusGainedListener(Predicate p) {
+		windowFocusGainedListener = new LambdaEventListener(p);
+	}
+
 	public void removeWindowFocusGainedListener() {
 		windowFocusGainedListener = null;
 	}
@@ -1052,15 +1114,21 @@ public class Frame extends Container {
 	/**
 	 * Fired when the window lost focus.
 	 * 
+	 * Event arguments: none
+	 * 
 	 * @param methodName method name
 	 * @param target     object
 	 */
 	public void addWindowFocusLostListener(String methodName, Object target) {
-		windowFocusLostListener = createEventListener(methodName, target, MouseEvent.class);
+		windowFocusLostListener = createEventListener(methodName, target);
 	}
 
 	public void addWindowFocusLostListener(String methodName) {
 		addWindowFocusLostListener(methodName, getPApplet());
+	}
+
+	public void addWindowFocusLostListener(Predicate p) {
+		windowFocusLostListener = new LambdaEventListener(p);
 	}
 
 	public void removeWindowFocusLostListener() {
@@ -1070,18 +1138,18 @@ public class Frame extends Container {
 	/**
 	 * External drop listener for data dropped to the application.
 	 * 
-	 * Arguments:
-	 * 
-	 * - 1. int that describes data type (Frame.DROP_STRING or Frame.DROP_FILE) - 2.
-	 * Object instance that is the dropped data (needs casting to String or File) -
-	 * 3. Control instance - the element that the data has been dropped on
-	 * 
+	 * Event arguments:
+	 * <ol>
+	 * <li>int that describes data type ({@link Frame#DROP_STRING} or {@link Frame#DROP_FILE})</li>
+	 * <li>Object instance that is the dropped data (needs casting to String or File)</li>
+	 * <li>Control instance - the element that the data has been dropped on</li>
+	 * </ol>
 	 * 
 	 * @param methodName method name
 	 * @param target     object
 	 */
 	public void addExternalDropListener(String methodName, Object target) {
-		if(awtFrame == null) 
+		if (awtFrame == null)
 			System.err.println("In P2D/P3D mode external drop is not yet supported.");
 		externalDropListener = createEventListener(methodName, target, int.class, Object.class, Control.class);
 	}
@@ -1094,8 +1162,12 @@ public class Frame extends Container {
 		externalDropListener = null;
 	}
 
+
+
+
+
 	/*
-	 * Mouse event uniqe to the Frame class. 
+	 * Mouse event unique to the Frame class. 
 	 * This is called by PApplet through Protected_Frame. 
 	 * From here all other mouseEvents are executed.  
 	 * 
@@ -1205,7 +1277,7 @@ public class Frame extends Container {
 
 		// reset stopPropagation for next frame (after handling mouseEvent and not
 		// before, in case render mode is EFFICIENT)
-		propagationStopped = false;
+		resetPropagationState();
 	}
 
 

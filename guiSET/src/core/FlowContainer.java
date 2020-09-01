@@ -30,10 +30,10 @@ public class FlowContainer extends Container {
 
 		for (Control c : items) {
 			if (c.visible) {
-				lineY = Math.max(lineY, c.height + c.marginTop + c.marginBottom);
-				int itemWid = c.width + c.marginLeft + c.marginRight;
+				lineY = Math.max(lineY, c.getHeight() + c.marginTop + c.marginBottom);
+				int itemWid = c.getWidth() + c.marginLeft + c.marginRight;
 
-				if (usedX + itemWid > width - paddingRight) {
+				if (usedX + itemWid > getWidth() - paddingRight) {
 					// new line
 					usedY += lineY;
 					usedX = paddingLeft;

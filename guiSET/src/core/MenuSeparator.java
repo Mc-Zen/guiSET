@@ -22,9 +22,9 @@ public class MenuSeparator extends MenuItem {
 
 		pg.strokeWeight(1);
 		pg.stroke(220);
-		pg.line(23, height / 2 - 1, width - 2, height / 2 - 1);
+		pg.line(23, getHeight() / 2 - 1, getWidth() - 2, getHeight() / 2 - 1);
 		pg.stroke(255);
-		pg.line(23, height / 2, width - 2, height / 2);
+		pg.line(23, getHeight() / 2, getWidth() - 2, getHeight() / 2);
 	}
 
 	// remove the functionality of all these events from MenuItem

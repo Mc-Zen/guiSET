@@ -22,12 +22,12 @@ public class MenuBar extends HFlowContainer {
 
 	@Override
 	protected void addedToParent() {
-		setWidthImpl(parent.width);
+		setWidthImpl(parent.getWidth());
 		addAutoAnchors(PApplet.LEFT, PApplet.RIGHT);
 	}
 
 	@Override
 	protected void press(MouseEvent e) {
-		propagationStopped = false;
+		resetPropagationState();
 	}
 }

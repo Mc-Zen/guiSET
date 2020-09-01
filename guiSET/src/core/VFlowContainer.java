@@ -27,7 +27,7 @@ public class VFlowContainer extends Container {
 		for (Control c : items) {
 			if (c.visible) {
 				renderItem(c, c.marginLeft + paddingLeft, usedSpace + c.marginTop);
-				usedSpace += (c.height + c.marginTop + c.marginBottom);
+				usedSpace += (c.getHeight() + c.marginTop + c.marginBottom);
 			}
 		}
 		drawDefaultDisabled();

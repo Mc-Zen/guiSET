@@ -6,16 +6,14 @@ import processing.event.MouseEvent;
 
 
 /**
- * Standard checkbox that allows to display some text to the right of the
- * checkbox.
+ * Standard checkbox that allows to display some text to the right of the checkbox.
  * 
- * Can be checked/unchecked by clicking. If readToEntireField is activated, then
- * the state of the checkbox can be changed not only by clicking on the box
- * itself but also on the entire element including text. All colors can be set
- * individually.
+ * Can be checked/unchecked by clicking. If readToEntireField is activated, then the state of the
+ * checkbox can be changed not only by clicking on the box itself but also on the entire element
+ * including text. All colors can be set individually.
  * 
- * Use the checkedChangedListener to subscribe to any changed in the checked
- * state (happens also when setting the state programatically).
+ * Use the checkedChangedListener to subscribe to any changed in the checked state (happens also
+ * when setting the state programatically).
  * 
  * @author Mc-Zen
  *
@@ -74,11 +72,12 @@ public class Checkbox extends TextBased {
 		setPaddingRight(2);
 		this.checked = checked; // no setChecked()
 	}
-	
+
 	public Checkbox(String text, String toggleEventMethodName) {
 		this(text, false);
 		addToggleListener(toggleEventMethodName);
 	}
+
 	public Checkbox(String text, String toggleEventMethodName, boolean checked) {
 		this(text, checked);
 		addToggleListener(toggleEventMethodName);
@@ -115,7 +114,7 @@ public class Checkbox extends TextBased {
 		}
 	}
 
-	
+
 //	@Override
 //	protected void autosizeRule() {
 //		setWidthImpl((int) (textWidth(text) + paddingLeft + paddingRight));
@@ -198,8 +197,8 @@ public class Checkbox extends TextBased {
 
 
 	/**
-	 * If set to true, pressing anywhere on the element toggles the checkbox, else
-	 * only the box itself reacts to clicking.
+	 * If set to true, pressing anywhere on the element toggles the checkbox, else only the box itself
+	 * reacts to clicking.
 	 * 
 	 * @param reactToEntireField reactToEntireField
 	 */
@@ -247,8 +246,8 @@ public class Checkbox extends TextBased {
 	protected EventListener toggleListener;
 
 	/**
-	 * Add a listener for when the the checkbox has been checked/unchecked. Only
-	 * triggered when the user presses the Checkbox and not if set programatically.
+	 * Add a listener for when the the checkbox has been checked/unchecked. Only triggered when the user
+	 * presses the Checkbox and not if set programatically.
 	 * 
 	 * @param methodName method name
 	 * @param target     object
@@ -261,12 +260,36 @@ public class Checkbox extends TextBased {
 		addToggleListener(methodName, getPApplet());
 	}
 
+	/**
+	 * Add a listener lambda for when the the checkbox has been checked/unchecked. Only triggered when
+	 * the user presses the Checkbox and not if set programatically.
+	 * 
+	 * Event arguments: the {@link #Checkbox()} whose state has changed
+	 * 
+	 * @param p lambda expression with {@link #Checkbox()} parameter
+	 */
+	public void addToggleListener(Predicate1<Checkbox> p) {
+		toggleListener = new LambdaEventListener1<Checkbox>(p);
+	}
+
+	/**
+	 * Add a listener lambda for when the the checkbox has been checked/unchecked. Only triggered when
+	 * the user presses the Checkbox and not if set programatically.
+	 * 
+	 * Event arguments: none
+	 * 
+	 * @param p lambda expression
+	 */
+	public void addToggleListener(Predicate p) {
+		toggleListener = new LambdaEventListener(p);
+	}
+
 	public void removeToggleListener() {
 		toggleListener = null;
 	}
 
-	
-	
+
+
 
 	@Override
 	protected void press(MouseEvent e) {

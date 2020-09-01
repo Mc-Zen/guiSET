@@ -371,7 +371,7 @@ abstract public class TextBased extends Control {
 		@Override
 		public int getPureLineHeightValue() {
 			return lineHeight;
-		}; // returns lineheight
+		}
 
 		/**
 		 * Maximum width of the text (longest line if multiple lines)
@@ -453,6 +453,8 @@ abstract public class TextBased extends Control {
 		public void setFontSize(float fontSize) {
 			this.size = fontSize;
 		}
+		
+		
 		/*
 		 * ExtendedTextRenderer specific setters/getters
 		 */
@@ -596,6 +598,14 @@ abstract public class TextBased extends Control {
 	 */
 	protected float textWidth(String text) {
 		return textRenderer.textWidth(text);
+	}
+
+
+	/**
+	 * Width of text in pixel - no matter which font in the TextRenderer.
+	 */
+	protected float textWidth(char c) {
+		return textRenderer.textWidth(String.valueOf(c));
 	}
 
 	/**

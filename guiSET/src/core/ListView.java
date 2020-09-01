@@ -6,11 +6,11 @@ import java.util.ArrayList;
 import java.util.Comparator;
 
 
+
 /**
- * The list view allows to display easily a lot of items in a vertical list.
- * When adding a String a new ListItem will be created and added. You can add
- * items that inherit from {@link Control} other than ListItems but they cannot
- * receive the itemSelected() event.
+ * The list view allows to display easily a lot of items in a vertical list. When adding a String a
+ * new ListItem will be created and added. You can add items that inherit from {@link Control} other
+ * than ListItems but they cannot receive the itemSelected() event.
  * 
  * @author E-Bow
  *
@@ -211,8 +211,8 @@ public class ListView extends VScrollContainer {
 
 
 	/**
-	 * Select item with given index. If multiselect is not activated then this will
-	 * deselect all other selected items. Throws no error if index is bad.
+	 * Select item with given index. If multiselect is not activated then this will deselect all other
+	 * selected items. Throws no error if index is bad.
 	 * 
 	 * @param index index in listviews item list
 	 */
@@ -223,8 +223,8 @@ public class ListView extends VScrollContainer {
 	}
 
 	/**
-	 * Select item by reference. If multiselect is not activated then this will
-	 * deselect all other selected items.
+	 * Select item by reference. If multiselect is not activated then this will deselect all other
+	 * selected items.
 	 * 
 	 * @param item item to select
 	 */
@@ -236,8 +236,7 @@ public class ListView extends VScrollContainer {
 
 
 	/**
-	 * Set one item to be selected programatically. Also deselecting all previously
-	 * selected items.
+	 * Set one item to be selected programatically. Also deselecting all previously selected items.
 	 * 
 	 * @param index index in listviews item list
 	 */
@@ -252,8 +251,7 @@ public class ListView extends VScrollContainer {
 
 
 	/**
-	 * Simple adding method just giving the text as String will create automatically
-	 * new ListItems.
+	 * Simple adding method just giving the text as String will create automatically new ListItems.
 	 * 
 	 * @param newItems arbitrary number of item texts
 	 */
@@ -264,8 +262,7 @@ public class ListView extends VScrollContainer {
 	}
 
 	/**
-	 * Simple adding method just giving the text as String will create automatically
-	 * new ListItems.
+	 * Simple adding method just giving the text as String will create automatically new ListItems.
 	 * 
 	 * @param newItem item text
 	 */
@@ -351,8 +348,7 @@ public class ListView extends VScrollContainer {
 	}
 
 	/**
-	 * Sort items alphanumerically. If argument is false then the items are sorted
-	 * backwards.
+	 * Sort items alphanumerically. If argument is false then the items are sorted backwards.
 	 * 
 	 * 
 	 * @param reversed sort reversed
@@ -380,8 +376,8 @@ public class ListView extends VScrollContainer {
 
 
 	/**
-	 * Settimg this color will affect all items added afterwards through the
-	 * {@link #add(String)} method.
+	 * Settimg this color will affect all items added afterwards through the {@link #add(String)}
+	 * method.
 	 * 
 	 * @param itemBackgroundColor background color for new items
 	 */
@@ -485,8 +481,9 @@ public class ListView extends VScrollContainer {
 	protected EventListener selectListener;
 
 	/**
-	 * Add a listener for when an item is selected. The event passes the item that
-	 * has been selected.
+	 * Add a listener for when an item is selected.
+	 * 
+	 * Event arguments: the {@link #Control()} whose state has changed
 	 * 
 	 * @param methodName methodName
 	 * @param target     target
@@ -498,6 +495,29 @@ public class ListView extends VScrollContainer {
 
 	public void addItemSelectListener(String methodName) {
 		addItemSelectListener(methodName, getPApplet());
+	}
+
+	/**
+	 * Add a listener lambda for when an item is selected. The event passes the item that has been
+	 * selected.
+	 * 
+	 * Event arguments: the {@link #Control()} whose state has changed
+	 * 
+	 * @param p lambda expression with {@link #Control()} parameter
+	 */
+	public void addItemSelectListener(Predicate1<Control> p) {
+		selectListener = new LambdaEventListener1<Control>(p);
+	}
+
+	/**
+	 * Add a listener lambda for when an item is selected.
+	 * 
+	 * Event arguments: none
+	 * 
+	 * @param p lambda expression
+	 */
+	public void addItemSelectListener(Predicate p) {
+		selectListener = new LambdaEventListener(p);
 	}
 
 	public void removeItemSelectListener() {

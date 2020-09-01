@@ -32,12 +32,6 @@ import java.util.Comparator;
  * 		- the initialize() method:
  * 				Frame calls each element to initialize (recursively) when the draw() method of the sketch is running for the first time. Here new items may be added. 
  * 
- * 		Deprecated
- * 		- the calcBounds()-method: 
- * 				at the beginning of each frame it is important for all objects to know their positions and size (relative to window origin) 
- * 				so they can react to mouse events. This is done via this method. It is initiated by the Frame after the rendering has been done. 
- * 
- * 
  * The container has a useful feature - containerRenderItem(Control item, int x, int y). This method does all the stuff needed to check if looks of children have to 
  * be refreshed, if opacity has changed, local positioning for mouse events etc...
  * Other classes inheriting from Container should use this method to draw their children if they implement a new render() method. 
@@ -60,7 +54,7 @@ import java.util.Comparator;
 public class Container extends TextBased {
 
 	/*
-	 * list of items
+	 * List of items
 	 */
 	protected ArrayList<Control> items;
 
@@ -155,7 +149,6 @@ public class Container extends TextBased {
 	/*
 	 * DRAWING AND RENDERING
 	 */
-
 
 	// content list should not be changed in items render() while iterating
 	@Override
@@ -330,8 +323,8 @@ public class Container extends TextBased {
 		for (int i = 0; i < items.size(); i++) {
 			Control c = items.get(i);
 			if (c.visible) {
-				mWidth = Math.max(mWidth, c.offsetX + c.width);
-				mHeight = Math.max(mHeight, c.offsetY + c.height);
+				mWidth = Math.max(mWidth, c.offsetX + c.getWidth());
+				mHeight = Math.max(mHeight, c.offsetY + c.getHeight());
 			}
 		}
 		setSize(mWidth, mHeight);
@@ -350,7 +343,6 @@ public class Container extends TextBased {
 	/*
 	 * EVENTS
 	 */
-
 
 	@Override
 	protected void mouseEvent(int x, int y) {

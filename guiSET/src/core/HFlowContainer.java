@@ -26,7 +26,7 @@ public class HFlowContainer extends Container {
 		for (Control c : items) {
 			if (c.visible) {
 				renderItem(c, usedSpace + c.marginLeft, c.marginTop + paddingTop);
-				usedSpace += (c.width + c.marginLeft + c.marginRight);
+				usedSpace += (c.getWidth() + c.marginLeft + c.marginRight);
 			}
 		}
 		drawDefaultDisabled();

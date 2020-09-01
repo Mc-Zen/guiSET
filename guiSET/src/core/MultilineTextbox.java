@@ -12,57 +12,56 @@ package guiSET.core; //<>// //<>// //<>// //<>// //<>// //<>// //<>// //<>//
 
 
 
-import processing.core.*;
+import processing.core.PApplet;
 import processing.event.*;
 import processing.data.StringList;
 import processing.data.IntList;
 
 //clipboard
 import java.awt.datatransfer.UnsupportedFlavorException;
+import java.io.IOException;
+
 import java.awt.Toolkit;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.StringSelection;
-import java.io.*;
 import java.awt.datatransfer.DataFlavor;
 
 
 
 /**
- * The MultilineTextbox allows entering and pasting multi-line text. If the
- * width of a line exceeds the MultilineTextboxs width a line-break is
- * performed.
+ * The MultilineTextbox allows entering and pasting multi-line text. If the width of a line exceeds
+ * the MultilineTextboxs width a line-break is performed.
  * 
  * @author Mc-Zen
  *
  */
 public class MultilineTextbox extends VScrollContainer {
 
-
-	protected StringList lines; 		// text in lines
-	protected IntList breakPositions; 		// stores all automatic and entered line-breaks
-
-
-
 	protected int selectionColor = SELECTION_BLUE;
 	protected int cursorColor = TEXT_CURSOR_COLOR;
+
+	// Text to display when textbox is empty
 	protected String hint = "";
 
 	protected int cursorPosition = 0;
-	protected boolean clickSetsCursor = true;
+	protected int selectionStart;
+	protected int selectionEnd;
 
-	// protected int lineHeight;
-	protected boolean needsScrolling; 		// autoscroll to cursor when text changed, dont set it
 
-	// measure time to create blink animation
-	protected int cursorTime;
 	// cursor currently displayed or not in animation cycle
 	protected boolean currentDisplayCursor;
 
-	protected boolean initialized = false;
-
 	// if false, then user can select text and copy but not insert or type
 	protected boolean inputEnabled = true;
+
+	protected boolean clickSetsCursor = true;
+
+	protected boolean initialized = false;
+
+
+	protected StringList lines; 		// text in lines
+	protected IntList breakPositions; 		// stores all automatic and entered line-breaks
 
 
 
@@ -74,27 +73,26 @@ public class MultilineTextbox extends VScrollContainer {
 		this(width, height, 12);
 	}
 
+	public MultilineTextbox(String hint, int width, int height) {
+		this(width, height, 12);
+		setHint(hint);
+	}
+
 	public MultilineTextbox(int width, int height, int fontSize) {
 		super(width, height);
-
 
 		lines = new StringList();
 		breakPositions = new IntList();
 
-		setForegroundColor(BLACK);
 		setBackgroundColor(230);
 		setPadding(3);
 		setFontSize(fontSize);
 		setTextAlign(LEFT);
-//		setLineHeight((int) (fontSize * 0.2f));
+		setLineHeightPercent(120);
 		setCursor(TEXT);
-
-		overridesFrameShortcuts = true;
-
 		setSlimScrollHandle(true);
 
-		// cursor animation
-		getPApplet().registerMethod("pre", this);
+		overridesFrameShortcuts = true;
 	}
 
 
@@ -105,7 +103,6 @@ public class MultilineTextbox extends VScrollContainer {
 	@Override
 	protected void render() {
 		if (!initialized) {
-			cursorTime = getPApplet().millis();
 			initialized = true;
 			boxedText(text);
 		}
@@ -118,8 +115,8 @@ public class MultilineTextbox extends VScrollContainer {
 			// draw 3D-Border
 			pg.strokeWeight(1);
 			pg.stroke(70);
-			pg.line(0, 0, width, 0);
-			pg.line(0, 0, 0, height);
+			pg.line(0, 0, getWidth(), 0);
+			pg.line(0, 0, 0, getHeight());
 		}
 
 		int lineHeight = getLineHeight();
@@ -134,8 +131,8 @@ public class MultilineTextbox extends VScrollContainer {
 		/*
 		 * do this before drawing cursor
 		 */
-		fullScrollHeight = lines.size() * (/*getFontSize() + */lineHeight) + paddingTop + paddingBottom;
-		scrollPosition = PApplet.constrain(scrollPosition, 0, PApplet.max(0, fullScrollHeight - height));
+		fullScrollHeight = lines.size() * lineHeight + paddingTop + paddingBottom;
+		scrollPosition = PApplet.constrain(scrollPosition, 0, PApplet.max(0, fullScrollHeight - getHeight()));
 
 		/*
 		 * DRAW CURSOR, before drawing text!
@@ -157,11 +154,10 @@ public class MultilineTextbox extends VScrollContainer {
 					int start = Math.max(selectionStart, breakPositions.get(i));
 					int end = Math.min(selectionEnd, breakPositions.get(i + 1));
 
-					int selectionX = (int) (pg.textWidth(lines.get(i).substring(0, start - breakPositions.get(i))) + getFontSize() / 40f);
+					int selectionX = (int) (textWidth(lines.get(i).substring(0, start - breakPositions.get(i))) + getFontSize() / 40f);
 
-					int selectionWidth = (int) pg.textWidth(lines.get(i).substring(start - breakPositions.get(i), end - breakPositions.get(i)));
-					pg.rect(lineStart(lines.get(i)) + selectionX, i * (lineHeight/* + getFontSize()*/) + paddingTop - scrollPosition, selectionWidth,
-							getFontSize() + pg.textDescent());
+					int selectionWidth = (int) textWidth(lines.get(i).substring(start - breakPositions.get(i), end - breakPositions.get(i)));
+					pg.rect(lineStart(lines.get(i)) + selectionX, i * lineHeight + paddingTop - scrollPosition, selectionWidth, getFontSize() + textDescent());
 				}
 			}
 		}
@@ -175,11 +171,11 @@ public class MultilineTextbox extends VScrollContainer {
 
 			float posX = getTextAlign() == PApplet.LEFT ? paddingLeft
 					: (getTextAlign() == PApplet.RIGHT ? getAvailableWidth() + paddingLeft : getAvailableWidth() / 2 + paddingLeft);
-			int i0 = ((-paddingTop + scrollPosition) / (lineHeight/* + getFontSize()*/)); // first (partly) visible line
+			int i0 = ((-paddingTop + scrollPosition) / lineHeight); // first (partly) visible line
 
-			for (int i = i0; i < lines.size(); i++) {
-				float posY = i * (lineHeight/* + getFontSize()*/) + paddingTop - scrollPosition;
-				if (posY > height) // all further lines not visible
+			for (int i = Math.max(i0, 0); i < lines.size(); i++) {
+				float posY = i * (lineHeight) + paddingTop - scrollPosition;
+				if (posY > getHeight()) // all further lines not visible
 					break;
 				pg.text(lines.get(i), posX, posY);
 			}
@@ -192,7 +188,7 @@ public class MultilineTextbox extends VScrollContainer {
 			pg.fill(120);
 			boxedText(hint);
 			for (int i = 0; i < lines.size(); ++i) {
-				pg.text(lines.get(i), posX, i * (lineHeight/* + getFontSize()*/) + paddingTop - scrollPosition);
+				pg.text(lines.get(i), posX, i * lineHeight + paddingTop - scrollPosition);
 			}
 			boxedText(""); // important
 		}
@@ -226,9 +222,9 @@ public class MultilineTextbox extends VScrollContainer {
 		case PApplet.LEFT:
 			return paddingLeft;
 		case PApplet.RIGHT:
-			return paddingLeft + getAvailableWidth() - pg.textWidth(line);
+			return paddingLeft + getAvailableWidth() - textWidth(line);
 		case PApplet.CENTER:
-			return paddingLeft + (getAvailableWidth() - pg.textWidth(line)) / 2;
+			return paddingLeft + (getAvailableWidth() - textWidth(line)) / 2f;
 		default:
 			return 0;
 		}
@@ -243,10 +239,10 @@ public class MultilineTextbox extends VScrollContainer {
 	 * breakPositions will contain all indices of chars that START a new line
 	 * (including 0) At last (length of str + 1) is appended to breakPositions.
 	 * 
-	 * The result depends on: width , paddingLeft, paddingRight, slimScrollHandle, text, fontSize, 
+	 * The result depends on: width, paddingLeft, paddingRight, slimScrollHandle, text, fontSize, 
 	 * Thus a change of these makes a call to boxedText() necessary. 
 	 * 
-	 * We cant use Processings implementation of box text here because we need the break indices as we 
+	 * We can't use Processings implementation of boxed text here because we need the break indices as we 
 	 * interact with the text afterwards. Also the standard implementation in PGraphics is not unbelievably fast.   
 	 */
 	protected void boxedText(String str) {
@@ -281,7 +277,7 @@ public class MultilineTextbox extends VScrollContainer {
 			}
 
 			// get width of this char
-			float charWidth = textWidth("" + c); // if we were using pg.textWidth(), we'd need to set pg.textSize()!
+			float charWidth = textWidth(c); // if we were using pg.textWidth(), we'd need to set pg.textSize()!
 			// check if this char is a word-breaking char. Do this before next step, so we
 			// can break when a space is at the end of the text
 			if (c == ' ') {
@@ -331,26 +327,6 @@ public class MultilineTextbox extends VScrollContainer {
 	 * CURSOR
 	 */
 
-	// cursor blink animation
-	/**
-	 * DO NOT CALL THIS METHOD. It is for internal purposes only and unfortunately
-	 * needs to be public.
-	 */
-	public void pre() {
-		if (this.focused) {
-			int t = getPApplet().millis();
-			if (t - cursorTime > 500) {
-				currentDisplayCursor = !currentDisplayCursor;
-				cursorTime = t;
-				update();
-			}
-		}
-		/*
-		 * if(pressed >=1) { System.out.println(pressed); if(pressed == 2)
-		 * setScrollPosition(scrollPosition-2); if(pressed == 3)
-		 * setScrollPosition(scrollPosition+2); }
-		 */
-	}
 
 	/*
 	 * Take a cursor position and get the line the cursor should be in.
@@ -389,24 +365,25 @@ public class MultilineTextbox extends VScrollContainer {
 	protected float lineWidthUntilCursor() {
 		int lineNumber = getLineToCursor();
 		String lineUntiCursor = lines.get(lineNumber).substring(0, cursorPosition - breakPositions.get(lineNumber));
-		return pg.textWidth(lineUntiCursor);
+		return textWidth(lineUntiCursor);
 	}
 
 
 
+	protected boolean needsScrolling; 		// autoscroll to cursor when text changed, dont set it
 
 	protected void drawCursor() {
 		int lineNumber = getLineToCursor();
 		float posX = lineWidthUntilCursor() + lineStart(lines.get(lineNumber)) + getFontSize() / 40f;
 		// position of upper left corner of cursor relative to first character of text
-		int posY = ((lineNumber) * (getLineHeight()/* + getFontSize()*/));
+		int posY = lineNumber * getLineHeight();
 		float cursorHeight = getFontSize();
 
 		// perform autoscroll (i.e. when created new line)
 		if (needsScrolling) {
 			// cursor has left the element at the bottom
-			if (posY - scrollPosition + cursorHeight > height - paddingBottom - paddingTop) {
-				setScrollPosition((int) (posY - height + getFontSize() + paddingTop + paddingBottom));
+			if (posY - scrollPosition + cursorHeight > getHeight() - paddingBottom - paddingTop) {
+				setScrollPosition((int) (posY - getHeight() + getFontSize() + paddingTop + paddingBottom));
 			} else if (posY < scrollPosition + paddingTop) { // cursor has left the element at the top
 				setScrollPosition(posY);
 			}
@@ -434,7 +411,7 @@ public class MultilineTextbox extends VScrollContainer {
 
 			float textwidth = 0;
 			for (int i = 0; i < line.length(); i++) {
-				float letterWidth = pg.textWidth(line.charAt(i));
+				float letterWidth = textWidth(line.charAt(i));
 
 				textwidth += letterWidth;
 				if (textwidth > textX) { // determine clicked on character.
@@ -474,7 +451,7 @@ public class MultilineTextbox extends VScrollContainer {
 		// determine which line clicked on
 		int textY = mY - paddingTop + scrollPosition; // clicked y position on text (max(), because when drag, lines can be exceeded)
 		int lineHeight = getLineHeight();
-		int lineNumber = (int) ((textY + (lineHeight - getFontSize()) / 2) / (lineHeight/* + getFontSize()*/)); 
+		int lineNumber = (int) ((textY + (lineHeight - getFontSize()) / 2) / (lineHeight/* + getFontSize()*/));
 
 		setCursorByXAndLine(mX, Math.max(lineNumber, 0));
 	}
@@ -506,14 +483,54 @@ public class MultilineTextbox extends VScrollContainer {
 
 
 
+	/**
+	 * Simple thread that sleeps for one half cursor cycle and toggles cursor visibilty. An interruption
+	 * just restarts the thread, except the variable finish has been set to false previously. Everything
+	 * alright with thread saftey?
+	 * 
+	 * @author Mc-Zen
+	 *
+	 */
+	protected class CursorThread extends Thread {
+		boolean finish = false;
 
+		public void run() {
+			while (true) {
+				try {
+					Thread.sleep(Textbox.globalCursorCycleTime / 2);
+					currentDisplayCursor = !currentDisplayCursor;
+					update();
+				} catch (InterruptedException e) {
+					if (finish)
+						return;
+					continue;
+				}
+			}
+		}
+	}
+
+	protected static CursorThread t;
 
 	@Override
-	public void focus() {
-		super.focus();
-		cursorTime = getPApplet().millis();
-		currentDisplayCursor = true;
+	protected void focused() {
+		t = new CursorThread();
+		t.start();
 	}
+
+	@Override
+	protected void blurred() {
+		t.finish = true;
+		t.interrupt();
+	}
+
+	protected void restartCursorAnimation() {
+		if (focused) {
+			currentDisplayCursor = true;
+			t.interrupt();
+		}
+	}
+
+
 	/*
 	 * INTERNAL TEXT EDITING METHODS
 	 */
@@ -581,8 +598,7 @@ public class MultilineTextbox extends VScrollContainer {
 	// called whenether the cursor position changed due to user interaction or text
 	// edits
 	protected void cursorChanged() {
-		cursorTime = getPApplet().millis();
-		currentDisplayCursor = true;
+		restartCursorAnimation();
 		selectionStart = cursorPosition;
 		selectionEnd = cursorPosition;
 		needsScrolling = true;
@@ -668,8 +684,7 @@ public class MultilineTextbox extends VScrollContainer {
 	}
 
 	/**
-	 * Set the start for the text selection. Selection start index can never be
-	 * higher than end index
+	 * Set the start for the text selection. Selection start index can never be higher than end index
 	 * 
 	 * @param selectionStart selection start position
 	 */
@@ -679,8 +694,7 @@ public class MultilineTextbox extends VScrollContainer {
 	}
 
 	/**
-	 * Set the end for the text selection. Selection end index can never be less
-	 * than start index
+	 * Set the end for the text selection. Selection end index can never be less than start index
 	 * 
 	 * @param selectionEnd selection end position
 	 */
@@ -710,8 +724,8 @@ public class MultilineTextbox extends VScrollContainer {
 	}
 
 	/**
-	 * if false then clicking on the Textbox does not set the cursor to where the
-	 * user clicked. Not really necessary but I needed it once.
+	 * if false then clicking on the Textbox does not set the cursor to where the user clicked. Not
+	 * really necessary but I needed it once.
 	 * 
 	 * @param clickSetsCursor clickSetsCursor
 	 */
@@ -784,8 +798,7 @@ public class MultilineTextbox extends VScrollContainer {
 
 
 	/**
-	 * Prevent user from typing or pasting text while maintaining the ability of
-	 * selecting and copying.
+	 * Prevent user from typing or pasting text while maintaining the ability of selecting and copying.
 	 */
 	public void disableInput() {
 		inputEnabled = false;
@@ -846,8 +859,10 @@ public class MultilineTextbox extends VScrollContainer {
 	protected EventListener textChangeListener;
 
 	/**
-	 * Add a key listener to the textbox. The event is triggered each time any key
-	 * is pressed when the textbox has focus.
+	 * Add a key listener to the textbox. The event is triggered each time any key is pressed when the
+	 * textbox has focus.
+	 * 
+	 * Event arguments: {@link KeyEvent}
 	 * 
 	 * @param methodName name of callback method
 	 * @param target     object that declares callback method.
@@ -860,13 +875,36 @@ public class MultilineTextbox extends VScrollContainer {
 		addKeyPressListener(methodName, getPApplet());
 	}
 
+	/**
+	 * Add a lambda key listener to the textbox. The event is triggered each time any key is pressed
+	 * when the textbox has focus.
+	 * 
+	 * Event arguments: none
+	 * 
+	 * @param p lambda expression
+	 */
+	public void addKeyPressListener(Predicate p) {
+		keyPressListener = new LambdaEventListener(p);
+	}
+
+	/**
+	 * Add a lambda key listener to the textbox. The event is triggered each time any key is pressed
+	 * when the textbox has focus.
+	 * 
+	 * Event arguments: {@link KeyEvent}
+	 * 
+	 * @param p lambda expression with {@link KeyEvent} as parameter
+	 */
+	public void addKeyPressListener(Predicate1<KeyEvent> p) {
+		keyPressListener = new LambdaEventListener1<KeyEvent>(p);
+	}
+
 	public void removeKeyPressListener() {
 		keyPressListener = null;
 	}
 
 	/**
-	 * Add a listener that fires when the text has actually changed (not just the
-	 * cursor or selection).
+	 * Add a listener that fires when the text has actually changed (not just the cursor or selection).
 	 * 
 	 * @param methodName name of callback method
 	 * @param target     object that declares callback method.
@@ -879,6 +917,18 @@ public class MultilineTextbox extends VScrollContainer {
 		addTextChangeListener(methodName, getPApplet());
 	}
 
+	/**
+	 * Add a lambda listener that fires when the text has actually changed (not just the cursor or
+	 * selection).
+	 * 
+	 * Event arguments: none
+	 * 
+	 * @param p lambda expression
+	 */
+	public void addTextChangeListener(Predicate p) {
+		textChangeListener = new LambdaEventListener(p);
+	}
+
 	public void removeTextChangeListener() {
 		textChangeListener = null;
 	}
@@ -887,8 +937,7 @@ public class MultilineTextbox extends VScrollContainer {
 
 
 
-	int selectionInitial = 0;
-	int selectionStart, selectionEnd;
+	protected int selectionInitial = 0;
 
 	@Override
 	protected void press(MouseEvent e) {
@@ -939,7 +988,7 @@ public class MultilineTextbox extends VScrollContainer {
 	@Override
 	protected void mouseWheel(MouseEvent e) {
 		if (getFrame().isControlDown()) {
-			setFontSize(getFontSize() * (e.getCount() > 0 ? 1.1f : 1 / 1.1f));
+			setFontSize(getFontSize() * (e.getCount() < 0 ? 1.1f : 1 / 1.1f));
 		} else {
 			super.mouseWheel(e);
 		}

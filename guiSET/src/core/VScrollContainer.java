@@ -31,7 +31,7 @@ public class VScrollContainer extends VFlowContainer {
 	protected int scrollPosition;
 
 	// speed at which container will be scrolled, can be set externally
-	protected int scrollSpeed = DEFAULT_SCROLL_SPEED;
+	protected int scrollSpeed = defaultScrollSpeed;
 
 	// enable a thin version of scroll handle for small containers (i.e. smaller
 	// textboxes)
@@ -63,12 +63,12 @@ public class VScrollContainer extends VFlowContainer {
 
 		for (Control c : items) {
 			if (c.visible) {
-				fullScrollHeight += c.marginTop + c.height + c.marginBottom;
+				fullScrollHeight += c.marginTop + c.getHeight() + c.marginBottom;
 			}
 		}
 		// do this here and not in setScrollPosition() as fullscrollHeight might have
 		// changed.
-		scrollPosition = PApplet.constrain(scrollPosition, 0, PApplet.max(0, fullScrollHeight - height));
+		scrollPosition = PApplet.constrain(scrollPosition, 0, PApplet.max(0, fullScrollHeight - getHeight()));
 
 		int usedSpace = paddingTop;
 		for (Control c : items) {
@@ -78,14 +78,14 @@ public class VScrollContainer extends VFlowContainer {
 				int cx0 = c.marginLeft + paddingLeft;
 				int cy0 = usedSpace + c.marginTop - scrollPosition;
 
-				if (cy0 > height || cy0 + c.height < 0) { // out of the containers bounds due to scrolling
-					c.offsetX = width; // one should suffice
-					c.offsetY = height;
+				if (cy0 > getHeight() || cy0 + c.getHeight() < 0) { // out of the containers bounds due to scrolling
+					c.offsetX = getWidth(); // one should suffice
+					c.offsetY = getHeight();
 				} else {
 					renderItem(c, cx0, cy0);
 				}
 
-				usedSpace += (c.height + c.marginTop + c.marginBottom);
+				usedSpace += (c.getHeight() + c.marginTop + c.marginBottom);
 			}
 		}
 
@@ -119,13 +119,13 @@ public class VScrollContainer extends VFlowContainer {
 				pg.noStroke();
 
 				if (slim_scrollhandle) {
-					pg.rect(width - 1 - scrollHandleStrength, scrollhandle_posY(), scrollHandleStrength, scrollhandle_height(), 15);
+					pg.rect(getWidth() - 1 - scrollHandleStrength, scrollhandle_posY(), scrollHandleStrength, scrollhandle_height(), 15);
 				} else {
 					
-					pg.rect(width - 2 - scrollHandleStrength, 0, scrollHandleStrength + 3, scrollbar_height());
+					pg.rect(getWidth() - 2 - scrollHandleStrength, 0, scrollHandleStrength + 3, scrollbar_height());
 					pg.fill(startHandleDragPos > -1 ? SCROLL_HANDLE_COLOR : SCROLL_HANDLE_PRESSED_COLOR);
 					pg.stroke(SCROLL_HANDLE_BORDER_COLOR);
-					pg.rect(width - 2 - scrollHandleStrength, scrollhandle_posY(), scrollHandleStrength+1, scrollhandle_height(), SCROLL_HANDLE_BORDER_RADIUS);
+					pg.rect(getWidth() - 2 - scrollHandleStrength, scrollhandle_posY(), scrollHandleStrength+1, scrollhandle_height(), SCROLL_HANDLE_BORDER_RADIUS);
 				}
 			}
 		}
@@ -135,19 +135,19 @@ public class VScrollContainer extends VFlowContainer {
 	 */
 
 	protected boolean needsScrollbarV() {
-		return height < fullScrollHeight;
+		return getHeight() < fullScrollHeight;
 	}
 
 	// get height of entire vertical scrollbar, seems trivial but is not if
 	// container has vertical and horizontal scrollbar
 	protected int scrollbar_height() {
-		return height;
+		return getHeight();
 	}
 
 
 	// get height of handle
 	protected int scrollhandle_height() {
-		return Math.max(minScrollHandleLength, height * scrollbar_height() / fullScrollHeight);
+		return Math.max(minScrollHandleLength, getHeight() * scrollbar_height() / fullScrollHeight);
 	}
 
 	// get position of handle
@@ -155,7 +155,7 @@ public class VScrollContainer extends VFlowContainer {
 		int scrollbar_height = scrollbar_height();
 		float scrollhandle_height = scrollhandle_height();
 
-		return (int) PApplet.constrain(scrollPosition * (scrollbar_height - scrollhandle_height) / (fullScrollHeight - height), 1,
+		return (int) PApplet.constrain(scrollPosition * (scrollbar_height - scrollhandle_height) / (fullScrollHeight - getHeight()), 1,
 				scrollbar_height - scrollhandle_height - 2);
 	}
 
@@ -175,13 +175,13 @@ public class VScrollContainer extends VFlowContainer {
 		if (index >= 0 && index < items.size()) {
 			int y = paddingTop;
 			for (int i = 0; i < index; i++) {
-				y += items.get(i).marginTop + items.get(i).height + items.get(i).marginBottom;
+				y += items.get(i).marginTop + items.get(i).getHeight() + items.get(i).marginBottom;
 			}
 			Control item = items.get(index);
 			if (scrollPosition > y) {
 				setScrollPosition(y);
-			} else if (scrollPosition + height < y + item.height) {
-				setScrollPosition(y - height + item.height + item.marginTop + item.marginBottom);
+			} else if (scrollPosition + getHeight() < y + item.getHeight()) {
+				setScrollPosition(y - getHeight() + item.getHeight() + item.marginTop + item.marginBottom);
 			}
 		}
 	}
@@ -194,12 +194,12 @@ public class VScrollContainer extends VFlowContainer {
 		for (int i = 0; i < items.size(); i++) {
 			if (item == items.get(i))
 				break;
-			y += items.get(i).marginTop + items.get(i).height + items.get(i).marginBottom;
+			y += items.get(i).marginTop + items.get(i).getHeight() + items.get(i).marginBottom;
 		}
 		if (scrollPosition > y) {
 			setScrollPosition(y);
-		} else if (scrollPosition + height < y + item.height) {
-			setScrollPosition(y - height + item.height + item.marginTop + item.marginBottom);
+		} else if (scrollPosition + getHeight() < y + item.getHeight()) {
+			setScrollPosition(y - getHeight() + item.getHeight() + item.marginTop + item.marginBottom);
 		}
 	}
 
@@ -273,7 +273,7 @@ public class VScrollContainer extends VFlowContainer {
 
 	@Override
 	public int getAvailableWidth() {
-		return width - paddingLeft - paddingRight - scrollHandleStrength - 1;
+		return getWidth() - paddingLeft - paddingRight - scrollHandleStrength - 1;
 	}
 
 
@@ -321,7 +321,7 @@ public class VScrollContainer extends VFlowContainer {
 	protected void drag(MouseEvent e) {
 		if (startHandleDragPos > -1) {
 			int newScrollHandle_Pos = e.getY() - getOffsetYWindow() - startHandleDragPos;
-			int newScrollPosition = newScrollHandle_Pos * (fullScrollHeight - height) / (scrollbar_height() - scrollhandle_height());
+			int newScrollPosition = newScrollHandle_Pos * (fullScrollHeight - getHeight()) / (scrollbar_height() - scrollhandle_height());
 			setScrollPosition(newScrollPosition);
 		}
 	}
@@ -349,7 +349,7 @@ public class VScrollContainer extends VFlowContainer {
 	 */
 	@Override
 	protected boolean containerPreItemsMouseEvent(int x, int y) {
-		boolean mouseIsOverScrollBar = needsScrollbarV() && x > width - scrollHandleStrength - 3 && x < width && y > 0 && y < height;
+		boolean mouseIsOverScrollBar = needsScrollbarV() && x > getWidth() - scrollHandleStrength - 3 && x < getWidth() && y > 0 && y < getHeight();
 
 		if (MouseEvent.PRESS == currentMouseEvent.getAction() && mouseIsOverScrollBar) {
 			int scrollhandle_posY = scrollhandle_posY();

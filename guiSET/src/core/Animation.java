@@ -111,8 +111,10 @@ public class Animation {
 				currentValue = ((Number) getter.invoke(target)).doubleValue();
 
 
-				// calculate needed number of frames to complete animation, never less than 1!
-				numberOfSteps = (int) Math.max(1, (Control.getPApplet().frameRate * milliseconds / 1000));
+				// Calculate needed number of frames to complete animation, never less than 1!
+				// If not looping, the papplet.frameRate tells us nothing about time
+				float frameRate = Control.getFrame().drawMode == Frame.DrawMode.NO_LOOP ? 60 : Control.getPApplet().frameRate;
+				numberOfSteps = (int) Math.max(1, (frameRate * milliseconds / 1000));
 
 
 				// colors need to be animate differently than ordinary numerics
@@ -172,20 +174,17 @@ public class Animation {
 		if (cancel)
 			return false;
 
-		// immediately finish animation if NO_LOOP is the drawMode (these do not work
-		// together)
 		if (Control.getFrame().drawMode == Frame.NO_LOOP) {
-			//counter = numberOfSteps;
 			Frame.noLoopAfterAnimation();
 		}
 
 		// check if there's still work to do
 		if (counter <= numberOfSteps) {
+			
 			switch (animationType) {
 			case NUMBER:
 				currentValue = valueStart + (valueEnd - valueStart) / (float) numberOfSteps * counter;
 				break;
-
 			case COLOR:
 				double ac = (a1 + (a2 - a1) / (float) numberOfSteps * counter);
 				double rc = (r1 + (r2 - r1) / (float) numberOfSteps * counter);
@@ -195,13 +194,10 @@ public class Animation {
 				currentValue = Color.create((int) rc, (int) gc, (int) bc, (int) ac);
 				break;
 			}
-
 			counter++;
 		} else {
 			return false;      // end animation with false, which clears it off animation queue (in Frame)
 		}
-
-
 
 		// set value
 		try {
@@ -211,7 +207,6 @@ public class Animation {
 		} catch (InvocationTargetException te) {
 			te.printStackTrace();
 		}
-
 
 		return true;
 	}

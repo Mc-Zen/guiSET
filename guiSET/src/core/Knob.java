@@ -43,7 +43,7 @@ public class Knob extends Slider {
 	
 
 	protected void render() {
-		float outerCircleRadius = Math.min(width * 0.8f, height * 0.8f);
+		float outerCircleRadius = Math.min(getWidth() * 0.8f, getHeight() * 0.8f);
 		float valueCircleRadius = outerCircleRadius * 0.9f;
 		float innerCircleRadius = outerCircleRadius * 0.6f;
 
@@ -53,23 +53,23 @@ public class Knob extends Slider {
 		pg.fill(getBackgroundColor());
 
 		// Knob circle
-		pg.ellipse(width * 0.5f, height * 0.5f, outerCircleRadius, outerCircleRadius);
+		pg.ellipse(getWidth() * 0.5f, getHeight() * 0.5f, outerCircleRadius, outerCircleRadius);
 
 		// Little lines for min and max value
 		float xx = (float) (0.5f * outerCircleRadius / Math.sqrt(2));
-		pg.line(width * 0.5f - xx, height * 0.5f + xx, width * 0.5f - (xx * 0.6f), height * 0.5f + (xx * 0.6f));
-		pg.line(width * 0.5f + xx, height * 0.5f + xx, width * 0.5f + (xx * 0.6f), height * 0.5f + (xx * 0.6f));
+		pg.line(getWidth() * 0.5f - xx, getHeight() * 0.5f + xx, getWidth() * 0.5f - (xx * 0.6f), getHeight() * 0.5f + (xx * 0.6f));
+		pg.line(getWidth() * 0.5f + xx, getHeight() * 0.5f + xx, getWidth() * 0.5f + (xx * 0.6f), getHeight() * 0.5f + (xx * 0.6f));
 		pg.fill(getForegroundColor());
 
 		// Draw arc in pie style
 		float angle = (3 * PI / 2) / Math.abs(maxValue - minValue) * (value - minValue);
 		pg.noStroke();
-		pg.arc(width * 0.5f, height * 0.5f, valueCircleRadius, valueCircleRadius, 3 * PI / 4, 3 * PI / 4 + angle, PIE);
+		pg.arc(getWidth() * 0.5f, getHeight() * 0.5f, valueCircleRadius, valueCircleRadius, 3 * PI / 4, 3 * PI / 4 + angle, PIE);
 
 		// Remove center of pie
 		pg.fill(getBackgroundColor());
 		pg.noStroke();
-		pg.ellipse(width * 0.5f, height * 0.5f, innerCircleRadius, innerCircleRadius);
+		pg.ellipse(getWidth() * 0.5f, getHeight() * 0.5f, innerCircleRadius, innerCircleRadius);
 
 		// Draw value as text
 		pg.fill(BLACK);
@@ -90,7 +90,7 @@ public class Knob extends Slider {
 		DecimalFormat df = new DecimalFormat(s);
 		df.setRoundingMode(RoundingMode.HALF_EVEN);
 		String text = df.format(value);
-		pg.text(text, width / 2, height / 2);
+		pg.text(text, getWidth() / 2, getHeight() / 2);
 	}
 
 
@@ -132,17 +132,17 @@ public class Knob extends Slider {
 	protected void drag(MouseEvent e) {
 		int mouse;
 		if (orientation == Orientation.HORIZONTAL)
-			mouse = e.getX() - getOffsetXWindow() - width / 2; // 0 is center of knob
+			mouse = e.getX() - getOffsetXWindow() - getWidth() / 2; // 0 is center of knob
 		else
-			mouse = -(e.getY() - getOffsetYWindow() - height / 2);
+			mouse = -(e.getY() - getOffsetYWindow() - getHeight() / 2);
 		setValue(startValue + (mouse - startPos) / 100f * getIntervalLength() * dragSpeed);
 	}
 
 
 	@Override
 	protected void press(MouseEvent e) {
-		int mouseX = e.getX() - getOffsetXWindow() - width / 2; // 0 is center of knob
-		int mouseY = e.getY() - getOffsetYWindow() - height / 2;		// 0 is center of know
+		int mouseX = e.getX() - getOffsetXWindow() - getWidth() / 2; // 0 is center of knob
+		int mouseY = e.getY() - getOffsetYWindow() - getHeight() / 2;		// 0 is center of know
 
 		// Transform into polar coordinates
 		double r = Math.sqrt(mouseX * mouseX + mouseY * mouseY);

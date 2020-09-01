@@ -65,8 +65,18 @@ public class Button extends TextBased {
 	}
 
 	/**
-	 * Create an image button. Width and height of button will be set to dimensions
-	 * of given image.
+	 * Constructor for specifying button text and press callback lambda.
+	 * 
+	 * @param text          text
+	 * @param pressCallback callback lambda for press event
+	 */
+	public Button(String text, Predicate pressCallback) {
+		this(text);
+		addMouseListener("press", pressCallback);
+	}
+
+	/**
+	 * Create an image button. Width and height of button will be set to dimensions of given image.
 	 * 
 	 * @param image background image for button
 	 */
@@ -75,8 +85,8 @@ public class Button extends TextBased {
 	}
 
 	/**
-	 * Create an image button. Width and height of button will be set to dimensions
-	 * of image multiplied by given scale factor.
+	 * Create an image button. Width and height of button will be set to dimensions of image multiplied
+	 * by given scale factor.
 	 * 
 	 * @param image background image for button
 	 * @param scale scale factor for image
@@ -86,8 +96,8 @@ public class Button extends TextBased {
 	}
 
 	/**
-	 * Create an image button and provide a mouse press callback method name, width
-	 * and height of button will be set to dimensions of given image.
+	 * Create an image button and provide a mouse press callback method name, width and height of button
+	 * will be set to dimensions of given image.
 	 * 
 	 * @param image         background image for button
 	 * @param pressCallback callback for press event
@@ -98,9 +108,20 @@ public class Button extends TextBased {
 	}
 
 	/**
-	 * Create an image button and provide a mouse press callback method name, width
-	 * and height of button will be set to dimensions of image multiplied by given
-	 * scale factor.
+	 * Create an image button and provide a mouse press callback lambda, width and height of button will
+	 * be set to dimensions of given image.
+	 * 
+	 * @param image         background image for button
+	 * @param pressCallback callback lambda for press event
+	 */
+	public Button(PImage image, Predicate pressCallback) {
+		this(image, image.width, image.height);
+		addMouseListener("press", pressCallback);
+	}
+
+	/**
+	 * Create an image button and provide a mouse press callback method name, width and height of button
+	 * will be set to dimensions of image multiplied by given scale factor.
 	 * 
 	 * @param image         background image for button
 	 * @param scale         scale factor for image
@@ -112,8 +133,20 @@ public class Button extends TextBased {
 	}
 
 	/**
-	 * Create an image label. Width and height of button are set to given
-	 * dimensions.
+	 * Create an image button and provide a mouse press callback lambda, width and height of button will
+	 * be set to dimensions of image multiplied by given scale factor.
+	 * 
+	 * @param image         background image for button
+	 * @param scale         scale factor for image
+	 * @param pressCallback callback lambda for press event
+	 */
+	public Button(PImage image, float scale, Predicate pressCallback) {
+		this(image, scale);
+		addMouseListener("press", pressCallback);
+	}
+
+	/**
+	 * Create an image label. Width and height of button are set to given dimensions.
 	 * 
 	 * @param image  image background image for button
 	 * @param width  width for label

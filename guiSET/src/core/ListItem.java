@@ -3,8 +3,7 @@ package guiSET.core;
 import processing.event.*;
 
 /**
- * Optimal item to add to {@link ListView} as it features firing the
- * itemSelected event of ListView.
+ * Optimal item to add to {@link ListView} as it features firing the itemSelected event of ListView.
  * 
  * @author Mc-Zen
  *
@@ -28,8 +27,8 @@ public class ListItem extends TextBased {
 		setSelectionColor(SELECTION_BLUE);
 		setSelectionForegroundColor(WHITE);
 		setBackgroundColor(TRANSPARENT);
-		setHoverColor(Color.create(0,0,0,30));
-		setPressedColor(Color.create(0,0,0,50));
+		setHoverColor(Color.create(0, 0, 0, 30));
+		setPressedColor(Color.create(0, 0, 0, 50));
 
 		autosize();
 	}
@@ -49,14 +48,14 @@ public class ListItem extends TextBased {
 		// Exception: Width is set in render() method for once which is okay because
 		// parent expects that
 
-		//setWidthImpl(((Container) parent).getAvailableWidth());
+		// setWidthImpl(((Container) parent).getAvailableWidth());
 //		updateAnchors(); // not really necessary or elegant but for now (just in case listitem has
-						 // children)
+		// children)
 //		resize();        // ...
 
 		// only if parent is not a ParentGraphicsRenderer (temporary solution)
 		if (pg != parent.pg) {
-			pg = getPApplet().createGraphics(width, height);
+			pg = getPApplet().createGraphics(getWidth(), getHeight());
 			pg.beginDraw();
 		}
 
@@ -79,17 +78,13 @@ public class ListItem extends TextBased {
 
 	}
 
-//	@Override
-//	protected void autosizeRule() {
-//		setHeightImpl((int) (getFontSize() * 1.5) + paddingTop + paddingBottom);
-//	}
 
 	@Override
 	protected int autoHeight() {
 		return (int) (getFontSize() * 1.5) + paddingTop + paddingBottom;
 	}
 
-	
+
 
 
 
@@ -112,9 +107,9 @@ public class ListItem extends TextBased {
 
 
 	/**
-	 * Sets the background color for when the item is in its selected state. This
-	 * also sets selectionHoverColor (a little darker / brighter depending on the
-	 * brightness of the selectionColor).
+	 * Sets the background color for when the item is in its selected state. This also sets
+	 * selectionHoverColor (a little darker / brighter depending on the brightness of the
+	 * selectionColor).
 	 * 
 	 * @param selectionColor selection color
 	 */
@@ -135,8 +130,7 @@ public class ListItem extends TextBased {
 	}
 
 	/**
-	 * Sets the background color for when the item is selecteed AND hovered over
-	 * with the mouse.
+	 * Sets the background color for when the item is selecteed AND hovered over with the mouse.
 	 * 
 	 * @param selectionHoverColor selection hover color
 	 */

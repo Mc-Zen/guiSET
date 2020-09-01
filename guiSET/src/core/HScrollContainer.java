@@ -31,7 +31,7 @@ public class HScrollContainer extends HFlowContainer {
 	protected int scrollPosition;
 
 	// speed at which container will be scrolled, can be set externally
-	protected int scrollSpeed = DEFAULT_SCROLL_SPEED;
+	protected int scrollSpeed = defaultScrollSpeed;
 
 
 
@@ -61,11 +61,11 @@ public class HScrollContainer extends HFlowContainer {
 		fullScrollWidth = paddingLeft;
 		for (Control c : items) {
 			if (c.visible) {
-				fullScrollWidth += c.marginRight + c.width + c.marginLeft;
+				fullScrollWidth += c.marginRight + c.getWidth() + c.marginLeft;
 			}
 		}
 
-		scrollPosition = PApplet.constrain(scrollPosition, 0, PApplet.max(0, fullScrollWidth - width));
+		scrollPosition = PApplet.constrain(scrollPosition, 0, PApplet.max(0, fullScrollWidth - getWidth()));
 
 		int usedSpace = paddingLeft;
 		for (Control c : items) {
@@ -74,14 +74,14 @@ public class HScrollContainer extends HFlowContainer {
 				int cx0 = usedSpace + c.marginLeft - scrollPosition;
 				int cy0 = c.marginTop + paddingTop;
 
-				if (cx0 > width || cx0 + c.width < 0) {  // out of the containers bounds due to scrolling
-					c.offsetX = width; // one should suffice
-					c.offsetY = height;
+				if (cx0 > getWidth() || cx0 + c.getWidth() < 0) {  // out of the containers bounds due to scrolling
+					c.offsetX = getWidth(); // one should suffice
+					c.offsetY = getHeight();
 				} else {
 					renderItem(c, cx0, cy0);
 				}
 
-				usedSpace += (c.width + c.marginLeft + c.marginRight);
+				usedSpace += (c.getWidth() + c.marginLeft + c.marginRight);
 			}
 		}
 
@@ -105,16 +105,16 @@ public class HScrollContainer extends HFlowContainer {
 			pg.noStroke();
 
 			if (slim_scrollhandle) {
-				pg.rect(scrollhandle_posX(), height - 1 - scrollHandleStrength, scrollhandle_width(), scrollHandleStrength, 15);
+				pg.rect(scrollhandle_posX(), getHeight() - 1 - scrollHandleStrength, scrollhandle_width(), scrollHandleStrength, 15);
 			} else {
 //				pg.rect(0, height - 2 - scrollHandleStrength, scrollbar_width(), scrollHandleStrength + 3); // height is one more than necessary (just)
 //				pg.fill(startHandleDragPos > -1 ? SCROLL_HANDLE_COLOR : SCROLL_HANDLE_PRESSED_COLOR);
 //				pg.rect(scrollhandle_posX(), height - 1 - scrollHandleStrength, scrollhandle_width(), scrollHandleStrength, SCROLL_HANDLE_BORDER_RADIUS);
 
-				pg.rect(0, height - 2 - scrollHandleStrength, scrollbar_width(), scrollHandleStrength + 3);
+				pg.rect(0, getHeight() - 2 - scrollHandleStrength, scrollbar_width(), scrollHandleStrength + 3);
 				pg.fill(startHandleDragPos > -1 ? SCROLL_HANDLE_COLOR : SCROLL_HANDLE_PRESSED_COLOR);
 				pg.stroke(SCROLL_HANDLE_BORDER_COLOR);
-				pg.rect(scrollhandle_posX(), height - 2 - scrollHandleStrength, scrollhandle_width(), scrollHandleStrength, SCROLL_HANDLE_BORDER_RADIUS);
+				pg.rect(scrollhandle_posX(), getHeight() - 2 - scrollHandleStrength, scrollhandle_width(), scrollHandleStrength, SCROLL_HANDLE_BORDER_RADIUS);
 
 			}
 		}
@@ -128,18 +128,18 @@ public class HScrollContainer extends HFlowContainer {
 
 	// horizontal scrollbar needed?
 	protected boolean needsScrollbarH() {
-		return width < fullScrollWidth;
+		return getWidth() < fullScrollWidth;
 	}
 
 
 	// get width of entire horizontal scrollbar
 	protected int scrollbar_width() {
-		return width;
+		return getWidth();
 	}
 
 	// get width of handle (of the horizontal scrollbar)
 	protected int scrollhandle_width() {
-		return Math.max(minScrollHandleLength, width * scrollbar_width() / fullScrollWidth);
+		return Math.max(minScrollHandleLength, getWidth() * scrollbar_width() / fullScrollWidth);
 	}
 
 	// get position of handle (of the horizontal scrollbar)
@@ -147,7 +147,7 @@ public class HScrollContainer extends HFlowContainer {
 		int scrollbar_width = scrollbar_width();
 		float scrollhandle_width = scrollhandle_width();
 
-		return (int) PApplet.constrain(scrollPosition * (scrollbar_width - scrollhandle_width) / (fullScrollWidth - width), 1,
+		return (int) PApplet.constrain(scrollPosition * (scrollbar_width - scrollhandle_width) / (fullScrollWidth - getWidth()), 1,
 				scrollbar_width - scrollhandle_width - 2);
 	}
 
@@ -161,13 +161,13 @@ public class HScrollContainer extends HFlowContainer {
 		if (index >= 0 && index < items.size()) {
 			int x = paddingLeft;
 			for (int i = 0; i < index; i++) {
-				x += items.get(i).marginLeft + items.get(i).width + items.get(i).marginRight;
+				x += items.get(i).marginLeft + items.get(i).getWidth() + items.get(i).marginRight;
 			}
 			Control item = items.get(index);
 			if (scrollPosition > x) {
 				setScrollPosition(x);
-			} else if (scrollPosition + width < x + item.width) {
-				setScrollPosition(x - width + item.width + item.marginLeft + item.marginRight);
+			} else if (scrollPosition + getWidth() < x + item.getWidth()) {
+				setScrollPosition(x - getWidth() + item.getWidth() + item.marginLeft + item.marginRight);
 			}
 		}
 	}
@@ -180,12 +180,12 @@ public class HScrollContainer extends HFlowContainer {
 		for (int i = 0; i < items.size(); i++) {
 			if (item == items.get(i))
 				break;
-			x += items.get(i).marginLeft + items.get(i).width + items.get(i).marginRight;
+			x += items.get(i).marginLeft + items.get(i).getWidth() + items.get(i).marginRight;
 		}
 		if (scrollPosition > x) {
 			setScrollPosition(x);
-		} else if (scrollPosition + width < x + item.width) {
-			setScrollPosition(x - width + item.width + item.marginLeft + item.marginRight);
+		} else if (scrollPosition + getWidth() < x + item.getWidth()) {
+			setScrollPosition(x - getWidth() + item.getWidth() + item.marginLeft + item.marginRight);
 		}
 	}
 
@@ -252,7 +252,7 @@ public class HScrollContainer extends HFlowContainer {
 
 	@Override
 	public int getAvailableHeight() {
-		return height - paddingTop - paddingBottom - scrollHandleStrength - 1;
+		return getHeight() - paddingTop - paddingBottom - scrollHandleStrength - 1;
 	}
 
 
@@ -294,7 +294,7 @@ public class HScrollContainer extends HFlowContainer {
 	protected void drag(MouseEvent e) {
 		if (startHandleDragPos > -1) {
 			int newScrollHandle_Pos = e.getX() - getOffsetXWindow() - startHandleDragPos;
-			float newScrollPosition = newScrollHandle_Pos * (float) (fullScrollWidth - width) / (scrollbar_width() - scrollhandle_width());
+			float newScrollPosition = newScrollHandle_Pos * (float) (fullScrollWidth - getWidth()) / (scrollbar_width() - scrollhandle_width());
 			setScrollPosition((int) newScrollPosition);
 		}
 	}
@@ -321,7 +321,7 @@ public class HScrollContainer extends HFlowContainer {
 	 */
 	@Override
 	protected boolean containerPreItemsMouseEvent(int x, int y) {
-		boolean mouseIsOverScrollBar = needsScrollbarH() && y > height - scrollHandleStrength - 3 && y < height && x > 0 && x < width;
+		boolean mouseIsOverScrollBar = needsScrollbarH() && y > getHeight() - scrollHandleStrength - 3 && y < getHeight() && x > 0 && x < getWidth();
 
 		if (currentMouseEvent.getAction() == MouseEvent.PRESS && mouseIsOverScrollBar) {
 			int scrollhandle_posX = scrollhandle_posX();

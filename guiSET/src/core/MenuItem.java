@@ -27,19 +27,18 @@ import java.util.TimerTask;
  */
 
 /**
- * Basic brick for creating menus. Just add a new {@link MenuBar} to your
- * {@link Frame} instance and add MenuItems to it.
+ * Basic brick for creating menus. Just add a new {@link MenuBar} to your {@link Frame} instance and
+ * add MenuItems to it.
  * 
- * You can add other MenuItems to theses and so on to create any structure of
- * menu items. Also take a look at the {@link MenuSeparator} which provides a
- * non-clickable and slim line for separating parts of the menu strip.
+ * You can add other MenuItems to theses and so on to create any structure of menu items. Also take
+ * a look at the {@link MenuSeparator} which provides a non-clickable and slim line for separating
+ * parts of the menu strip.
  * 
  * There is only this one class for every position in the menu tree.
  *
- * MenuItems and MenuStrips can also be used to create menus that pop up when
- * i.e. right-clicking on something. This is accomplished by creating a
- * ToolStrip and adding items to it. The ToolStrip can be be shown by calling
- * myToolStrip.show().
+ * MenuItems and MenuStrips can also be used to create menus that pop up when i.e. right-clicking on
+ * something. This is accomplished by creating a ToolStrip and adding items to it. The ToolStrip can
+ * be be shown by calling myToolStrip.show().
  * 
  * 
  */
@@ -103,7 +102,7 @@ class MenuSurface extends Container {
 
 		// now that the menu has closed, allow pressing immediately with the same
 		// click on other elements (even dragging works this way).
-		propagationStopped = false;
+		resetPropagationState();
 	}
 
 }
@@ -197,8 +196,7 @@ public class MenuItem extends TextBased {
 
 
 	/**
-	 * Constructor for immediately setting text and name of method to call when
-	 * selected.
+	 * Constructor for immediately setting text and name of method to call when selected.
 	 * 
 	 * @param text       text
 	 * @param methodName method name
@@ -216,8 +214,7 @@ public class MenuItem extends TextBased {
 	}
 
 	/**
-	 * If strong set to true, then the shortcut might also be fired when a textbox
-	 * has focus.
+	 * If strong set to true, then the shortcut might also be fired when a textbox has focus.
 	 * 
 	 * @param text       text
 	 * @param methodName method name
@@ -272,7 +269,7 @@ public class MenuItem extends TextBased {
 				pg.fill(enabled ? 0 : 150);
 				pg.stroke(0);
 				pg.strokeWeight(0);
-				pg.triangle(width - 4, height / 2, width - 7, height / 2 + 3, width - 7, height / 2 - 3);
+				pg.triangle(getWidth() - 4, getHeight() / 2, getWidth() - 7, getHeight() / 2 + 3, getWidth() - 7, getHeight() / 2 - 3);
 			}
 
 			/*
@@ -307,9 +304,8 @@ public class MenuItem extends TextBased {
 
 
 	/**
-	 * When added to their parent, it is determined whether this item is a
-	 * {@link #MENU_HEADER} or a {@link #MENU_ITEM}. Some styles are set
-	 * accordingly.
+	 * When added to their parent, it is determined whether this item is a {@link #MENU_HEADER} or a
+	 * {@link #MENU_ITEM}. Some styles are set accordingly.
 	 */
 
 	@Override
@@ -378,24 +374,6 @@ public class MenuItem extends TextBased {
 		return -1; // will be ignored
 	}
 
-//	@Override
-//	protected void autosizeRule() {
-//		float shortcutWidth = (shortcut != null ? textWidth(shortcut.toString()) + 30 : 0);
-//		int baseWidth = (int) (textWidth(text) + shortcutWidth);
-//
-//		/*
-//		 * if subitem, then only require this as minimal width; as header it's the
-//		 * actual width
-//		 */
-//		if (type == MENU_ITEM) {
-//			setMinWidth(baseWidth + paddingLeft + paddingRight); // 27 is the left padding
-//		} else if (type == MENU_HEADER) {
-//			setWidthImpl(baseWidth + paddingLeft + paddingRight);
-//		} else {
-//			// undefined state (before this item has fully been initialized).
-//			// At least when called in addedToParent(), the type is defined.
-//		}
-//	}
 
 
 	/*
@@ -449,7 +427,7 @@ public class MenuItem extends TextBased {
 				// reset timer (when closing the strip the timer is always ceased)
 				hoverTimer = new Timer();
 			} else {
-				dropDown.x = getOffsetXWindow() + width - 10;
+				dropDown.x = getOffsetXWindow() + getWidth() - 10;
 				dropDown.y = getOffsetYWindow() - MenuSurface.staticMS.offsetY;
 			}
 
@@ -524,8 +502,7 @@ public class MenuItem extends TextBased {
 	}
 
 	/**
-	 * Set the displayed shortcut (shortcut has no real effect unless set manually
-	 * at Frame).
+	 * Set the displayed shortcut (shortcut has no real effect unless set manually at Frame).
 	 * 
 	 * @param shortcut shortcut
 	 */
@@ -567,8 +544,8 @@ public class MenuItem extends TextBased {
 
 
 	/**
-	 * MenuItems can be checked / unchecked with this method (little icon on the
-	 * left of the MenuItem text).
+	 * MenuItems can be checked / unchecked with this method (little icon on the left of the MenuItem
+	 * text).
 	 * 
 	 * @param checked checked
 	 */
@@ -632,8 +609,8 @@ public class MenuItem extends TextBased {
 
 
 	/**
-	 * Create and add subitems for each text String passed. Passing an empty String
-	 * will create a {@link MenuSeparator}.
+	 * Create and add subitems for each text String passed. Passing an empty String will create a
+	 * {@link MenuSeparator}.
 	 * 
 	 * @param strings arbitrary number of text.
 	 */
@@ -759,8 +736,9 @@ public class MenuItem extends TextBased {
 	protected EventListener childSelectListener;
 
 	/**
-	 * Add a listener for the item selected event (called when this item has been
-	 * selected).
+	 * Add a listener for the item selected event (called when this item has been selected).
+	 * 
+	 * Event arguments: this {@link #MenuItem()}
 	 * 
 	 * @param methodName method name
 	 * @param target     target
@@ -773,6 +751,28 @@ public class MenuItem extends TextBased {
 		addSelectListener(methodName, getPApplet());
 	}
 
+	/**
+	 * Add a listener lambda for when this item is selected.
+	 * 
+	 * Event arguments: this {@link #MenuItem()}
+	 * 
+	 * @param p lambda expression with {@link #MenuItem()} parameter
+	 */
+	public void addItemSelectListener(Predicate1<MenuItem> p) {
+		selectListener = new LambdaEventListener1<MenuItem>(p);
+	}
+
+	/**
+	 * Add a listener lambda for when this item is selected.
+	 * 
+	 * Event arguments: none
+	 * 
+	 * @param p lambda expression
+	 */
+	public void addItemSelectListener(Predicate p) {
+		selectListener = new LambdaEventListener(p);
+	}
+
 	public void removeSelectListener() {
 		selectListener = null;
 	}
@@ -781,6 +781,8 @@ public class MenuItem extends TextBased {
 
 	/**
 	 * Add a listener for when a child of this header has been selected.
+	 * 
+	 * Event arguments: the selected child {@link #MenuItem()}
 	 * 
 	 * @param methodName method name
 	 * @param target     target
@@ -791,6 +793,28 @@ public class MenuItem extends TextBased {
 
 	public void addChildSelectListener(String methodName) {
 		addChildSelectListener(methodName, getPApplet());
+	}
+
+	/**
+	 * Add a listener for when a child of this header has been selected.
+	 * 
+	 * Event arguments: the selected child {@link #MenuItem()}
+	 * 
+	 * @param p lambda expression with {@link #MenuItem()} parameter
+	 */
+	public void addChildSelectListener(Predicate1<MenuItem> p) {
+		childSelectListener = new LambdaEventListener1<MenuItem>(p);
+	}
+
+	/**
+	 * Add a listener for when a child of this header has been selected.
+	 * 
+	 * Event arguments: none
+	 * 
+	 * @param p lambda expression
+	 */
+	public void addChildSelectListener(Predicate p) {
+		childSelectListener = new LambdaEventListener(p);
 	}
 
 	public void removeChildSelectListener() {
@@ -952,34 +976,34 @@ class MenuStrip extends Container {
 		int h = 1;
 		for (int i = 0; i < items.size(); i++) {
 			h += items.get(i).getHeight();
-			items.get(i).setWidthImpl(width);
+			items.get(i).setWidthImpl(getWidth());
 		}
 		setHeight(h);
 
 		// only if parent is not a ParentGraphicsRenderer (temporary solution)
 		if (pg != parent.pg) {
 			// we cheat here and give some extra size for shadow
-			pg = getPApplet().createGraphics(width + 5, height + 5);
+			pg = getPApplet().createGraphics(getWidth() + 5, getHeight() + 5);
 			pg.beginDraw();
 		}
 
-		drawShadow(width, height, 5);
+		drawShadow(getWidth(), getHeight(), 5);
 
 		drawDefaultBackground();
 
 		// draw the thin vertical line
 		pg.strokeWeight(1);
 		pg.stroke(220);
-		pg.line(22, 0 + 3, 22, height - 3);
+		pg.line(22, 0 + 3, 22, getHeight() - 3);
 		pg.stroke(255);
-		pg.line(23, 0 + 3, 23, height - 3);
+		pg.line(23, 0 + 3, 23, getHeight() - 3);
 
 		int usedSpace = paddingTop;
 
 		for (Control c : items) {
 			if (c.visible) {
 				renderItem(c, c.marginLeft + paddingLeft, usedSpace + c.marginTop);
-				usedSpace += (c.height + c.marginTop + c.marginBottom);
+				usedSpace += (c.getHeight() + c.marginTop + c.marginBottom);
 			}
 		}
 	}

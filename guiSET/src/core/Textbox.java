@@ -12,26 +12,25 @@ package guiSET.core;
  */
 
 
-import processing.core.*;
+import processing.core.PApplet;
 import processing.event.*;
 
 //clipboard
 import java.awt.datatransfer.UnsupportedFlavorException;
+import java.io.IOException;
+
 import java.awt.Toolkit;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.StringSelection;
-import java.io.*;
-
 import java.awt.datatransfer.DataFlavor;
 
 
 
 /**
- * A single-line Textbox that behaves just as you would expect one to behave.
- * When focused (by click) text can be inserted via keyboard. Comes with
- * expected features like cursor, selection, some keyboard shortcuts for
- * cut/copy/paste, scrolling etc...
+ * A single-line Textbox that behaves just as you would expect one to behave. When focused (by
+ * click) text can be inserted via keyboard. Comes with expected features like cursor, selection,
+ * some keyboard shortcuts for cut/copy/paste, scrolling etc...
  * 
  * 
  * 
@@ -42,28 +41,24 @@ public class Textbox extends HScrollContainer {
 
 	protected int selectionColor = SELECTION_BLUE;
 	protected int cursorColor = TEXT_CURSOR_COLOR;
-	protected String hint = ""; // text to display when textbox is empty
+
+	// Text to display when textbox is empty
+	protected String hint = "";
 
 	protected int cursorPosition;
 	protected int selectionStart;
 	protected int selectionEnd;
 
+	// Cursor currently displayed or not in animation cycle
+	protected boolean currentDisplayCursor;
 
-	// measure time to create blink animation
-	protected int cursorTime;
-	// cursor currently displayed or not in animation cycle
-	protected boolean currentDisplayCurs;
-
-	// loose focus and call submit event when hit enter
-	/**
-	 * If submitOnEnter isn't set to false the return/enter key will trigger the
-	 * submit-event and blur the focus on the textbox.
-	 */
+	// Loose focus and call submit event when hit Enter.
 	public boolean submitOnEnter = true;
 
-	// if false, then user can select text and copy but not insert or type
+	// If false, then user can select text and copy but not insert or type
 	protected boolean inputEnabled = true;
 
+	volatile protected static int globalCursorCycleTime = 1000; // 1000 ms for cursor to blink off and on // read from timer thread
 
 
 	public Textbox() {
@@ -93,16 +88,14 @@ public class Textbox extends HScrollContainer {
 		super(width, 20); // height does not matter
 
 		setBackgroundColor(-2302756);
-		setFontSize(fontSize);
-		setCursor(PApplet.TEXT);
 		setPadding(5);
+		setFontSize(fontSize);
 		setSlimScrollHandle(true);
 		setTextAlign(LEFT);
+		setLineHeightPercent(120);
+		setCursor(TEXT);
 
 		overridesFrameShortcuts = true;
-
-		// cursor animation:
-		getPApplet().registerMethod("pre", this);
 	}
 
 
@@ -110,7 +103,6 @@ public class Textbox extends HScrollContainer {
 
 
 	protected boolean needsScrolling; // autoscroll once to cursor when text changed, dont set it
-
 
 
 	@Override
@@ -121,8 +113,8 @@ public class Textbox extends HScrollContainer {
 			// draw "3D"-Border
 			pg.strokeWeight(1);
 			pg.stroke(70);
-			pg.line(0, 0, width, 0);
-			pg.line(0, 0, 0, height);
+			pg.line(0, 0, getWidth(), 0);
+			pg.line(0, 0, 0, getHeight());
 		}
 
 		/*
@@ -133,12 +125,12 @@ public class Textbox extends HScrollContainer {
 
 		// do this before drawing cursor!! - needs new fullScrollWidth
 		fullScrollWidth = (int) textWidth(text) + paddingLeft + paddingRight;
-		scrollPosition = Math.max(0, Math.min(scrollPosition, Math.max(0, fullScrollWidth - width)));
+		scrollPosition = Math.max(0, Math.min(scrollPosition, Math.max(0, fullScrollWidth - getWidth())));
 
 		/*
 		 * draw cursor if textbox is focused and animation currently is in display cycle
 		 */
-		if (focused && currentDisplayCurs) {
+		if (focused && currentDisplayCursor) {
 			drawCursor();
 		}
 
@@ -147,12 +139,11 @@ public class Textbox extends HScrollContainer {
 		 */
 		if (focused && selectionStart < selectionEnd) {
 			if (selectionStart <= text.length() && selectionEnd <= text.length()) {
-				int selectionX = (int) pg.textWidth(text.substring(0, selectionStart));
-				int selectionWidth = (int) pg.textWidth(text.substring(selectionStart, selectionEnd));
+				int selectionX = (int) textWidth(text.substring(0, selectionStart));
+				int selectionWidth = (int) textWidth(text.substring(selectionStart, selectionEnd));
 				pg.fill(selectionColor);
 				pg.noStroke();
-				pg.rect(paddingLeft - scrollPosition + selectionX + getFontSize() / 40f, paddingTop, selectionWidth + getFontSize() / 40f,
-						getFontSize() + pg.textDescent());
+				pg.rect(paddingLeft - scrollPosition + selectionX + getFontSize() / 40f, paddingTop, selectionWidth + getFontSize() / 40f, getFontSize() + textDescent());
 			}
 		}
 
@@ -179,55 +170,81 @@ public class Textbox extends HScrollContainer {
 
 
 	/*
-	 * Cursor managing
+	 * CURSOR
 	 */
 
-	// cursor blink animation
-	/**
-	 * DO NOT CALL THIS METHOD. It is for internal purposes only and unfortunately
-	 * needs to be public.
-	 */
-	public void pre() {
-		if (this.focused) {
-			int t = getPApplet().millis();
-			if (t - cursorTime > 500) {
-				currentDisplayCurs = !currentDisplayCurs;
-				cursorTime = t;
-				update();
-			}
-		}
-	}
 
 	// draw cursor to the graphics
 	protected void drawCursor() {
 		cursorPosition = Math.max(0, Math.min(text.length(), cursorPosition));
 
 		// get width of text before cursor in pixels; add little extra space
-		float wordWidth = pg.textWidth(text.substring(0, cursorPosition)) + getFontSize() / 40f;
+		float wordWidth = textWidth(text.substring(0, cursorPosition)) + getFontSize() / 40f;
 
 		float cursorHeight = getFontSize();
 
 		// do this before drawing the cursor - scrollPositionX has to be set first!!
 		if (needsScrolling) {
-			if (wordWidth - scrollPosition > width - paddingRight - paddingLeft) { // cursor has left visible box at the right
-				setScrollPosition((int) (wordWidth - width + paddingRight + paddingLeft));
+			if (wordWidth - scrollPosition > getWidth() - paddingRight - paddingLeft) { // cursor has left visible box at the right
+				setScrollPosition((int) (wordWidth - getWidth() + paddingRight + paddingLeft));
+				scrollPosition = Math.min(scrollPosition, fullScrollWidth - getWidth()); // cursor moves a bit strange otherwise
 			} else if (wordWidth < scrollPosition + paddingLeft) { // cursor has left visible box at the left
 				setScrollPosition((int) wordWidth);
 			}
 			needsScrolling = false;
 		}
+		float x = paddingLeft + wordWidth - scrollPosition;
 		pg.stroke(cursorColor);
-		pg.line(paddingLeft + wordWidth - scrollPosition, paddingTop, wordWidth + paddingLeft - scrollPosition,
-				cursorHeight + paddingTop /* + textDescent() */);
+		pg.line(x, paddingTop, x, cursorHeight + paddingTop);
+	}
+
+
+	/**
+	 * Simple thread that sleeps for one half cursor cycle and toggles cursor visibilty. An interruption
+	 * just restarts the thread, except the variable finish has been set to false previously. Everything
+	 * alright with thread saftey?
+	 * 
+	 * @author Mc-Zen
+	 *
+	 */
+	protected class CursorThread extends Thread {
+		boolean finish = false;
+
+		public void run() {
+			while (true) {
+				try {
+					Thread.sleep(globalCursorCycleTime / 2);
+					currentDisplayCursor = !currentDisplayCursor;
+					update();
+				} catch (InterruptedException e) {
+					if (finish)
+						return;
+					continue;
+				}
+			}
+		}
+	}
+
+	protected static CursorThread t;
+
+	@Override
+	protected void focused() {
+		t = new CursorThread();
+		t.start();
 	}
 
 	@Override
-	public void focus() {
-		super.focus();
-		cursorTime = getPApplet().millis();
-		currentDisplayCurs = true;
+	protected void blurred() {
+		t.finish = true;
+		t.interrupt();
 	}
 
+	protected void restartCursorAnimation() {
+		if (focused) {
+			currentDisplayCursor = true;
+			t.interrupt();
+		}
+	}
 
 
 
@@ -298,8 +315,7 @@ public class Textbox extends HScrollContainer {
 	// called whenether the cursor position changed due to user interaction or text
 	// edits
 	protected void cursorPositionChanged() {
-		cursorTime = getPApplet().millis();
-		currentDisplayCurs = true;
+		restartCursorAnimation();
 		selectionStart = cursorPosition;
 		selectionEnd = cursorPosition;
 		needsScrolling = true;
@@ -324,7 +340,6 @@ public class Textbox extends HScrollContainer {
 	 * GETTER AND SETTER
 	 */
 
-
 	/**
 	 * Set the color of the cursor.
 	 * 
@@ -345,8 +360,7 @@ public class Textbox extends HScrollContainer {
 	}
 
 	/**
-	 * Set the start for the text selection. Selection start index can never be
-	 * higher than end index.
+	 * Set the start for the text selection. Selection start index can never be higher than end index.
 	 * 
 	 * @param selectionStart selection start position
 	 */
@@ -356,8 +370,7 @@ public class Textbox extends HScrollContainer {
 	}
 
 	/**
-	 * Set the end for the text selection. Selection end index can never be less
-	 * than start index.
+	 * Set the end for the text selection. Selection end index can never be less than start index.
 	 * 
 	 * @param selectionEnd selection end position
 	 */
@@ -394,8 +407,7 @@ public class Textbox extends HScrollContainer {
 	}
 
 	/**
-	 * Prevent user from typing or pasting text while maintaining the ability of
-	 * selecting and copying.
+	 * Prevent user from typing or pasting text while maintaining the ability of selecting and copying.
 	 */
 	public void disableInput() {
 		inputEnabled = false;
@@ -408,6 +420,14 @@ public class Textbox extends HScrollContainer {
 		inputEnabled = true;
 	}
 
+	/**
+	 * Set the time the cursor needs to blink on and off in milliseconds, default is 1000 (1 second).
+	 * 
+	 * @param milliseconds time in milliseconds
+	 */
+	public static void setGlobalCursorCycleTime(int milliseconds) {
+		globalCursorCycleTime = milliseconds;
+	}
 
 
 	public int getCursorColor() {
@@ -438,20 +458,18 @@ public class Textbox extends HScrollContainer {
 		return hint;
 	}
 
+	public static int getGlobalCursorCycleTime() {
+		return globalCursorCycleTime;
+	}
 
 
 
-
-
-//	@Override
-//	protected void autosizeRule() {
-//		setHeight((int) getFontSize() + paddingTop + paddingBottom);
-//	}
 
 	@Override
 	protected int autoHeight() {
 		return (int) getFontSize() + paddingTop + paddingBottom;
 	}
+
 
 	protected static final String wordDelimiters = " \n+-()[] {}().,:;_*\"\'$%&/=?!";
 
@@ -512,8 +530,10 @@ public class Textbox extends HScrollContainer {
 	protected EventListener submitListener;
 
 	/**
-	 * Add a key listener to the textbox. The event is triggered each time any key
-	 * is pressed when the textbox has focus.
+	 * Add a key listener to the textbox. The event is triggered each time any key is pressed when the
+	 * textbox has focus.
+	 * 
+	 * Event arguments: {@link KeyEvent}
 	 * 
 	 * @param methodName name of callback method
 	 * @param target     object that declares callback method.
@@ -526,6 +546,30 @@ public class Textbox extends HScrollContainer {
 		addKeyPressListener(methodName, getPApplet());
 	}
 
+	/**
+	 * Add a lambda key listener to the textbox. The event is triggered each time any key is pressed
+	 * when the textbox has focus.
+	 * 
+	 * Event arguments: none
+	 * 
+	 * @param p lambda expression
+	 */
+	public void addKeyPressListener(Predicate p) {
+		keyPressListener = new LambdaEventListener(p);
+	}
+
+	/**
+	 * Add a lambda key listener to the textbox. The event is triggered each time any key is pressed
+	 * when the textbox has focus.
+	 * 
+	 * Event arguments: {@link KeyEvent}
+	 * 
+	 * @param p lambda expression with {@link KeyEvent} as parameter
+	 */
+	public void addKeyPressListener(Predicate1<KeyEvent> p) {
+		keyPressListener = new LambdaEventListener1<KeyEvent>(p);
+	}
+
 	public void removeKeyPressListener() {
 		keyPressListener = null;
 	}
@@ -533,8 +577,7 @@ public class Textbox extends HScrollContainer {
 
 
 	/**
-	 * Add a listener that fires when the text has actually changed (not just the
-	 * cursor or selection).
+	 * Add a listener that fires when the text has actually changed (not just the cursor or selection).
 	 * 
 	 * @param methodName name of callback method
 	 * @param target     object that declares callback method.
@@ -547,14 +590,26 @@ public class Textbox extends HScrollContainer {
 		addTextChangeListener(methodName, getPApplet());
 	}
 
+	/**
+	 * Add a lambda listener that fires when the text has actually changed (not just the cursor or
+	 * selection).
+	 * 
+	 * Event arguments: none
+	 * 
+	 * @param p lambda expression
+	 */
+	public void addTextChangeListener(Predicate p) {
+		textChangeListener = new LambdaEventListener(p);
+	}
+
 	public void removeTextChangeListener() {
 		textChangeListener = null;
 	}
 
 
 	/**
-	 * So long as the property {@link #submitOnEnter} is set to true, pressing enter
-	 * or return will remove the focus of the textbox and call this event.
+	 * So long as the property {@link #submitOnEnter} is set to true, pressing enter or return will
+	 * remove the focus of the textbox and call this event.
 	 * 
 	 * @param methodName name of callback method
 	 * @param target     object that declares callback method.
@@ -565,6 +620,18 @@ public class Textbox extends HScrollContainer {
 
 	public void addSubmitListener(String methodName) {
 		addSubmitListener(methodName, getPApplet());
+	}
+
+	/**
+	 * So long as the property {@link #submitOnEnter} is set to true, pressing enter or return will
+	 * remove the focus of the textbox and call this event.
+	 * 
+	 * Event arguments: none
+	 * 
+	 * @param p lambda expression
+	 */
+	public void addSubmitListener(Predicate p) {
+		submitListener = new LambdaEventListener(p);
 	}
 
 	public void removeSubmitListener() {
@@ -604,7 +671,7 @@ public class Textbox extends HScrollContainer {
 		int clickedPos = mX - getOffsetXWindow() + scrollPosition - paddingLeft;
 		float wide = 0;
 		for (int i = 0; i < text.length(); i++) {
-			float letterWidth = pg.textWidth(text.substring(i, i + 1));
+			float letterWidth = textWidth(text.substring(i, i + 1));
 			wide += letterWidth;
 			if (wide - letterWidth / 2 > clickedPos) { // set decision point to the center of the letter
 				moveCursorTo(i);
@@ -637,7 +704,7 @@ public class Textbox extends HScrollContainer {
 			// scroll a bit when at left or right edge
 			if (e.getX() - x0 < 10) {
 				setScrollPosition(scrollPosition - 10);
-			} else if (x0 + width - e.getX() < 10) {
+			} else if (x0 + getWidth() - e.getX() < 10) {
 				setScrollPosition(scrollPosition + 10);
 			}
 		}
@@ -744,7 +811,6 @@ public class Textbox extends HScrollContainer {
 		 * No coded keys (control), but enable Alt Gr (Alt + Control)
 		 */
 
-
 		else if (!ctrl || alt) {
 			switch (key) {
 			case PApplet.BACKSPACE:
@@ -790,9 +856,9 @@ public class Textbox extends HScrollContainer {
 				append(key);
 			}
 		} else if (ctrl && key == PApplet.BACKSPACE) { // delete last word
-			int xx = findPreviousStop();
-			deleteRange(xx, selectionEnd);
-			moveCursorTo(xx);
+			int pos = findPreviousStop();
+			deleteRange(pos, selectionEnd);
+			moveCursorTo(pos);
 		}
 		handleEvent(keyPressListener, e);
 	}
@@ -818,7 +884,7 @@ public class Textbox extends HScrollContainer {
 		if (contents != null && contents.isDataFlavorSupported(DataFlavor.stringFlavor)) {
 			try {
 				String content = (String) contents.getTransferData(DataFlavor.stringFlavor);
-				if (selectionStart < selectionEnd) { // if there is a selection then replace
+				if (selectionStart < selectionEnd) { // if there is a selection, then replace
 
 					// store this because delete will call cursorChanged which resets selectionStart
 					int selStart = selectionStart;
@@ -826,11 +892,11 @@ public class Textbox extends HScrollContainer {
 					moveCursorTo(selStart);
 				}
 				this.append(content);
-			} catch (UnsupportedFlavorException ex) {
-				System.out.println(ex);
-				ex.printStackTrace();
-			} catch (IOException ex) {
-				ex.printStackTrace();
+			} catch (UnsupportedFlavorException ufe) {
+				System.out.println(ufe);
+				ufe.printStackTrace();
+			} catch (IOException ioe) {
+				ioe.printStackTrace();
 			}
 		}
 	}
@@ -846,4 +912,5 @@ public class Textbox extends HScrollContainer {
 		selectionStart = 0;
 		selectionEnd = 0;
 	}
+
 }

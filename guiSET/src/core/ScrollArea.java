@@ -33,8 +33,8 @@ public class ScrollArea extends Container {
 	protected int fullScrollWidth;
 	protected int fullScrollHeight;
 
-	protected int scrollSpeedX = DEFAULT_SCROLL_SPEED;
-	protected int scrollSpeedY = DEFAULT_SCROLL_SPEED;
+	protected int scrollSpeedX = defaultScrollSpeed;
+	protected int scrollSpeedY = defaultScrollSpeed;
 
 
 	protected boolean slim_scrollhandle = false;
@@ -61,15 +61,15 @@ public class ScrollArea extends Container {
 
 		for (Control c : items) {
 			if (c.visible) {
-				fullScrollWidth = Math.max(fullScrollWidth, c.x + c.width + c.marginLeft);
-				fullScrollHeight = Math.max(fullScrollHeight, c.y + c.height + c.marginBottom);
+				fullScrollWidth = Math.max(fullScrollWidth, c.x + c.getWidth() + c.marginLeft);
+				fullScrollHeight = Math.max(fullScrollHeight, c.y + c.getHeight() + c.marginBottom);
 			}
 		}
 		fullScrollWidth += scrollHandleStrength + 3;
 		fullScrollHeight += scrollHandleStrength + 3;
 
-		scrollPositionX = PApplet.constrain(scrollPositionX, 0, PApplet.max(0, fullScrollWidth - width));
-		scrollPositionY = PApplet.constrain(scrollPositionY, 0, PApplet.max(0, fullScrollHeight - height));
+		scrollPositionX = PApplet.constrain(scrollPositionX, 0, PApplet.max(0, fullScrollWidth - getWidth()));
+		scrollPositionY = PApplet.constrain(scrollPositionY, 0, PApplet.max(0, fullScrollHeight - getHeight()));
 
 
 
@@ -83,7 +83,7 @@ public class ScrollArea extends Container {
 		if (needsScrollbarH() && needsScrollbarV() && !slim_scrollhandle) {
 			pg.fill(130);
 			pg.noStroke();
-			pg.rect(width - scrollHandleStrength - 3, height - scrollHandleStrength - 3, scrollHandleStrength + 3, scrollHandleStrength + 3);
+			pg.rect(getWidth() - scrollHandleStrength - 3, getHeight() - scrollHandleStrength - 3, scrollHandleStrength + 3, scrollHandleStrength + 3);
 		}
 
 		drawScrollbarH();
@@ -101,13 +101,13 @@ public class ScrollArea extends Container {
 			pg.noStroke();
 
 			if (slim_scrollhandle) {
-				pg.rect(width - 4, scrollhandle_posY(), scrollHandleStrength, scrollhandle_height(), 15);
+				pg.rect(getWidth() - 4, scrollhandle_posY(), scrollHandleStrength, scrollhandle_height(), 15);
 
 			} else {
-				pg.rect(width - 2 - scrollHandleStrength, 0, scrollHandleStrength + 3, scrollbar_height());
+				pg.rect(getWidth() - 2 - scrollHandleStrength, 0, scrollHandleStrength + 3, scrollbar_height());
 				pg.fill(startHandleDragPos > -1 ? SCROLL_HANDLE_COLOR : SCROLL_HANDLE_PRESSED_COLOR);
 				pg.stroke(SCROLL_HANDLE_BORDER_COLOR);
-				pg.rect(width - 2 - scrollHandleStrength, scrollhandle_posY(), scrollHandleStrength + 1, scrollhandle_height(), SCROLL_HANDLE_BORDER_RADIUS);
+				pg.rect(getWidth() - 2 - scrollHandleStrength, scrollhandle_posY(), scrollHandleStrength + 1, scrollhandle_height(), SCROLL_HANDLE_BORDER_RADIUS);
 
 //				pg.rect(width - 2 - scrollHandleStrength, 0, scrollHandleStrength + 2, scrollbar_height());
 //				pg.fill((startHandleDragPos > -1 && whichScrollBar == V_SCROLLBAR) ? 170 : 190);
@@ -125,17 +125,17 @@ public class ScrollArea extends Container {
 			pg.noStroke();
 
 			if (slim_scrollhandle) {
-				pg.rect(scrollhandle_posX(), height - 4, scrollhandle_width(), 3, 15);
+				pg.rect(scrollhandle_posX(), getHeight() - 4, scrollhandle_width(), 3, 15);
 			} else {
-				pg.rect(0, height - 2 - scrollHandleStrength, scrollbar_width(), scrollHandleStrength + 3); // height is one more than necessary
+				pg.rect(0, getHeight() - 2 - scrollHandleStrength, scrollbar_width(), scrollHandleStrength + 3); // height is one more than necessary
 //																											 // (just) // a buffer)
 //				pg.fill((startHandleDragPos > -1 && whichScrollBar == H_SCROLLBAR) ? 170 : 190);
 //				pg.rect(scrollhandle_posX(), height - 1 - scrollHandleStrength, scrollhandle_width(), scrollHandleStrength, 3);
 
-				pg.rect(0, height - 2 - scrollHandleStrength, scrollbar_width(), scrollHandleStrength + 3);
+				pg.rect(0, getHeight() - 2 - scrollHandleStrength, scrollbar_width(), scrollHandleStrength + 3);
 				pg.fill((startHandleDragPos > -1 && whichScrollBar == H_SCROLLBAR) ? SCROLL_HANDLE_COLOR : SCROLL_HANDLE_PRESSED_COLOR);
 				pg.stroke(SCROLL_HANDLE_BORDER_COLOR);
-				pg.rect(scrollhandle_posX(), height - 2 - scrollHandleStrength, scrollhandle_width(), scrollHandleStrength, SCROLL_HANDLE_BORDER_RADIUS);
+				pg.rect(scrollhandle_posX(), getHeight() - 2 - scrollHandleStrength, scrollhandle_width(), scrollHandleStrength, SCROLL_HANDLE_BORDER_RADIUS);
 
 			}
 		}
@@ -148,34 +148,34 @@ public class ScrollArea extends Container {
 
 	// vertical scrollbar needed?
 	protected boolean needsScrollbarV() {
-		return height < fullScrollHeight;
+		return getHeight() < fullScrollHeight;
 	}
 
 	// horizontal scrollbar needed?
 	protected boolean needsScrollbarH() {
-		return width < fullScrollWidth;
+		return getWidth() < fullScrollWidth;
 	}
 
 	// get height of entire vertical scrollbar (usually full height of element
 	// except when also having a horizontal scrollbar
 	protected int scrollbar_height() {
-		return height - (needsScrollbarH() ? scrollHandleStrength + 3 : 0);
+		return getHeight() - (needsScrollbarH() ? scrollHandleStrength + 3 : 0);
 	}
 
 	// get width of entire horizontal scrollbar (usually full width of element
 	// except when also having a vertical scrollbar
 	protected int scrollbar_width() {
-		return width - (needsScrollbarV() ? scrollHandleStrength + 3 : 0);
+		return getWidth() - (needsScrollbarV() ? scrollHandleStrength + 3 : 0);
 	}
 
 	// get height of handle (of the vertical scrollbar)
 	protected int scrollhandle_height() {
-		return Math.max(minScrollHandleLength, height * scrollbar_height() / fullScrollHeight);
+		return Math.max(minScrollHandleLength, getHeight() * scrollbar_height() / fullScrollHeight);
 	}
 
 	// get width of handle (of the horizontal scrollbar)
 	protected int scrollhandle_width() {
-		return Math.max(minScrollHandleLength, width * scrollbar_width() / fullScrollWidth);
+		return Math.max(minScrollHandleLength, getWidth() * scrollbar_width() / fullScrollWidth);
 	}
 
 	// get position of handle (of the vertical scrollbar)
@@ -183,7 +183,7 @@ public class ScrollArea extends Container {
 		int scrollbar_height = scrollbar_height();
 		float scrollhandle_height = scrollhandle_height();
 
-		return (int) PApplet.constrain(scrollPositionY * (scrollbar_height - scrollhandle_height) / (fullScrollHeight - height), 1,
+		return (int) PApplet.constrain(scrollPositionY * (scrollbar_height - scrollhandle_height) / (fullScrollHeight - getHeight()), 1,
 				scrollbar_height - scrollhandle_height - 2);
 	}
 
@@ -192,7 +192,7 @@ public class ScrollArea extends Container {
 		int scrollbar_width = scrollbar_width();
 		float scrollhandle_width = scrollhandle_width();
 
-		return (int) PApplet.constrain(scrollPositionX * (scrollbar_width - scrollhandle_width) / (fullScrollWidth - width), 1,
+		return (int) PApplet.constrain(scrollPositionX * (scrollbar_width - scrollhandle_width) / (fullScrollWidth - getWidth()), 1,
 				scrollbar_width - scrollhandle_width - 2);
 	}
 
@@ -344,13 +344,13 @@ public class ScrollArea extends Container {
 			if (whichScrollBar == H_SCROLLBAR) {
 
 				int newScrollHandle_Pos = e.getX() - getOffsetXWindow() - startHandleDragPos;
-				int newScrollPosition = newScrollHandle_Pos * (fullScrollWidth - width) / (scrollbar_width() - scrollhandle_width());
+				int newScrollPosition = newScrollHandle_Pos * (fullScrollWidth - getWidth()) / (scrollbar_width() - scrollhandle_width());
 				setScrollPositionX(newScrollPosition);
 
 			} else if (whichScrollBar == V_SCROLLBAR) {
 
 				int newScrollHandle_Pos = e.getY() - getOffsetYWindow() - startHandleDragPos;
-				int newScrollPosition = newScrollHandle_Pos * (fullScrollHeight - height) / (scrollbar_height() - scrollhandle_height());
+				int newScrollPosition = newScrollHandle_Pos * (fullScrollHeight - getHeight()) / (scrollbar_height() - scrollhandle_height());
 				setScrollPositionY(newScrollPosition);
 
 			}
@@ -377,10 +377,10 @@ public class ScrollArea extends Container {
 	 */
 	@Override
 	protected boolean containerPreItemsMouseEvent(int x, int y) {
-		boolean mouseIsOverScrollBarV = needsScrollbarV() && x > width - scrollHandleStrength - 3 && x < width && y > 0
-				&& y < height - (needsScrollbarV() ? scrollHandleStrength + 3 : 0);
-		boolean mouseIsOverScrollBarH = needsScrollbarH() && y > height - scrollHandleStrength - 3 && y < height && x > 0
-				&& x < width - (needsScrollbarH() ? scrollHandleStrength + 3 : 0);
+		boolean mouseIsOverScrollBarV = needsScrollbarV() && x > getWidth() - scrollHandleStrength - 3 && x < getWidth() && y > 0
+				&& y < getHeight() - (needsScrollbarV() ? scrollHandleStrength + 3 : 0);
+		boolean mouseIsOverScrollBarH = needsScrollbarH() && y > getHeight() - scrollHandleStrength - 3 && y < getHeight() && x > 0
+				&& x < getWidth() - (needsScrollbarH() ? scrollHandleStrength + 3 : 0);
 
 
 		if (currentMouseEvent.getAction() == MouseEvent.PRESS) {
