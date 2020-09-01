@@ -201,7 +201,6 @@ public class Frame extends Container {
 		// mode
 		// to add some listeners for resizing and focus.
 		Object nativeWindow = papplet.getSurface().getNative();
-		new DropTarget((Component) nativeWindow, new Guiset_Drop_Handler());
 
 		if (nativeWindow instanceof processing.awt.PSurfaceAWT.SmoothCanvas) {
 			awtFrame = ((processing.awt.PSurfaceAWT.SmoothCanvas) nativeWindow).getFrame();
@@ -228,9 +227,12 @@ public class Frame extends Container {
 				}
 			});
 
+			new DropTarget((Component) nativeWindow, new Guiset_Drop_Handler());
+			
 		} else if (nativeWindow instanceof GLWindow) {
 
 			glWindow = ((GLWindow) nativeWindow);
+
 			glWindow.addWindowListener(new com.jogamp.newt.event.WindowListener() {
 
 				@Override
@@ -838,7 +840,6 @@ public class Frame extends Container {
 	 * @param minHeight minimum height
 	 */
 	public void setMinimumWindowSize(int minWidth, int minHeight) {
-		awtFrame.setMinimumSize(new Dimension(minWidth, minHeight));
 		if (awtFrame != null) {
 			awtFrame.setMinimumSize(new Dimension(minWidth, minHeight));
 		} else {
@@ -1080,6 +1081,8 @@ public class Frame extends Container {
 	 * @param target     object
 	 */
 	public void addExternalDropListener(String methodName, Object target) {
+		if(awtFrame == null) 
+			System.err.println("In P2D/P3D mode external drop is not yet supported.");
 		externalDropListener = createEventListener(methodName, target, int.class, Object.class, Control.class);
 	}
 

@@ -213,6 +213,8 @@ abstract public class TextBased extends Control {
 
 		int getLineHeight();
 
+		int getPureLineHeightValue(); // returns lineheight
+
 
 		void setTextColor(int color);
 
@@ -366,6 +368,11 @@ abstract public class TextBased extends Control {
 			return (int) getActualLineHeight();
 		}
 
+		@Override
+		public int getPureLineHeightValue() {
+			return lineHeight;
+		}; // returns lineheight
+
 		/**
 		 * Maximum width of the text (longest line if multiple lines)
 		 */
@@ -417,7 +424,7 @@ abstract public class TextBased extends Control {
 			}
 
 			pg.fill(color);
-			pg.strokeWeight(borderWidth);
+			pg.strokeWeight(size / 15); // for strike-through
 			pg.stroke(color);
 			pg.textSize(size);
 			float realLineHeight = getActualLineHeight();
@@ -436,7 +443,6 @@ abstract public class TextBased extends Control {
 				posY += getAvailableHeight() - textHeight - textDescent(); // cant ignore descent here
 				break;
 			}
-
 			for (int i = 0; i < lines.length; ++i) {
 				textLineAlignImpl(lines[i], 0, (int) posY + (int) (i * realLineHeight));
 			}
@@ -789,7 +795,7 @@ abstract public class TextBased extends Control {
 			newR.setFontSize(textRenderer.getFontSize());
 			newR.setTextAlign(textRenderer.getTextAlign());
 			newR.setTextAlignY(textRenderer.getTextAlignY());
-			newR.setLineHeight(textRenderer.getLineHeight());
+			newR.setLineHeight(textRenderer.getPureLineHeightValue());
 			textRenderer = newR;
 			return newR;
 		}

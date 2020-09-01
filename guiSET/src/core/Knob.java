@@ -62,7 +62,7 @@ public class Knob extends Slider {
 		pg.fill(getForegroundColor());
 
 		// Draw arc in pie style
-		float angle = (float) (3 * PI / 2) / Math.abs(maxValue - minValue) * (value - minValue);
+		float angle = (3 * PI / 2) / Math.abs(maxValue - minValue) * (value - minValue);
 		pg.noStroke();
 		pg.arc(width * 0.5f, height * 0.5f, valueCircleRadius, valueCircleRadius, 3 * PI / 4, 3 * PI / 4 + angle, PIE);
 
