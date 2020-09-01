@@ -24,6 +24,14 @@
     word-break: break-word; /* some headers like InvocationTargetException in common errors are just too long on mobile version*/
 }
 
+/* undo if the nav is non-sticky for mobile devices */
+@media screen and (max-width: 500px) {
+    .main_container h1 {
+        margin-top: initial;
+        padding-top: 0.5em;
+    }
+}
+
 .wiki_main_container {
     background-color: rgb(255, 255, 255);
 }
@@ -47,3 +55,16 @@
         margin: 0 auto;
     }
 }
+
+.spaced-list li {
+    margin: 0.5em;
+}
+
+.spaced-list li a {
+    text-decoration: none;
+}
+
+.spaced-list li a:hover {
+    text-decoration: overline;
+} 
+

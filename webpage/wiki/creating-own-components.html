@@ -6,7 +6,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="shortcut icon" type="image/x-icon" href="../favicon.ico">
     <link rel="stylesheet" href="../css/main.css">
-    <link rel="stylesheet" href="../css/examples.css">
     <link rel="stylesheet" href="../css/wiki.css">
     <script src="https://cdn.jsdelivr.net/gh/google/code-prettify@master/loader/run_prettify.js"></script>
     <script src="../js/main.js"></script>
@@ -16,7 +15,7 @@
     <nav>
         <li><a class="mlink" href="../../index.html">Home</a></li>
         <li><a class="mlink sel" href="wiki.html">Wiki</a></li>
-        <li><a class="mlink" href="../examples.html">Examples</a></li>
+        <li><a class="mlink" href="../examples/examples.html">Examples</a></li>
         <li><a class="mlink" href="../../guiSET/reference/index.html" target="_blank">Documentation</a>
         <li><a class="mlink" href="https://github.com/Mc-Zen/guiSET" target="_blank">Source Code</a>
     </nav>
@@ -34,7 +33,7 @@
                 <li><a href="dynamic-resizing-and-anchors.html">Dynamic resizing and anchors</a></li>
                 <li><a href="global-keyboard-shortcuts.html">Global keyboard shortcuts</a></li>
                 <li><a href="installing-guiset.html">Installing guiSET</a></li>
-                <li><a href="introduction-for-beginners.html">Introduction for Beginners</a></li>
+                <li><a href="introduction-for-beginners.html">Introduction for beginners</a></li>
                 <li><a href="list-of-components.html">List of components</a></li>
                 <li><a href="the-box-model.html">The box model</a></li>
                 <li><a href="the-deep-shit.html">The deep shit</a></li>
@@ -49,7 +48,7 @@
             button but also a complex new component for displaying data or anything.
         </p>
         <p>
-            To do this you need to subclass <code>Control</code> or other classes from <b>guiSET</b>. Here I'll give
+            To do this, you need to subclass <code>Control</code> or other classes from <b>guiSET</b>. Here I'll give
             your a short guide through the main aspects, methods to implement or override and we'll also mention (some)
             basic concepts of this library. You might also want to read this <a href="the-deep-shit.html">article</a>
             which goes deeper into core ideas and implementation of <b>guiSET</b>.
@@ -74,7 +73,8 @@
         <h1 id="first-own-component">First own component</h1>
         <p>
             To learn the basics, first we want to create a button that just displays its background color.
-            We create a new class and let it extend <code>Control</code> - the base class for all guiSET components.
+            We create a new class and let it extend <code>Control</code> - the base class for all <b>guiSET</b>
+            components.
             Also let's add a constructor that allows setting the background and foreground color (NOTE: in Processing we
             get the impression there
             is a <code>color</code> type, but it is literally really just an <code>int</code>).
@@ -107,10 +107,13 @@ void render() {
             <code>drawDefaultBackground()</code> is already implemented in <b>guiSET</b> and will draw:
         </p>
         <ul>
-            <li>The background color set for this element</li>
-            <li>The border including border color, border radius and border width</li>
+            <li>The background/hover/pressed color set for this element</li>
             <li>The background image or gradient if set</li>
         </ul>
+
+        <p>
+            The border along with its color, radius and width is always drawn automatically somewhere else.
+        </p>
 
         <p>
             We could now come up with ideas to change the look of the button and add some stuff:
@@ -120,25 +123,24 @@ void render() {
 void render() {
     drawDefaultBackground();
     if (enabled) {
-        pg.fill(foregroundColor); // set fill color to foregroundColor
+        pg.fill(getForegroundColor()); // set fill color to foregroundColor
     } else {
         pg.fill(color(0));        // set fill color to black if the component is disabled. 
     }
     pg.noStroke();                // no border 
-    pg.rect(4, 4, width-8, height-8); // draw a rectangle in the center with foregroundColor
+    pg.rect(4, 4, getWidth()-8, getHeight()-8); // draw a rectangle in the center with foregroundColor
 }</pre>
 
         <p>
             Now there will be a (somewhat random) rectangle inside the button that fills most of the area and is colored
-            with the
-            <code>foregroundColor</code> of the element. If the button is disabled however - the rectangle will be
-            black.
+            with the <code>foregroundColor</code> of the element. If the button is disabled however - the rectangle will
+            be black.
         </p>
         <p>
             Also, as this shall be a button, we might want to change the color when the mouse hovers over the component
             or
-            presses it. To achieve this, we set the <code>hoverColor</code> and <code>pressedColor</code> attribute. We
-            can do this either manually or use the built-in method
+            presses it. To achieve this, we just set the <code>hoverColor</code> and <code>pressedColor</code> attribute
+            to a different color. We can do this either manually or use the built-in method
             <code>setStatusBackgroundColorsAutomatically(int backgroundColor)</code> which not only sets background
             color but also hover and pressed color according to the given value. The latter two will be set a bit darker
             than the
@@ -149,7 +151,7 @@ void render() {
 public class ColorButton extends Control {
     ColorButton(int backgroundColor, int foregroundColor) { 
         setStatusBackgroundColorsAutomatically(backgroundColor);
-        setForegroundColor(foregroundColor);
+        setForegroundColor(getForegroundColor());
     }
 
     @Override
@@ -161,7 +163,7 @@ public class ColorButton extends Control {
             pg.fill(color(0)); 
         }
         pg.noStroke();
-        pg.rect(4, 4, width-8, height-8);
+        pg.rect(4, 4, getWidth()-8, getHeight()-8);
     }
 }
 </pre>
@@ -177,6 +179,11 @@ public class ColorButton extends Control {
 
 
         <h1 id="vertical-label">Vertical label</h1>
+        <p>
+            This example can also be found in the library examples (as "Custom_Component") and <a
+                href="../examples/examples.html">here</a>.
+        </p>
+
         <p>
             Now, next I want to create a fancy label that displays text not horizontally but vertically. For this
             purpose we
@@ -233,12 +240,19 @@ void autoHeight(){}
 
         <p>
             We set the width to the text height (might be multiple lines) and the height to the text width. Also, the
-            paddings are
-            added.
+            paddings are added. The method <code>setWidth(int)</code> however calls update(), telling the component to
+            render again next frame which might be unnecessary. Therefore we call <code>setWidthNoUpdate(int)</code>.
+            Same for height.
+        </p>
+        <p style="color: gray">
+            We might get one strange behavior though and that is min/maxWidth/Height: all setters for
+            width and height constrain the given value between the set min and max value. These are reversed now for
+            width and height and for the ultimate vertical label we also should swap <code>minWidth</code> and
+            <code>maxWidth</code> etc. or even override some of the setters/getters.
         </p>
         <p>
             The only problem is that <code>drawDefaultText()</code> expects the text to be drawn horizontally and uses
-            the elements <code>width</code> and <code>height</code> to calcutate the best position. Therefore, we need
+            the elements <code>width</code> and <code>height</code> to calculate the best position. Therefore, we need
             to swap width and height temporarily.
         </p>
         <p>
@@ -255,19 +269,19 @@ public class FancyLabel extends Label {
         drawDefaultBackground();
     
         pg.pushMatrix();               // saves the current position of the coordinate system
-        pg.translate(this.width, 0);   // move by width to the left so rotation is right
+        pg.translate(getWidth(), 0);   // move by width to the left so rotation is right
         pg.rotate(radians(90));        // rotate by 90 degrees (around left top corner)
     
         int tempWidth = width;
         int tempHeight = height;
-        height = tempWidth;
-        width = tempHeight;
+        setHeightNoUpdate(tempWidth);  // Set height to width without updating
+        setWidthNoUpdate(tempHeight);  // Set width to height without updating
     
         drawDefaultText();             // guiSET default text drawing method (sets foregroundColor, textSize etc.)
         pg.popMatrix();                // restore the transformation to before when we called pushMatrix()
     
-        width = tempWidth;
-        height = tempHeight;
+        setHeightNoUpdate(tempHeight);
+        setWidthNoUpdate(tempWidth);
     }
  
     // autosize is also called by setPadding(), setFontSize() and various others 
@@ -296,7 +310,8 @@ public class FancyLabel extends Label {
         <p>
             We'll now take a look at containers - components that group other elements.
             This example uses the actual implementation of <code>VFlowContainer</code>. This container ignores the
-            position specified for its item and just rows them up vertically one below the other.
+            position specified for its items (namely the <code>x</code> and <code>y</code> attributes) and just rows
+            them up vertically one below the other.
         </p>
         <p>
             We start off by creating constructors and overriding <code>void render()</code>. In our constructor we need
@@ -324,7 +339,7 @@ class VFlowContainer extends Container {
 }</pre>
 
         <p>
-            Now the interesting part: to place one item below the other we keep track of the "used" space and intialize
+            Now the interesting part: to place one item below the other we keep track of the "used" space and initialize
             it
             with the containers <code>paddingTop</code>. Then iteratively we go through all items, render them and add
             the
@@ -341,7 +356,7 @@ protected void render() {
     for (Control c : items) {
         if (c.visible) {
             renderItem(c, c.marginLeft + paddingLeft, usedSpace + c.marginTop);
-            usedSpace += (c.height + c.marginTop + c.marginBottom);
+            usedSpace += (c.getHeight() + c.marginTop + c.marginBottom);
         }
     }
     drawDefaultDisabled();
@@ -369,7 +384,8 @@ protected void render() {
             In general, when changing visual properties (like <code>text</code> or <code>width</code>), use the setter.
             I.e. the setters for <code>width</code> and <code>height</code> take care that neither exceeds maximum size
             nor is less than minimum size. Also some concepts like resizing and updating the graphics are handled by
-            setters.
+            setters. Only sometimes you will want to change <code>width</code>/<code>height</code> without calling also
+            update() and then you can use <code>setWidthNoUpdate(int)</code> and same for height.
         </p>
         <p>
             And also (!), always, when writing a setter for a new property that affects how the component looks
@@ -394,7 +410,8 @@ protected void render() {
             content.
         </p>
         <p>
-            When overriding or creating new methods for adding items, use the already provided <code>add(Control...c)</code> method.
+            When overriding or creating new methods for adding items, use the already provided
+            <code>add(Control...c)</code> method.
         </p>
 
         <h3 id="using-mouse-event">Using mouse events</h3>
@@ -416,7 +433,7 @@ protected void render() {
 
         <pre class="prettyprint">
 @Override
-protected void rpess(MouseEvent e) {
+protected void press(MouseEvent e) {
     super.press(e);
 
     // do your stuff 
@@ -424,7 +441,7 @@ protected void rpess(MouseEvent e) {
 
         <p>
             Mind, you can call <code>stopPropagation()</code> in a mouse event routine to prevent further elements of
-            the gui to possibly receive the current mouse event.
+            the GUI to possibly receive the current mouse event.
         </p>
 
         <h3 id="using-key-events">Using key events</h3>
@@ -440,7 +457,8 @@ protected void rpess(MouseEvent e) {
             Maybe you also to call the super method here too (especially when subclassing a textbox).
         </p>
         <p>
-            What really might be useful is the <code>overridesFrameShortcts</code> property. The standard value for this
+            What really might be useful is the <code>overridesFrameShortcuts</code> property. The standard value for
+            this
             is false (except for textboxes). If this property is true, then shortcuts registered at <code>Frame</code>
             will not be handled if an instance of your component is focused at the moment. I.e. it would be irrating
             when typing text into a textbox and every time you hit 'E', a shortcut that is by chance
@@ -450,9 +468,10 @@ protected void rpess(MouseEvent e) {
 
         <h3 id="using-mouse-event">Methods you might want to override</h3>
         <p>
-            <code>render()</code>, <code>intialize()</code>, <code>int autoWidth()</code>, <code>int autoHeight</code>,
-            <code>fitContent</code>, <code>int getAvailableWidth()</code>, <code>int getAvailableHeight</code>, internal
-            event methods.
+            <code>render()</code>, <code>initialize()</code>, <code>int autoWidth()</code>,
+            <code>int autoHeight()</code>,
+            <code>fitContent()</code>, <code>int getAvailableWidth()</code>, <code>int getAvailableHeight()</code>,
+            internal event methods.
         </p>
 
 

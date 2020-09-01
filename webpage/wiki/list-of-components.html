@@ -6,7 +6,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="shortcut icon" type="image/x-icon" href="../favicon.ico">
     <link rel="stylesheet" href="../css/main.css">
-    <link rel="stylesheet" href="../css/examples.css">
     <link rel="stylesheet" href="../css/wiki.css">
     <script src="https://cdn.jsdelivr.net/gh/google/code-prettify@master/loader/run_prettify.js"></script>
     <script src="../js/main.js"></script>
@@ -16,7 +15,7 @@
     <nav>
         <li><a class="mlink" href="../../index.html">Home</a></li>
         <li><a class="mlink sel" href="wiki.html">Wiki</a></li>
-        <li><a class="mlink" href="../examples.html">Examples</a></li>
+        <li><a class="mlink" href="../examples/examples.html">Examples</a></li>
         <li><a class="mlink" href="../../guiSET/reference/index.html" target="_blank">Documentation</a>
         <li><a class="mlink" href="https://github.com/Mc-Zen/guiSET" target="_blank">Source Code</a>
     </nav>
@@ -34,7 +33,7 @@
                 <li><a href="dynamic-resizing-and-anchors.html">Dynamic resizing and anchors</a></li>
                 <li><a href="global-keyboard-shortcuts.html">Global keyboard shortcuts</a></li>
                 <li><a href="installing-guiset.html">Installing guiSET</a></li>
-                <li><a href="introduction-for-beginners.html">Introduction for Beginners</a></li>
+                <li><a href="introduction-for-beginners.html">Introduction for beginners</a></li>
                 <li><a href="list-of-components.html">List of components</a></li>
                 <li><a href="the-box-model.html">The box model</a></li>
                 <li><a href="the-deep-shit.html">The deep shit</a></li>
@@ -53,19 +52,16 @@
             <li><a href="#HFlowContainer">HFlowContainer</a>, <a href="#HScrollContainer">HScrollContainer</a></li>
             <li><a href="#FlowContainer">FlowContainer</a>, <a href="#ScrollArea">ScrollArea</a></li>
             <li><a href="#Checkbox">Checkbox</a>, <a href="#Switch">Switch</a></li>
-            <li><a href="#Slider">Slider</a></li>
+            <li><a href="#Slider">Slider</a>, <a href="#Knob">Knob</a></li>
             <li><a href="#Textbox">Textbox</a>, <a href="#PasswordTextbox">PasswordTextbox</a>, <a
                     href="#MultilineTextbox">MultilineTextbox</a></li>
             <li><a href="#ListView">ListView</a>, <a href="#ListItem">ListItem</a></li>
-            <li><a href="#MenuBar">MenuBar</a>, <a href="#MenuItem">MenuItem</a>, <a href="#ToolStrip">ToolStrip</a>
+            <li><a href="#MenuBar">MenuBar</a>, <a href="#MenuItem">MenuItem</a>, <a
+                    href="#MenuTextbox">MenuTextbox</a>, <a href="#ContextMenu">ContextMenu</a>
             </li>
-
         </ul>
-        <style>
-            span.events {
-                color: #a22525
-            }
-        </style>
+
+        <br>
         <h4 id="Control">Control&nbsp; &nbsp; (<a
                 href="https://mc-zen.github.io/guiSET/guiSET/reference/guiSET/core/Control.html">reference</a>)</h4>
         <ul>
@@ -119,7 +115,8 @@
                 href="https://mc-zen.github.io/guiSET/guiSET/reference/guiSET/core/VFlowContainer.html">reference</a>)
         </h4>
         <ul>
-            <li>Added items are automatically placed one below the other. Ignores coordinates of items. Paddings and margins are honoured, </li>
+            <li>Added items are automatically placed one below the other. Ignores coordinates of items. Paddings and
+                margins are honoured, </li>
         </ul>
 
         <h4 id="VScrollContainer">VScrollContainer &nbsp; &nbsp; (<a
@@ -188,6 +185,15 @@
             <li><span class="events">Events: valueChange</span></li>
         </ul>
 
+        <h4 id="Knob">Knob &nbsp; &nbsp; (<a
+                href="https://mc-zen.github.io/guiSET/guiSET/reference/guiSET/core/Knob.html">reference</a>)</h4>
+        <ul>
+            <li>A floating point value knob. User can set value by clicking, pulling or scrolling. Minimum and maximum
+                can be set freely. Drag orientation can be set to <code>Knob.HORIZONTAL</code> or
+                <code>Knob.VERTICAL</code> with <code>knob.setOrientation(int orientation)</code>. </li>
+            <li><span class="events">Events: valueChange</span></li>
+        </ul>
+
         <h4 id="Textbox">Textbox &nbsp; &nbsp; (<a
                 href="https://mc-zen.github.io/guiSET/guiSET/reference/guiSET/core/Textbox.html">reference</a>)</h4>
         <ul>
@@ -230,7 +236,7 @@
         <h4 id="ListItem">ListItem &nbsp; &nbsp; (<a
                 href="https://mc-zen.github.io/guiSET/guiSET/reference/guiSET/core/ListItem.html">reference</a>)</h4>
         <ul>
-            <li>Look at <a href="#ListView">ListView</a>).</li>
+            <li>Look at <a href="#ListView">ListView</a>.</li>
         </ul>
 
         <h4 id="MenuBar">MenuBar &nbsp; &nbsp; (<a
@@ -247,8 +253,14 @@
             <li><span class="events">Events: select, itemSelect</span></li>
         </ul>
 
-        <h4 id="ToolStrip">ToolStrip &nbsp; &nbsp; (<a
-                href="https://mc-zen.github.io/guiSET/guiSET/reference/guiSET/core/ToolStrip.html">reference</a>)</h4>
+        <h4 id="MenuTextbox">MenuTextbox &nbsp; &nbsp; (<a
+                href="https://mc-zen.github.io/guiSET/guiSET/reference/guiSET/core/MenuTextbox.html">reference</a>)</h4>
+        <ul>
+            <li>Experimental</li>
+        </ul>
+
+        <h4 id="ContextMenu">ContextMenu &nbsp; &nbsp; (<a
+                href="https://mc-zen.github.io/guiSET/guiSET/reference/guiSET/core/ContextMenu.html">reference</a>)</h4>
         <ul>
             <li>Can be used to create menu strips that are independent from the main menu, such as appear on right click
                 on some area.</li>
