@@ -5,6 +5,7 @@ import processing.event.*;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 
+
 import java.lang.reflect.InvocationTargetException;
 
 
@@ -84,7 +85,6 @@ public abstract class Control implements PConstants {
 	 * 
 	 * Don't set this property, only call update() in your classes !
 	 */
-
 	protected boolean dirty = true;
 
 
@@ -112,10 +112,10 @@ public abstract class Control implements PConstants {
 	private int width; 					// Is always between minWidth and maxWidth
 	private int height; 				// Is always between minHeight and maxHeight
 
-	protected int minWidth = 1; 		// Never below 1
-	protected int maxWidth = 100000;
-	protected int minHeight = 1; 		// Never below 1
-	protected int maxHeight = 100000;
+	protected int minWidth = Constants.MinimalMinWidth; 		// Never below Constants.MinimalMinWidth
+	protected int maxWidth = Constants.DefaultMaxWidth;
+	protected int minHeight = Constants.MinimalMinHeight; 		// Never below Constants.MinimalMinHeight
+	protected int maxHeight = Constants.DefaultMaxHeight;
 
 	protected int marginLeft; 			// Margins are not included in width/height and honored by containers when layouting their items
 	protected int marginTop;
@@ -232,6 +232,17 @@ public abstract class Control implements PConstants {
 	public static final int TRANSPARENT = 0;
 	public static final int SELECTION_BLUE = -13395457;
 	public static final int TEXT_CURSOR_COLOR = -12171706; // color(70)
+
+	public class Constants {
+		public static final int MinimalMinWidth = 1;
+		public static final int MinimalMinHeight = 1;
+		public static final int DefaultMaxWidth = 10000;
+		public static final int DefaultMaxHeight = 10000;
+		public static final int DefaultContainerWidth = 100;
+		public static final int DefaultContainerHeight = 100;
+
+		protected final static int MinScrollHandleLength = 15;
+	}
 
 	// default values
 
@@ -1684,7 +1695,7 @@ public abstract class Control implements PConstants {
 			try {
 				// no use to sort containers with autolayout (its bad actually because it could
 				// change order)
-				if (!((Container) parent).containerMakesAutoLayout)
+				if (((Container) parent).needsSortingByZ())
 					((Container) parent).sortItemsbyZ();
 			} catch (ClassCastException cce) {
 			}
@@ -1909,15 +1920,16 @@ public abstract class Control implements PConstants {
 
 
 	/**
-	 * Set minimum width of element in pixel. Width of element will never be less than minWidth. Minimum
-	 * width cannot be smaller than 1.
+	 * Set minimum width of element in pixel. Width of element will never be less than minWidth and
+	 * therefore might be adjusted. Minimum width cannot be smaller than 1 and not greater than
+	 * minWidth.
 	 * 
 	 * @param minWidth minimum width in pixel
 	 */
 	public void setMinWidth(int minWidth) {
 		// don't allow width ever to go below 1 (that produces errors when creating
 		// graphics)
-		this.minWidth = Math.max(1, minWidth);
+		this.minWidth = Math.max(Constants.MinimalMinWidth, Math.min(minWidth, maxWidth));
 		setWidth(width);
 	}
 
@@ -1935,20 +1947,21 @@ public abstract class Control implements PConstants {
 
 
 	/**
-	 * Set minimum height of element in pixel. Width of element will never be less than minHeight.
-	 * Minimum height cannot be smaller than 1.
+	 * Set minimum height of element in pixel. Height of element will never be less than minHeight and
+	 * therefore might be adjusted. Minimum height cannot be smaller than 1 and not greater than
+	 * maxHeight.
 	 * 
 	 * @param minHeight minimum height in pixel
 	 */
 	public void setMinHeight(int minHeight) {
 		// don't allow height ever to go below 1 (that produces errors when creating
 		// graphics)
-		this.minHeight = Math.max(1, minHeight);
+		this.minHeight = Math.max(Constants.MinimalMinHeight, Math.min(minHeight, maxHeight));
 		setHeight(height);
 	}
 
 	/**
-	 * Set maximum height of element in pixel. Width of element will never be greater than maxHeight.
+	 * Set maximum height of element in pixel. Height of element will never be greater than maxHeight.
 	 * Default is 100000.
 	 * 
 	 * @param maxHeight maximum height in pixel
@@ -3238,6 +3251,13 @@ public abstract class Control implements PConstants {
 
 	// Origin coordinates relative to parent. Set by parent in containerRenderItem(Control, int, int)
 	protected int offsetX, offsetY;
+	
+	public int getOffsetX() {
+		return offsetX;
+	}
+	public int getOffsetY() {
+		return offsetY;
+	}
 
 	// Current mouse event is stored here by Frame, no need to carry it around
 	protected static MouseEvent currentMouseEvent;
@@ -3293,9 +3313,9 @@ public abstract class Control implements PConstants {
 		propagationStopped = false;
 	}
 
-	// check if given coordinates (need to be relative to parent) are within this
+	// Check if given coordinates (need to be relative to parent) are within this
 	// elements bounds
-	public boolean relCoordsAreWithin(int x, int y) {
+	public boolean relativeCoordsAreWithin(int x, int y) {
 		return x > offsetX && y > offsetY && x < offsetX + width && y < offsetY + height;
 	}
 
@@ -3348,7 +3368,7 @@ public abstract class Control implements PConstants {
 	 * @param relY rely
 	 */
 	protected void traceCoordsImpl(int relX, int relY) {
-		if (visible && enabled && relCoordsAreWithin(relX, relY)) {
+		if (visible && enabled && relativeCoordsAreWithin(relX, relY)) {
 			coordinateTrace.add(this);
 		}
 	}
@@ -3363,7 +3383,7 @@ public abstract class Control implements PConstants {
 		if (!visible || !enabled)
 			return;
 
-		if (relCoordsAreWithin(x, y)) {
+		if (relativeCoordsAreWithin(x, y)) {
 			if (hoveredElement == null) {
 				hoveredElement = this;
 			}

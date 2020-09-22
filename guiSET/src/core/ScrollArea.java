@@ -1,20 +1,7 @@
 package guiSET.core;
 
-
-/*
- * ScrollArea is a panel container which allows overflowing and scrolling in x and y direction. 
- * Items will be placed at their specific location. 
- * 
- * The full scroll width and height is determined new every time ScrollArea renders.  
- */
-
-
-
-
-
-import processing.core.*;
-import processing.event.*;
-
+import processing.core.PApplet;
+import processing.event.MouseEvent;
 
 /**
  * A Container that allows both horizontal and vertical scrolling if the content
@@ -170,12 +157,12 @@ public class ScrollArea extends Container {
 
 	// get height of handle (of the vertical scrollbar)
 	protected int scrollhandle_height() {
-		return Math.max(minScrollHandleLength, getHeight() * scrollbar_height() / fullScrollHeight);
+		return Math.max(Constants.MinScrollHandleLength, getHeight() * scrollbar_height() / fullScrollHeight);
 	}
 
 	// get width of handle (of the horizontal scrollbar)
 	protected int scrollhandle_width() {
-		return Math.max(minScrollHandleLength, getWidth() * scrollbar_width() / fullScrollWidth);
+		return Math.max(Constants.MinScrollHandleLength, getWidth() * scrollbar_width() / fullScrollWidth);
 	}
 
 	// get position of handle (of the vertical scrollbar)

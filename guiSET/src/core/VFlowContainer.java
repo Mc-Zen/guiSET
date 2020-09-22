@@ -10,12 +10,11 @@ package guiSET.core;
 public class VFlowContainer extends Container {
 
 	public VFlowContainer() {
-		this(100, 100);
+		super();
 	}
 
 	public VFlowContainer(int width, int height) {
 		super(width, height);
-		containerMakesAutoLayout = true; // this container overrides items x/y property and gives them new location
 	}
 
 	@Override
@@ -31,6 +30,13 @@ public class VFlowContainer extends Container {
 			}
 		}
 		drawDefaultDisabled();
+	}
+
+	// this container overrides items x/y property and gives them new location. All items are next to
+	// each other and will not overlap
+	@Override
+	protected boolean needsSortingByZ() {
+		return false;
 	}
 
 }

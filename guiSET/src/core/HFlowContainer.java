@@ -9,12 +9,11 @@ package guiSET.core;
 public class HFlowContainer extends Container {
 
 	public HFlowContainer() {
-		this(100, 100);
+		super();
 	}
 
 	public HFlowContainer(int width, int height) {
 		super(width, height);
-		containerMakesAutoLayout = true; // this container overrides items x/y property and gives them new location
 	}
 
 	@Override
@@ -31,5 +30,14 @@ public class HFlowContainer extends Container {
 		}
 		drawDefaultDisabled();
 	}
+
+
+	// this container overrides items x/y property and gives them new location. All items are next to
+	// each other and will not overlap
+	@Override
+	protected boolean needsSortingByZ() {
+		return false;
+	}
+
 
 }

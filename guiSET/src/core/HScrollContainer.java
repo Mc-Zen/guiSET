@@ -139,7 +139,7 @@ public class HScrollContainer extends HFlowContainer {
 
 	// get width of handle (of the horizontal scrollbar)
 	protected int scrollhandle_width() {
-		return Math.max(minScrollHandleLength, getWidth() * scrollbar_width() / fullScrollWidth);
+		return Math.max(Constants.MinScrollHandleLength, getWidth() * scrollbar_width() / fullScrollWidth);
 	}
 
 	// get position of handle (of the horizontal scrollbar)

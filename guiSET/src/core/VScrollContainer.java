@@ -1,5 +1,7 @@
 package guiSET.core;
 
+
+
 /*
  * VScrollContainer is a container that allows vertical scrolling. 
  * This way items can exceed the displayed height of the container. 
@@ -41,7 +43,7 @@ public class VScrollContainer extends VFlowContainer {
 
 
 	public VScrollContainer() {
-		this(100, 100);
+		super();
 	}
 
 	public VScrollContainer(int width, int height) {
@@ -147,7 +149,7 @@ public class VScrollContainer extends VFlowContainer {
 
 	// get height of handle
 	protected int scrollhandle_height() {
-		return Math.max(minScrollHandleLength, getHeight() * scrollbar_height() / fullScrollHeight);
+		return Math.max(Constants.MinScrollHandleLength, getHeight() * scrollbar_height() / fullScrollHeight);
 	}
 
 	// get position of handle

@@ -10,12 +10,11 @@ package guiSET.core;
 public class FlowContainer extends Container {
 
 	public FlowContainer() {
-		this(100, 100);
+		super();
 	}
 
 	public FlowContainer(int width, int height) {
 		super(width, height);
-		containerMakesAutoLayout = true; // this container overrides items x/y property and gives them new location
 	}
 
 
@@ -46,4 +45,10 @@ public class FlowContainer extends Container {
 		drawDefaultDisabled();
 	}
 
+	// this container overrides items x/y property and gives them new location. All items are next to
+	// each other and will not overlap
+	@Override
+	protected boolean needsSortingByZ() {
+		return false;
+	}
 }

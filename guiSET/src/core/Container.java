@@ -45,8 +45,8 @@ import java.util.Comparator;
 
 
 /**
- * Base class for all containers. Containers group items and can be nested to
- * create complex graphics structures.
+ * Base class for all containers. Containers group items and can be nested to create complex
+ * graphics structures.
  * 
  * @author Mc-Zen
  *
@@ -59,16 +59,8 @@ public class Container extends TextBased {
 	protected ArrayList<Control> items;
 
 
-	/*
-	 * If a subclass of container applies auto layout (overrides x,y-coordinates of
-	 * items) then set this to true in constructor. Auto-layouting containers do not
-	 * sort their content by z-index.
-	 */
-	protected boolean containerMakesAutoLayout = false;
 
-	// for scroll container sub classes
-	protected final static int minScrollHandleLength = 15;
-	
+
 	// For containers with scroll bars
 	public static int SCROLL_HANDLE_BORDER_RADIUS = 0;
 	public static int SCROLL_BAR_COLOR = Color.create(150);
@@ -80,7 +72,7 @@ public class Container extends TextBased {
 	 * Default constructor sets width and height to 100
 	 */
 	public Container() {
-		this(100, 100);
+		this(Constants.DefaultContainerWidth, Constants.DefaultContainerHeight);
 	}
 
 
@@ -172,26 +164,25 @@ public class Container extends TextBased {
 	 */
 
 	// internal item adding method
-	protected void addItemImpl(int position, Control newItem) {
-		items.add(position, newItem);
-		newItem.parent = this;
-		newItem.addedToParent(); // notify control that it has been added to this parent
+	protected void insertImpl(int position, Control item) {
+		items.add(position, item);
+		item.parent = this;
+		item.addedToParent(); // notify control that it has been added to this parent
 		// update(); // called once by public add/insert
 	}
 
 
 	/**
-	 * Add items to Container. Containers that don't layout their items
-	 * automatically like i.e. {@link VFlowContainer} or {@link VScrollContainer}
-	 * sort them by z-index!
+	 * Add items to Container. Containers that don't layout their items automatically like i.e.
+	 * {@link VFlowContainer} or {@link VScrollContainer} sort them by z-index!
 	 * 
-	 * @param newItems arbitrary number of items.
+	 * @param items arbitrary number of items.
 	 */
-	public void add(Control... newItems) {
-		for (Control c : newItems) {
-			addItemImpl(items.size(), c);
+	public void add(Control... items) {
+		for (Control c : items) {
+			insertImpl(this.items.size(), c);
 		}
-		if (!containerMakesAutoLayout) { // don't sort containers with custom layout
+		if (needsSortingByZ()) { // don't sort layouting containers!
 			sortItemsbyZ();
 		}
 		update();
@@ -201,13 +192,13 @@ public class Container extends TextBased {
 	 * Insert items at given index position.
 	 * 
 	 * @param position index to insert items into list.
-	 * @param newItems arbitrary number of items.
+	 * @param items arbitrary number of items.
 	 */
-	public void insert(int position, Control... newItems) {
-		for (int i = 0; i < newItems.length; i++) {
-			addItemImpl(position + i, newItems[i]);
+	public void insert(int position, Control... items) {
+		for (int i = 0; i < items.length; i++) {
+			insertImpl(position + i, items[i]);
 		}
-		if (!containerMakesAutoLayout) { // don't sort auto-layout containers!
+		if (needsSortingByZ()) { // don't sort layouting containers!
 			sortItemsbyZ();
 		}
 		update();
@@ -249,8 +240,7 @@ public class Container extends TextBased {
 	}
 
 	/**
-	 * Get list index of given item. Returns -1 if item is no child of this
-	 * container.
+	 * Get list index of given item. Returns -1 if item is no child of this container.
 	 * 
 	 * @param item item to get index to
 	 * @return index
@@ -273,8 +263,7 @@ public class Container extends TextBased {
 	}
 
 	/**
-	 * Get item in item list at given index. Throws error if index exceeds list
-	 * length.
+	 * Get item in item list at given index. Throws error if index exceeds list length.
 	 * 
 	 * @param index index of requested item
 	 * @return item
@@ -318,19 +307,26 @@ public class Container extends TextBased {
 	 * Resize container once so it fits its content.
 	 */
 	public void fitContent() {
-		int mWidth = 1;
-		int mHeight = 1;
-		for (int i = 0; i < items.size(); i++) {
-			Control c = items.get(i);
-			if (c.visible) {
-				mWidth = Math.max(mWidth, c.offsetX + c.getWidth());
-				mHeight = Math.max(mHeight, c.offsetY + c.getHeight());
+		int w = Constants.MinimalMinWidth;
+		int h = Constants.MinimalMinHeight;
+		for (Control item : items) {
+			if (item.isVisible()) {
+				w = Math.max(w, item.getOffsetX() + item.getWidth());
+				h = Math.max(h, item.getOffsetY() + item.getHeight());
 			}
 		}
-		setSize(mWidth, mHeight);
+		setSize(w, h);
 	}
 
 
+	/*
+	 * If a subclass of container applies layouting (overrides x,y-coordinates of
+	 * items) then return false in constructor. If content does not overlap, it is 
+	 * not necessary to sort the contents by z-Index. This container needs it. 
+	 */
+	protected boolean needsSortingByZ() {
+		return true;
+	}
 
 
 
@@ -349,7 +345,7 @@ public class Container extends TextBased {
 		if (!visible || !enabled)
 			return;
 
-		if (relCoordsAreWithin(x, y)) {
+		if (relativeCoordsAreWithin(x, y)) {
 			int x_ = x - offsetX;
 			int y_ = y - offsetY;
 
@@ -383,9 +379,9 @@ public class Container extends TextBased {
 
 
 	/**
-	 * Called by {@link #mouseEvent(int, int)} before dealing with the items. It
-	 * enables the container to process the mouse event before the items do and if
-	 * this returns false the items will not receive the event at all.
+	 * Called by {@link #mouseEvent(int, int)} before dealing with the items. It enables the container
+	 * to process the mouse event before the items do and if this returns false the items will not
+	 * receive the event at all.
 	 * 
 	 * @param x y
 	 * @param y y
@@ -397,11 +393,10 @@ public class Container extends TextBased {
 
 
 	/**
-	 * Almost a copy of {@link Control#mouseEvent(int x, int y) } but not again
-	 * checking for visible, enabled and relCoordsAreWithin.
+	 * Almost a copy of {@link Control#mouseEvent(int x, int y) } but not again checking for visible,
+	 * enabled and relCoordsAreWithin.
 	 * 
-	 * Also this method can be overriden and accessed even by more deeply nested
-	 * classes.
+	 * Also this method can be overriden and accessed even by more deeply nested classes.
 	 * 
 	 * 
 	 * @param x x
@@ -447,9 +442,8 @@ public class Container extends TextBased {
 	}
 
 	/**
-	 * Get a list of arbitrarly nested child elements that given coordinates go
-	 * through, ordered by layer on the screen. This version takes relative
-	 * coordinates of this object.
+	 * Get a list of arbitrarly nested child elements that given coordinates go through, ordered by
+	 * layer on the screen. This version takes relative coordinates of this object.
 	 * 
 	 * @param x x coordinate on this element
 	 * @param y y coordinate on this element
@@ -462,9 +456,9 @@ public class Container extends TextBased {
 	}
 
 	/**
-	 * Get a list of arbitrarly nested child elements that given coordinates go
-	 * through, ordered by layer on the screen. This version takes absolute window
-	 * coordinates. Invisible and disabled elements are ignored.
+	 * Get a list of arbitrarly nested child elements that given coordinates go through, ordered by
+	 * layer on the screen. This version takes absolute window coordinates. Invisible and disabled
+	 * elements are ignored.
 	 * 
 	 * @param x absolute x window coordinate
 	 * @param y absolute y window coordinate
@@ -478,7 +472,7 @@ public class Container extends TextBased {
 
 	@Override
 	protected void traceCoordsImpl(int relX, int relY) {
-		if (visible && enabled && relCoordsAreWithin(relX, relY)) {
+		if (visible && enabled && relativeCoordsAreWithin(relX, relY)) {
 			for (int i = items.size() - 1; i >= 0; i--) {
 				items.get(i).traceCoordsImpl(relX - offsetX, relY - offsetY);
 			}

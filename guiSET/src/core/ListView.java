@@ -291,7 +291,7 @@ public class ListView extends VScrollContainer {
 			if (c instanceof ListItem) {
 				c.setWidth(getAvailableWidth());
 			}
-			addItemImpl(items.size(), c);
+			insertImpl(items.size(), c);
 		}
 		// no sorting
 		update();

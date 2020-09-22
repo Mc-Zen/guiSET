@@ -1045,7 +1045,7 @@ class MenuStrip extends Container {
 		for (String s : strings) {
 			MenuItem newItem = new MenuItem();
 			newItem.setText(s);
-			addItemImpl(items.size(), newItem);
+			insert(items.size(), newItem);
 		}
 		update();
 	}
