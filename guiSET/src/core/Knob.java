@@ -25,7 +25,7 @@ public class Knob extends Slider {
 	public Knob() {
 		setSize(70, 70);
 		setWheelEnabled(true);
-		setScrollSpeed(-1);
+		setWheelAmmount(-getWheelAmmount());
 		setMinValue(-20f);
 		setMaxValue(1);
 	}
@@ -95,7 +95,7 @@ public class Knob extends Slider {
 
 
 
-	float dragSpeed = 1;
+	protected float dragSpeed = 1;
 
 	/**
 	 * Set the speed of changing the value through dragging; default (1) allows for
@@ -124,8 +124,8 @@ public class Knob extends Slider {
 
 
 
-	int startPos;
-	float startValue;
+	protected int startPos;
+	protected float startValue;
 
 
 	@Override

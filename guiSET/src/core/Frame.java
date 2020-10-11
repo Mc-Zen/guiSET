@@ -37,6 +37,7 @@ import java.lang.reflect.InvocationTargetException;
 
 import com.jogamp.newt.event.WindowEvent;
 import com.jogamp.newt.opengl.GLWindow;
+import java.lang.reflect.Field;
 
 /**
  * 
@@ -83,7 +84,7 @@ public class Frame extends Container {
 	/**
 	 * Parent sketch
 	 */
-	protected PApplet papplet;
+	private PApplet papplet;
 
 
 
@@ -98,14 +99,15 @@ public class Frame extends Container {
 	/*
 	 * Initialization state. 
 	 */
-	public enum Initialization_State {
+	protected enum InitializationState {
 		NOT_INITIALIZED, INITIALIZING, INITIALIZED
 	}
 
-	protected Initialization_State initialized = Initialization_State.NOT_INITIALIZED;
+	private InitializationState initializationState = InitializationState.NOT_INITIALIZED;
 
-
-
+	protected InitializationState getInitializationState() {
+		return initializationState;
+	}
 
 
 
@@ -184,11 +186,8 @@ public class Frame extends Container {
 		// default size fills out entire sketch window
 		setWidthNoUpdate(papplet.width);
 		setHeightNoUpdate(papplet.height);
-		offsetX = 0;
-		offsetY = 0;
 
 		keyListener = new KeyListener(this);
-
 		animations = new ArrayList<Animation>();
 
 		TextBased.init_text();
@@ -202,8 +201,8 @@ public class Frame extends Container {
 		Object nativeWindow = papplet.getSurface().getNative();
 
 		if (nativeWindow instanceof processing.awt.PSurfaceAWT.SmoothCanvas) {
-			awtFrame = ((processing.awt.PSurfaceAWT.SmoothCanvas) nativeWindow).getFrame();
 
+			awtFrame = ((processing.awt.PSurfaceAWT.SmoothCanvas) nativeWindow).getFrame();
 			awtFrame.addWindowFocusListener(new java.awt.event.WindowFocusListener() {
 				@Override
 				public void windowLostFocus(java.awt.event.WindowEvent e) {
@@ -220,8 +219,9 @@ public class Frame extends Container {
 
 			awtFrame.addComponentListener(new java.awt.event.ComponentAdapter() {
 				public void componentResized(java.awt.event.ComponentEvent evt) {
-					if (initialized == Initialization_State.INITIALIZED) {
-						resized(awtFrame.getWidth(), awtFrame.getHeight());
+					if (initializationState == InitializationState.INITIALIZED) {
+						java.awt.Insets inset = awtFrame.getInsets(); // subtract window borders
+						resized(awtFrame.getWidth() - inset.left - inset.right, awtFrame.getHeight() - inset.top - inset.bottom);
 					}
 				}
 			});
@@ -231,7 +231,6 @@ public class Frame extends Container {
 		} else if (nativeWindow instanceof GLWindow) {
 
 			glWindow = ((GLWindow) nativeWindow);
-
 			glWindow.addWindowListener(new com.jogamp.newt.event.WindowListener() {
 
 				@Override
@@ -264,37 +263,45 @@ public class Frame extends Container {
 
 				@Override
 				public void windowResized(WindowEvent arg0) {
-					if (initialized == Initialization_State.INITIALIZED) {
+					if (initializationState == InitializationState.INITIALIZED) {
 						resized(glWindow.getWidth(), glWindow.getHeight()); // in opengl mode, papplet does not know its size yet. Thus, we get it right from window
+																			 // (already client area)
 					}
 				}
 			});
+
+
+		}
+
+		try {
+			pappletsRedrawField = PApplet.class.getDeclaredField("redraw");
+			pappletsRedrawField.setAccessible(true);
+		} catch (NoSuchFieldException | SecurityException e) {
+			e.printStackTrace();
 		}
 
 	}
 
+	private Field pappletsRedrawField;
 
 
-
-	// a protected inner frame that users cannot access so keyEvent, mouseEvent, pre
-	// and draw are hidden from user
-	// only works protected
+	// A protected inner frame that users cannot access so keyEvent, mouseEvent, pre
+	// and draw are hidden from user. Only works protected (not private)
 	protected class Protected_Frame {
 		private boolean postRegistered = false;
 
 		Protected_Frame(DrawTime timeToDraw) {
 			papplet.registerMethod("keyEvent", this);
 			papplet.registerMethod("mouseEvent", this);
-			// papplet.registerMethod("post", this); // if animations should work right
-			if (timeToDraw == DRAW_PRE) {
+			if (timeToDraw == DrawTime.PRE) {
 				papplet.registerMethod("pre", this);
-			} else if (timeToDraw == DRAW_POST) {
+			} else if (timeToDraw == DrawTime.POST) {
 				papplet.registerMethod("draw", this);
 			} else {
 				System.err.println("Error can't initialize Frame with these arguments: " + timeToDraw + ". Use Frame.DRAW_POST or Frame.DRAW_PRE");
 			}
 			// needed for animations to work in NO_LOOP mode
-			if (drawMode == NO_LOOP) {
+			if (refreshMode == RefreshMode.NO_LOOP) {
 				registerPost();
 			}
 		}
@@ -320,9 +327,10 @@ public class Frame extends Container {
 		}
 
 		public void post() {
-			if (no_loopUpdateAgain) {
-				papplet.redraw(); // draw again because animation is not finished yet. See animations.
-				no_loopUpdateAgain = false;
+			// Used in RefreshMode.NO_LOOP to schedule another redraw.
+			if (refreshAgain) {
+				getPApplet().redraw();
+				refreshAgain = false;
 			}
 		}
 
@@ -342,7 +350,7 @@ public class Frame extends Container {
 
 
 	/*
-	 * Draw mode determines how often the gui will be drawn:
+	 * RefreshMode determines how often the gui will be drawn:
 	 *
 	 * - In efficient mode the sketch runs as usual but the gui will be drawn only
 	 * when changes occured. This saves resources. 
@@ -358,12 +366,12 @@ public class Frame extends Container {
 	 * cursor animation with textboxes.
 	 */
 
-	public enum DrawMode {
+	public enum RefreshMode {
 		NO_LOOP, EFFICIENT, CONTINOUS
 	}
 
 
-	protected DrawMode drawMode = DrawMode.EFFICIENT;
+	private RefreshMode refreshMode = RefreshMode.EFFICIENT;
 
 	/**
 	 * Draw frequency mode. Continous makes Frame draw the entire GUI EACH time (standard is 60 times
@@ -371,30 +379,32 @@ public class Frame extends Container {
 	 * the sketch but it is the most wasteful mode.This is the default and for many cases recommended
 	 * mode.
 	 */
-	public static final DrawMode CONTINOUS = DrawMode.CONTINOUS;
+	public static final RefreshMode CONTINOUS = RefreshMode.CONTINOUS;
 
 	/**
 	 * Draw frequency mode. Only refresh if an element has changed. It still keeps the
 	 * {@link PApplet#draw()} loop running to check for some events but only redraws if necessary.
 	 */
-	public static final DrawMode EFFICIENT = DrawMode.EFFICIENT;
+	public static final RefreshMode EFFICIENT = RefreshMode.EFFICIENT;
 
 
 	/**
 	 * Most efficient mode. The {@link PApplet#draw()} loop is interrupted and only key and mouse events
 	 * are still received and can change the state of the GUI. Animation timing is not as good.
 	 */
-	public static final DrawMode NO_LOOP = DrawMode.NO_LOOP;
+	public static final RefreshMode NO_LOOP = RefreshMode.NO_LOOP;
 
 
 	/**
-	 * Set draw frequency mode {@link #EFFICIENT} {@link #CONTINOUS} {@link #NO_LOOP}
+	 * Set draw frequency mode {@link #EFFICIENT} {@link #CONTINOUS} {@link #NO_LOOP}. It is no
+	 * recommended to change the mode very frequently (like every few frames) to {@link #NO_LOOP} and
+	 * back to one of the others as thus might reduce performance.
 	 * 
 	 * @param mode accepts Frame.EFFICIENT, Frame.CONTINOUS, Frame.NO_LOOP
 	 */
-	public void setMode(DrawMode mode) {
-		this.drawMode = mode;
-		if (mode == DrawMode.NO_LOOP) {
+	public void setRefreshMode(RefreshMode mode) {
+		this.refreshMode = mode;
+		if (mode == RefreshMode.NO_LOOP) {
 			papplet.noLoop();
 			papplet.redraw();
 
@@ -405,31 +415,73 @@ public class Frame extends Container {
 		}
 	}
 
-
-	// if we are in NO_LOOP drawMode then we need to call redraw() after draw()
-	// happens to
-	// force another update to continue the animation to work. If this flag is set,
-	// then the
-	// Protected_Frame.post() method calls papplet.redraw();
-	private static boolean no_loopUpdateAgain = false;
-
-	// called by Animation if mode is NO_LOOP
-	protected static void noLoopAfterAnimation() {
-		no_loopUpdateAgain = true;
+	public RefreshMode getRefreshMode() {
+		return refreshMode;
 	}
 
 
 
+	/*
+	 * When RefreshMode is NO_LOOP, a call to redraw usually enables refreshing the gui.
+	 * During drawing however, redraw() will do nothing as the redraw flag in PApplet 
+	 * is only reset after drawing. Therefore Frame.update() will set this flag to true 
+	 * when called during drawing. The post() method will check it and if the flag is 
+	 * set, will schedule another redraw. 
+	 * 
+	 * This issue also occurs randomly when calling redraw() outside of the drawing process. 
+	 * Therefore, the PApplets redraw flag is checked. If it is false but the Frame just got 
+	 * dirty in this call of update() we know there is something wrong: PApplets redraw flag 
+	 * should be false. Anyway, we just refresh again.     
+	 */
+	private boolean refreshAgain = false;
 
 
 
+	@Override 
+	protected void update() {
+		
+		if (refreshMode == NO_LOOP) {
+			try {
+				// No other way to access this. But we are in NO_LOOP mode and performance is not a real issue.
+				// When update is called very often very quick, this is evaluated much faster anyway due to
+				// optimization.
+				boolean redraw = (boolean) pappletsRedrawField.get(papplet);
+				if (redraw && !dirty) { // PApplets redraw is already set to true but that's old news, as the Frame got dirty just now.
+					refreshAgain = true;
+				}
+			} catch (IllegalArgumentException | IllegalAccessException e) { // will (should) not happen
+				e.printStackTrace();
+			}
+			papplet.redraw(); // Call redraw upon sketch when changed occured
+
+		}
+		dirty = true;
+	}
+
+	
+	@Override
+	protected void initialize() {
+		initializationState = InitializationState.INITIALIZING;
+		super.initialize();
+		handleEvent(guiInitializedListener);
+		initializationState = InitializationState.INITIALIZED;
+
+		if (resizable) {
+			// somehow sometimes a second render is important if resizable is active.
+			// In fact that's because a PFont() is created which calls some stuff. Has to do
+			// with something in Graphics awt java class
+			render();
+			update();
+			return;
+		}
+	}
 
 
 	/**
 	 * Called each draw loop
 	 */
 	private void display() {
-		if (initialized == Initialization_State.NOT_INITIALIZED) {
+		if (initializationState == InitializationState.NOT_INITIALIZED) {
 			initialize();	// recursive procedure going through all elements connected to Frame
 		}
 
@@ -445,7 +497,6 @@ public class Frame extends Container {
 		/*
 		 * re-render if graphics have been changed
 		 */
-
 		if (visible) {
 			render();
 		}
@@ -456,56 +507,21 @@ public class Frame extends Container {
 	@Override
 	protected void render() {
 		if (dirty) {
-
-			// calcBoundsCount = 0; renderCount = 0; renderedObjects = "";
 			dirty = false;
 
-			preRender(); // for frame
-			super.render();    // render everything
+			preRender(); 		// for frame
+			super.render();		// render everything
 			pg.endDraw();
 			// System.out.println((System.nanoTime() - t0));
 
-			if (drawMode == EFFICIENT || drawMode == NO_LOOP) {
+			if (refreshMode == EFFICIENT || refreshMode == NO_LOOP) {
 				papplet.image(pg, 0, 0);
 			}
 		}
 
 		// project graphics onto papplet
-		if (drawMode == CONTINOUS) {
+		if (refreshMode == CONTINOUS) {
 			papplet.image(pg, 0, 0);
-		}
-	}
-
-
-
-
-	@Override // - Frame doesn't need to call its parent to update
-	protected void update() {
-		dirty = true;
-
-		/*
-		 * call redraw upon sketch when changed occured
-		 */
-		if (drawMode == NO_LOOP) {
-			// no_loopUpdateAgain = true; // why did I ever do this? It makes no sense
-			papplet.redraw();
-		}
-	}
-
-	@Override
-	protected void initialize() {
-		initialized = Initialization_State.INITIALIZING;
-		super.initialize();
-		handleEvent(guiInitializedListener);
-		initialized = Initialization_State.INITIALIZED;
-
-		if (resizable) {
-			// somehow sometimes a second render is important if resizable is active.
-			// In fact that's because a PFont() is created which calls some stuff. Has to do
-			// with something in Graphics awt java class
-			render();
-			update();
-			return;
 		}
 	}
 
@@ -514,8 +530,6 @@ public class Frame extends Container {
 	protected void resized(int w, int h) {
 
 		// always resize frame to window size
-		// this.width = papplet.width;
-		// this.height = papplet.height;
 		setWidthNoUpdate(w);
 		setHeightNoUpdate(h);
 
@@ -536,8 +550,8 @@ public class Frame extends Container {
 
 
 
-	protected boolean setupFinished() {
-		return initialized == Initialization_State.INITIALIZED;
+	protected boolean isSetupFinished() {
+		return initializationState == InitializationState.INITIALIZED;
 	}
 
 
@@ -560,24 +574,104 @@ public class Frame extends Container {
 	 * SHORTCUTS
 	 */
 
-	// list of registered shortcuts
-	protected HashMap<Shortcut, ShortcutDetails> shortcutMethods = new HashMap<Shortcut, ShortcutDetails>();
+
+	/*
+	 * Registered shortcuts are put in a map with the callback mechanism. 
+	 * This can either be a method (together with the object it shall be invoked on) - or a lambda (Predicate). 
+	 * 
+	 * A shortcut is handled by calling the virtual method shortcutCallback.handle(). 
+	 */
+	private HashMap<Shortcut, ShortcutCallback> shortcutMethods = new HashMap<Shortcut, ShortcutCallback>();
 
 
-	// store a method and the object it shall be invoked on in one class:
-	class ShortcutDetails {
+
+	private abstract class ShortcutCallback {
+		boolean executeEvenIfFocusedElementOverridesNormalShortcuts = false;
+
+		abstract void handle();
+
+		boolean executeEvenIfFocusedElementOverridesNormalShortcuts() {
+			return executeEvenIfFocusedElementOverridesNormalShortcuts;
+		}
+	}
+
+	// Store a method and the object it shall be invoked on in one class
+	private class ShortcutCallbackMethod extends ShortcutCallback {
 		Method method;
 		Object object;
 
-		// if shortcut is strong then it will be executed even if the focused element
-		// ovverrides shortcuts
-		boolean strong;
-
-		ShortcutDetails(Method method, Object object, boolean strong) {
+		public ShortcutCallbackMethod(Method method, Object object, boolean executeEvenIfFocusedElementOverridesNormalShortcuts) {
 			this.method = method;
 			this.object = object;
-			this.strong = strong;
+			this.executeEvenIfFocusedElementOverridesNormalShortcuts = executeEvenIfFocusedElementOverridesNormalShortcuts;
 		}
+
+		@Override
+		void handle() {
+			try {
+				method.invoke(object);
+			} catch (Exception e) {
+				Throwable t; // check for wrapped exception and get the root exception
+				if (e instanceof InvocationTargetException) {
+					InvocationTargetException ite = (InvocationTargetException) e;
+					t = ite.getCause();
+				} else {
+					t = e;
+				}
+				// check for a RuntimeException and allow to bubble up
+				if (t instanceof RuntimeException) {
+					// re-throw exception
+					throw (RuntimeException) t;
+				} else {
+					t.printStackTrace();
+				}
+			}
+		}
+	}
+
+	// Store a lambda function as callback
+	private class ShortcutCallbackLambda extends ShortcutCallback {
+		Predicate p;
+
+		public ShortcutCallbackLambda(Predicate p, boolean executeEvenIfFocusedElementOverridesNormalShortcuts) {
+			this.p = p;
+			this.executeEvenIfFocusedElementOverridesNormalShortcuts = executeEvenIfFocusedElementOverridesNormalShortcuts;
+		}
+
+		@Override
+		void handle() {
+			p.run();
+		}
+	}
+
+
+
+	/**
+	 * Register a shortcut to the sketch and fire the given lambda callback when the combination is hit
+	 * on the keyboard.
+	 * 
+	 * @param shortcut shortcut to register
+	 * @param callback lambda callback
+	 * @return
+	 */
+	public boolean registerShortcut(Shortcut shortcut, Predicate callback) {
+		shortcutMethods.put(shortcut, new ShortcutCallbackLambda(callback, false));
+		return true;
+	}
+
+	/**
+	 * Register a shortcut to the sketch and fire the given lambda callback when the combination is hit
+	 * on the keyboard.
+	 * 
+	 * @param shortcut                                            shortcut to register
+	 * @param callback                                            lambda callback
+	 * @param executeEvenIfFocusedElementOverridesNormalShortcuts Should this shortcut even work when
+	 *                                                            i.e. a textbox has focus?
+	 * @return
+	 */
+	public boolean registerShortcut(Shortcut shortcut, Predicate callback, boolean executeEvenIfFocusedElementOverridesNormalShortcuts) {
+		shortcutMethods.put(shortcut, new ShortcutCallbackLambda(callback, executeEvenIfFocusedElementOverridesNormalShortcuts));
+		return true;
 	}
 
 	/**
@@ -613,22 +707,25 @@ public class Frame extends Container {
 	 *      is false.
 	 * 
 	 * 
-	 * @param shortcut   shortcut to register
-	 * @param methodName method to execute when shortcut is pressed.
-	 * @param target     object that declares the callback method.
-	 * @param strong     Should this shortcut even work when a textbox has focus?
+	 * @param shortcut                                            shortcut to register
+	 * @param methodName                                          method to execute when shortcut is
+	 *                                                            pressed.
+	 * @param target                                              object that declares the callback
+	 *                                                            method.
+	 * @param executeEvenIfFocusedElementOverridesNormalShortcuts Should this shortcut even work when a
+	 *                                                            textbox has focus?
 	 * @return true if registering has been successful.
 	 */
-	public boolean registerShortcut(Shortcut shortcut, String methodName, Object target, boolean strong) {
+	public boolean registerShortcut(Shortcut shortcut, String methodName, Object target, boolean executeEvenIfFocusedElementOverridesNormalShortcuts) {
 		Class<?> c = target.getClass();
 		try {
 
 			Method method = c.getMethod(methodName);
-			shortcutMethods.put(shortcut, new ShortcutDetails(method, target, strong));
+			shortcutMethods.put(shortcut, new ShortcutCallbackMethod(method, target, executeEvenIfFocusedElementOverridesNormalShortcuts));
 		} catch (NoSuchMethodException nsme) {
 			papplet.die("There is no public " + methodName + "() method in the class " + target.getClass().getName());
 		} catch (Exception e) {
-			papplet.die("Could not register " + methodName + " +() for " + target, e);
+			papplet.die("Could not register " + methodName + "() for " + target, e);
 		}
 		return false;
 	}
@@ -647,43 +744,20 @@ public class Frame extends Container {
 		return shortcutMethods.size() < size;
 	}
 
-
+	// KeyListener accesses this
 	protected boolean checkShortcut(Shortcut shortcut) {
-		ShortcutDetails sd = shortcutMethods.get(shortcut);
+		ShortcutCallback sd = shortcutMethods.get(shortcut);
 		if (sd != null) {
-			if (!focusedElement.overridesFrameShortcuts || sd.strong) { // don't handle shortcut if focused element
-																		 // overrides shortcuts, but only if shortcut
-																		 // isn't strong
-				handleShortcut(sd);
+			// Don't handle shortcut if focused element overrides shortcuts. Exception: Shortcuts that
+			// "executeEvenIfFocusedElementOverridesNormalShortcuts" xD
+			if (!focusedElement.overridesFrameShortcuts() || sd.executeEvenIfFocusedElementOverridesNormalShortcuts()) {
+				sd.handle();
 			}
 			return true;
 		}
 		return false;
 	}
 
-	protected void handleShortcut(ShortcutDetails shortcutDetails) {
-		Method method = shortcutDetails.method;
-		Object object = shortcutDetails.object;
-		try {
-			method.invoke(object);
-		} catch (Exception e) {
-			// check for wrapped exception and get the root exception
-			Throwable t;
-			if (e instanceof InvocationTargetException) {
-				InvocationTargetException ite = (InvocationTargetException) e;
-				t = ite.getCause();
-			} else {
-				t = e;
-			}
-			// check for a RuntimeException and allow to bubble up
-			if (t instanceof RuntimeException) {
-				// re-throw exception
-				throw (RuntimeException) t;
-			} else {
-				t.printStackTrace();
-			}
-		}
-	}
 
 
 
@@ -745,7 +819,7 @@ public class Frame extends Container {
 	 * ANIMATIONS
 	 */
 
-	protected ArrayList<Animation> animations;
+	private ArrayList<Animation> animations;
 
 	protected void animateImpl(String attribute, Control target, float aimedValue, double milliseconds) {
 
@@ -1370,7 +1444,7 @@ public class Frame extends Container {
 	 * @return version
 	 */
 	public String getVersion() {
-		return "Version 0.0.7";
+		return "Version 0.0.11";
 	}
 
 

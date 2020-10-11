@@ -12,7 +12,7 @@ import processing.event.MouseEvent;
 public class MenuSeparator extends MenuItem {
 	public MenuSeparator() {
 		super();
-		setHeightImpl(5);
+		setHeightNoUpdate(5);
 	}
 
 	@Override

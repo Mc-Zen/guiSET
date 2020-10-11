@@ -55,8 +55,11 @@ public class Container extends TextBased {
 
 	/*
 	 * List of items
+	 * 
+	 *  It seems that ArrayList has a default capacity of 10 at first. This might be
+	 *  wasteful if a lot of containers are used. Lets start with 1.
 	 */
-	protected ArrayList<Control> items;
+	protected ArrayList<Control> items = new ArrayList<Control>(1);
 
 
 
@@ -77,12 +80,7 @@ public class Container extends TextBased {
 
 
 	public Container(int width, int height) {
-		setSizeImpl(width, height);
-
-
-		// It seems that ArrayList has a default capacity of 10 at first. This might be
-		// wasteful if a lot of containers are used. Lets start with 1.
-		items = new ArrayList<Control>(1);
+		setSizeWithoutUpdate(width, height); // After creatinbg items
 	}
 
 
@@ -192,7 +190,7 @@ public class Container extends TextBased {
 	 * Insert items at given index position.
 	 * 
 	 * @param position index to insert items into list.
-	 * @param items arbitrary number of items.
+	 * @param items    arbitrary number of items.
 	 */
 	public void insert(int position, Control... items) {
 		for (int i = 0; i < items.length; i++) {

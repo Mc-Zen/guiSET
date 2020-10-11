@@ -94,8 +94,6 @@ public class Textbox extends HScrollContainer {
 		setTextAlign(LEFT);
 		setLineHeightPercent(120);
 		setCursor(TEXT);
-
-		overridesFrameShortcuts = true;
 	}
 
 
@@ -837,7 +835,7 @@ public class Textbox extends HScrollContainer {
 				}
 				break;
 
-			case PApplet.RETURN: // for macinthosh
+			case PApplet.RETURN: // for macintosh
 			case PApplet.ENTER:
 				if (submitOnEnter) {
 					blur(); // this first, in case the event callback wants to focus this again
@@ -863,12 +861,25 @@ public class Textbox extends HScrollContainer {
 		handleEvent(keyPressListener, e);
 	}
 
+	
+
+	/*
+	 * (non-Javadoc)
+	 * @see guiSET.core.Control#overridesFrameShortcuts()
+	 * 
+	 * Normal shortcuts are not executed if this textbox has focus. 
+	 */
+	@Override
+	protected boolean overridesFrameShortcuts() {
+		return true;
+	}
+	
+	
 	/**
 	 * Copy selection to clipboard
 	 */
 	public void copy() {
 		if (selectionStart < selectionEnd) {
-			print(selectionStart, selectionEnd);
 			StringSelection selection = new StringSelection(getSelectedText());
 			Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
 			clipboard.setContents(selection, selection);

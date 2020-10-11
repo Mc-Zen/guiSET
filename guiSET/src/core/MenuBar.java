@@ -15,14 +15,14 @@ import processing.event.MouseEvent;
 public class MenuBar extends HFlowContainer {
 
 	public MenuBar() {
-		setGradient(Color.create(230), Color.create(190));
-		setZ(MenuItem.MenuZIndex);
-		setHeightImpl(MenuItem.MENUITEM_HEIGHT);
+		setGradient(MENUBAR_GRADIENT_TOP_COLOR, MENUBAR_GRADIENT_BOTTOM_COLOR);
+		setZ(Constants.MenuSurfaceZIndex);
+		setHeightNoUpdate(Constants.MenuItemHeight);
 	}
 
 	@Override
 	protected void addedToParent() {
-		setWidthImpl(parent.getWidth());
+		setWidthNoUpdate(parent.getWidth());
 		addAutoAnchors(PApplet.LEFT, PApplet.RIGHT);
 	}
 

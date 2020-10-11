@@ -246,7 +246,7 @@ public class Checkbox extends TextBased {
 	protected EventListener toggleListener;
 
 	/**
-	 * Add a listener for when the the checkbox has been checked/unchecked. Only triggered when the user
+	 * Add a listener for when the checkbox has been checked/unchecked. Only triggered when the user
 	 * presses the Checkbox and not if set programatically.
 	 * 
 	 * @param methodName method name
@@ -261,19 +261,19 @@ public class Checkbox extends TextBased {
 	}
 
 	/**
-	 * Add a listener lambda for when the the checkbox has been checked/unchecked. Only triggered when
+	 * Add a listener lambda for when the checkbox has been checked/unchecked. Only triggered when
 	 * the user presses the Checkbox and not if set programatically.
 	 * 
-	 * Event arguments: the {@link #Checkbox()} whose state has changed
+	 * Event arguments: the {@link Checkbox} whose state has changed
 	 * 
-	 * @param p lambda expression with {@link #Checkbox()} parameter
+	 * @param p lambda expression with {@link Checkbox} parameter
 	 */
 	public void addToggleListener(Predicate1<Checkbox> p) {
 		toggleListener = new LambdaEventListener1<Checkbox>(p);
 	}
 
 	/**
-	 * Add a listener lambda for when the the checkbox has been checked/unchecked. Only triggered when
+	 * Add a listener lambda for when the checkbox has been checked/unchecked. Only triggered when
 	 * the user presses the Checkbox and not if set programatically.
 	 * 
 	 * Event arguments: none

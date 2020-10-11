@@ -422,30 +422,11 @@ abstract public class TextBased extends Control {
 			if (pfont != null) {
 				pg.textFont(pfont);
 			}
-
-			pg.fill(color);
-			pg.strokeWeight(size / 15); // for strike-through
+			// for underline and strike-through. Strokes are not added to text itself
+			pg.strokeWeight(size / 15); 
 			pg.stroke(color);
-			pg.textSize(size);
-			float realLineHeight = getActualLineHeight();
 
-			String[] lines = text.split("\n");
-			// textAscent if not the real size - depending on font, this is actually
-			// smaller, this is a compromise
-			float posY = paddingTop + textAscent() * TEXTHEIGHT_FACTOR;
-			float textHeight = realLineHeight * (lines.length - 1) + size * TEXTHEIGHT_FACTOR;
-
-			switch (textAlignY) {
-			case CENTER:
-				posY += (getAvailableHeight() - textHeight) / 2f;  // somehow alignY center by processing is not quite exact in middle
-				break;
-			case BOTTOM:
-				posY += getAvailableHeight() - textHeight - textDescent(); // cant ignore descent here
-				break;
-			}
-			for (int i = 0; i < lines.length; ++i) {
-				textLineAlignImpl(lines[i], 0, (int) posY + (int) (i * realLineHeight));
-			}
+			super.draw(text);
 		}
 
 
@@ -575,7 +556,7 @@ abstract public class TextBased extends Control {
 
 	// called by Frame at constructor
 	protected static void init_text() {
-		textInfo_graphics = getFrame().papplet.createGraphics(1, 1);
+		textInfo_graphics = Frame.getPApplet().createGraphics(1, 1);
 		textInfo_graphics.beginDraw();
 		textInfo_graphics.textSize(12);
 	}

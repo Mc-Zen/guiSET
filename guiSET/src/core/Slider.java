@@ -24,8 +24,8 @@ import processing.event.*;
 public class Slider extends Control {
 
 	protected float value;
-	protected float minValue = 0;
-	protected float maxValue = 100;
+	protected float minValue = Constants.SliderDefaultMinValue;
+	protected float maxValue = Constants.SliderDefaultMaxValue;
 
 
 	public enum Orientation {
@@ -42,17 +42,16 @@ public class Slider extends Control {
 	protected Orientation orientation = Orientation.HORIZONTAL;
 
 	protected boolean wheelEnabled = false;
-	protected int scrollSpeed = 3;
+	protected float relativeScrollSpeed = 0.02f; // Percentage-based scroll speed. Value of 1 means from min to max in one wheel movement
 
 
 
 
 	public Slider() {
 		super();
-		setBackgroundColor(-2302756); // some gray
-		setForegroundColor(-1926085); // orange
-		setWidthImpl(150);
-		setHeightImpl((int) (ballSize * 1.3));
+		setBackgroundColor(SLIDER_BACKGROUND_COLOR); // some gray
+		setForegroundColor(SLIDER_FOREGROUND_COLOR); // orange
+		setSizeWithoutUpdate(150, (int) (ballSize * 1.3));
 		setPadding(3, 0);
 	}
 
@@ -177,9 +176,9 @@ public class Slider extends Control {
 	public void setThickness(int thickness) {
 		this.thickness = thickness;
 		if (orientation == HORIZONTAL)
-			setHeightImpl((int) (Math.max(thickness, ballSize) * 1.3));
+			setHeightNoUpdate((int) (Math.max(thickness, ballSize) * 1.3));
 		else
-			setWidthImpl((int) (Math.max(thickness, ballSize) * 1.3));
+			setWidthNoUpdate((int) (Math.max(thickness, ballSize) * 1.3));
 		update();
 	}
 
@@ -194,9 +193,9 @@ public class Slider extends Control {
 
 		// adjust height to larger of Size and BallSize
 		if (orientation == Orientation.HORIZONTAL)
-			setHeightImpl((int) (Math.max(thickness, ballSize) * 1.3));
+			setHeightNoUpdate((int) (Math.max(thickness, ballSize) * 1.3));
 		else
-			setWidthImpl((int) (Math.max(thickness, ballSize) * 1.3));
+			setWidthNoUpdate((int) (Math.max(thickness, ballSize) * 1.3));
 		update();
 	}
 
@@ -208,14 +207,14 @@ public class Slider extends Control {
 	public void setOrientation(Orientation orientation) {
 		if (orientation == Orientation.HORIZONTAL) {
 			if (this.orientation == Orientation.VERTICAL) {
-				setWidthImpl(getHeight());
-				setHeightImpl((int) (Math.max(thickness, ballSize) * 1.3));
+				setWidthNoUpdate(getHeight());
+				setHeightNoUpdate((int) (Math.max(thickness, ballSize) * 1.3));
 			}
 			this.orientation = orientation;
 		} else {
 			if (this.orientation == Orientation.HORIZONTAL) {
-				setHeightImpl(getWidth());
-				setWidthImpl((int) (Math.max(thickness, ballSize) * 1.3));
+				setHeightNoUpdate(getWidth());
+				setWidthNoUpdate((int) (Math.max(thickness, ballSize) * 1.3));
 			}
 			this.orientation = orientation;
 		}
@@ -237,8 +236,8 @@ public class Slider extends Control {
 	 * 
 	 * @param scrollSpeed scrollSpeed
 	 */
-	public void setScrollSpeed(int scrollSpeed) {
-		this.scrollSpeed = scrollSpeed;
+	public void setWheelAmmount(float scrollSpeed) {
+		this.relativeScrollSpeed = scrollSpeed;
 	}
 
 
@@ -272,8 +271,8 @@ public class Slider extends Control {
 		return wheelEnabled;
 	}
 
-	public int getScrollSpeed() {
-		return scrollSpeed;
+	public float getWheelAmmount() {
+		return relativeScrollSpeed;
 	}
 
 
@@ -308,9 +307,9 @@ public class Slider extends Control {
 	 * Add a value-change listener lambda. The event is also triggered when the value is changed
 	 * programatically.
 	 * 
-	 * Event arguments: the {@link #Slider()} whose state has changed
+	 * Event arguments: the {@link Slider} whose state has changed
 	 * 
-	 * @param p lambda expression with {@link #Slider()} parameter
+	 * @param p lambda expression with {@link Slider} parameter
 	 */
 	public void addValueChangeListener(Predicate1<Slider> p) {
 		valueChangeListener = new LambdaEventListener1<Slider>(p);
@@ -364,8 +363,10 @@ public class Slider extends Control {
 
 	@Override
 	protected void mouseWheel(MouseEvent e) {
+		int delta = e.getCount() < 0 ? 1 : -1;
 		if (wheelEnabled)
-			setValue(value + e.getCount() * scrollSpeed);
+			setValue(value + delta * relativeScrollSpeed * getIntervalLength());
+		print(delta * relativeScrollSpeed, getIntervalLength());
 	}
 }
 

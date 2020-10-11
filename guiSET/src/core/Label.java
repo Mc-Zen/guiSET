@@ -84,8 +84,7 @@ public class Label extends TextBased {
 	 */
 	public Label(PImage image, int width, int height) {
 		setImage(image);
-		setWidthImpl(width);  // should be okay to set size without setter
-		setHeightImpl(height);
+		setSizeWithoutUpdate(width, height);  
 		setBorderWidth(0);
 	}
 

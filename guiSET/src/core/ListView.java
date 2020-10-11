@@ -31,6 +31,10 @@ public class ListView extends VScrollContainer {
 	// allow selection of multiple items
 	protected boolean multiSelect = false;
 
+	// on every change of availableWidth (paddings or width), resize items to fill the ListView
+	protected boolean makeItemsFillAvailableWidth = true;
+
+	
 	// currrently selected (or last selected) item
 	protected Control selectedItem;
 
@@ -50,9 +54,9 @@ public class ListView extends VScrollContainer {
 		selectedItems = new ArrayList<Control>(0);
 
 		setBorderWidth(1);
-		setBackgroundColor(WHITE); // light grey
+		setBackgroundColor(WHITE);
 		setSelectionColor(SELECTION_BLUE);
-		setNewItemBackgroundColor(TRANSPARENT); // color(255)
+		setNewItemBackgroundColor(TRANSPARENT);
 	}
 
 
@@ -329,14 +333,14 @@ public class ListView extends VScrollContainer {
 		return super.remove(item);
 	}
 
+
 	@Override
-	protected boolean setWidthNoUpdate(int width) {
-		if (super.setWidthNoUpdate(width)) {
-			for (Control c : items)
-				c.setWidth(getAvailableWidth());
-			return true;
-		} else {
-			return false;
+	protected void availableWidthChanged() {
+		if (makeItemsFillAvailableWidth) {
+			int availableWidth = getAvailableWidth();
+			for (Control item : items) {
+				item.setWidth(availableWidth);
+			}
 		}
 	}
 
@@ -436,6 +440,10 @@ public class ListView extends VScrollContainer {
 		}
 	}
 
+	public void setMakeItemsFillAvailableWidth(boolean makeItemsFillAvailableWidth) {
+		this.makeItemsFillAvailableWidth = makeItemsFillAvailableWidth;
+	}
+
 
 	/*
 	 * GETTER
@@ -467,6 +475,10 @@ public class ListView extends VScrollContainer {
 
 	public boolean getMultiSelect() {
 		return multiSelect;
+	}
+
+	public boolean isMakeItemsFillAvailableWidth() {
+		return makeItemsFillAvailableWidth;
 	}
 
 

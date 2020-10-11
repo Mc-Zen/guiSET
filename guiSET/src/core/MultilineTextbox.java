@@ -91,8 +91,6 @@ public class MultilineTextbox extends VScrollContainer {
 		setLineHeightPercent(120);
 		setCursor(TEXT);
 		setSlimScrollHandle(true);
-
-		overridesFrameShortcuts = true;
 	}
 
 
@@ -1146,6 +1144,18 @@ public class MultilineTextbox extends VScrollContainer {
 
 		handleEvent(keyPressListener, e);
 	}
+
+	/*
+	 * (non-Javadoc)
+	 * @see guiSET.core.Control#overridesFrameShortcuts()
+	 * 
+	 * Normal shortcuts are not executed if this textbox has focus. 
+	 */
+	@Override
+	protected boolean overridesFrameShortcuts() {
+		return true;
+	}
+
 
 	/**
 	 * Copy selection to clipboard

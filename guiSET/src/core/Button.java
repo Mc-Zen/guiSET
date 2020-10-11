@@ -1,6 +1,7 @@
 package guiSET.core;
 
 import processing.core.*;
+import processing.event.MouseEvent;
 
 /**
  * Basic button template for text or image buttons.
@@ -11,12 +12,14 @@ import processing.core.*;
 
 public class Button extends TextBased {
 
+	protected boolean clickEventOnPress = false; // If true, then click event is fired on press
+
 	public Button() {
 		super();
 		setPadding(7);
 		setBorderWidth(1);
-		setHoverColor(-3618616); 		// color(200)
-		setPressedColor(-6908266);	// color(150)
+		setHoverColor(BUTTON_HOVER_COLOR);
+		setPressedColor(BUTTON_PRESS_COLOR);
 	}
 
 	/**
@@ -57,22 +60,35 @@ public class Button extends TextBased {
 	 * Constructor for specifying button text and press callback method name.
 	 * 
 	 * @param text          text
-	 * @param pressCallback callback for press event
+	 * @param clickCallback callback for click event
 	 */
-	public Button(String text, String pressCallback) {
+	public Button(String text, String clickCallback) {
 		this(text);
-		addMouseListener("press", pressCallback);
+		addClickListener(clickCallback);
 	}
 
 	/**
 	 * Constructor for specifying button text and press callback lambda.
 	 * 
 	 * @param text          text
-	 * @param pressCallback callback lambda for press event
+	 * @param clickCallback callback lambda for click event
 	 */
-	public Button(String text, Predicate pressCallback) {
+	public Button(String text, Predicate clickCallback) {
 		this(text);
-		addMouseListener("press", pressCallback);
+		addClickListener(clickCallback);
+	}
+
+	/**
+	 * Create an image button. Width and height of button are set to given dimensions.
+	 * 
+	 * @param image  image background image for button
+	 * @param width  width for label
+	 * @param height height for label
+	 */
+	public Button(PImage image, int width, int height) {
+		setImage(image);
+		setSizeWithoutUpdate(width, height);
+		setBorderWidth(0);
 	}
 
 	/**
@@ -100,11 +116,11 @@ public class Button extends TextBased {
 	 * will be set to dimensions of given image.
 	 * 
 	 * @param image         background image for button
-	 * @param pressCallback callback for press event
+	 * @param clickCallback callback for click event
 	 */
-	public Button(PImage image, String pressCallback) {
+	public Button(PImage image, String clickCallback) {
 		this(image, image.width, image.height);
-		addMouseListener("press", pressCallback);
+		addClickListener(clickCallback);
 	}
 
 	/**
@@ -112,11 +128,11 @@ public class Button extends TextBased {
 	 * be set to dimensions of given image.
 	 * 
 	 * @param image         background image for button
-	 * @param pressCallback callback lambda for press event
+	 * @param clickCallback callback lambda for click event
 	 */
-	public Button(PImage image, Predicate pressCallback) {
+	public Button(PImage image, Predicate clickCallback) {
 		this(image, image.width, image.height);
-		addMouseListener("press", pressCallback);
+		addClickListener(clickCallback);
 	}
 
 	/**
@@ -125,11 +141,11 @@ public class Button extends TextBased {
 	 * 
 	 * @param image         background image for button
 	 * @param scale         scale factor for image
-	 * @param pressCallback callback for press event
+	 * @param clickCallback callback for click event
 	 */
-	public Button(PImage image, float scale, String pressCallback) {
+	public Button(PImage image, float scale, String clickCallback) {
 		this(image, scale);
-		addMouseListener("press", pressCallback);
+		addClickListener(clickCallback);
 	}
 
 	/**
@@ -138,26 +154,13 @@ public class Button extends TextBased {
 	 * 
 	 * @param image         background image for button
 	 * @param scale         scale factor for image
-	 * @param pressCallback callback lambda for press event
+	 * @param clickCallback callback lambda for click event
 	 */
-	public Button(PImage image, float scale, Predicate pressCallback) {
+	public Button(PImage image, float scale, Predicate clickCallback) {
 		this(image, scale);
-		addMouseListener("press", pressCallback);
+		addClickListener(clickCallback);
 	}
 
-	/**
-	 * Create an image label. Width and height of button are set to given dimensions.
-	 * 
-	 * @param image  image background image for button
-	 * @param width  width for label
-	 * @param height height for label
-	 */
-	public Button(PImage image, int width, int height) {
-		setImage(image);
-		setWidthImpl(width);  // should be okay to set size without setter
-		setHeightImpl(height);
-		setBorderWidth(0);
-	}
 
 
 
@@ -185,14 +188,95 @@ public class Button extends TextBased {
 
 
 	/*
-	 * STYLE SETTING METHODS
+	 * SETTER
 	 */
 
-	// automatically set HoverColor and PressedColor
+	// automatically set hoverColor and pressedColor
 	@Override
 	public void setBackgroundColor(int clr) {
 		setStatusBackgroundColorsAutomatically(clr);
 	}
 
+	/**
+	 * The click event is called when the button is pressed down. The click event is either called when
+	 * the button is pressed OR when it is released.
+	 * 
+	 * @see #callClickEventOnRelease()
+	 */
+	public void callClickEventOnPress() {
+		clickEventOnPress = true;
+	}
 
+	/**
+	 * The click event is called when the button is released (default). The click event is either called
+	 * when the button is pressed OR when it is released.
+	 * 
+	 * @see #callClickEventOnPress()
+	 */
+	public void callClickEventOnRelease() {
+		clickEventOnPress = false;
+	}
+
+
+
+
+	/*
+	 * EVENTS
+	 */
+	protected EventListener clickListener;
+
+	/**
+	 * Add a listener for when the button has been clicked.
+	 * 
+	 * @param methodName method name
+	 * @param target     object
+	 */
+	public void addClickListener(String methodName, Object target) {
+		clickListener = createEventListener(methodName, target, MouseEvent.class);
+	}
+
+	public void addClickListener(String methodName) {
+		addClickListener(methodName, getPApplet());
+	}
+
+	/**
+	 * Add a listener lambda for when the button has been clicked.
+	 * 
+	 * Event arguments: the {@link Button} whose state has changed
+	 * 
+	 * @param p lambda expression with {@link MouseEvent} parameter
+	 */
+	public void addClickListener(Predicate1<MouseEvent> p) {
+		clickListener = new LambdaEventListener1<MouseEvent>(p);
+	}
+
+	/**
+	 * Add a listener lambda for when the button has been clicked.
+	 * 
+	 * Event arguments: none
+	 * 
+	 * @param p lambda expression
+	 */
+	public void addClickListener(Predicate p) {
+		clickListener = new LambdaEventListener(p);
+	}
+
+	public void removeClickListener() {
+		clickListener = null;
+	}
+
+
+	@Override
+	protected void press(MouseEvent e) {
+		super.press(e);
+		if (clickEventOnPress)
+			handleEvent(clickListener, e);
+	}
+
+	@Override
+	protected void release(MouseEvent e) {
+		super.release(e);
+		if (!clickEventOnPress)
+			handleEvent(clickListener, e);
+	}
 }

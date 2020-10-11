@@ -12,25 +12,22 @@ public class ListItem extends TextBased {
 
 	// back color for selected state
 	protected int selectionColor;
+	
 	// hover color for selected state
 	protected int selectionHoverColor;
-	// hover color for selected state
-	protected int selectionForegroundColor;
 
 	// true if this item has been selected by the parent listview
 	protected boolean selected;
 
+	
 	public ListItem() {
 		super();
 		setPadding(3);
 		setBorderWidth(1);
 		setSelectionColor(SELECTION_BLUE);
-		setSelectionForegroundColor(WHITE);
 		setBackgroundColor(TRANSPARENT);
 		setHoverColor(Color.create(0, 0, 0, 30));
 		setPressedColor(Color.create(0, 0, 0, 50));
-
-		autosize();
 	}
 
 	/**
@@ -45,19 +42,6 @@ public class ListItem extends TextBased {
 
 	@Override
 	protected void render() {
-		// Exception: Width is set in render() method for once which is okay because
-		// parent expects that
-
-		// setWidthImpl(((Container) parent).getAvailableWidth());
-//		updateAnchors(); // not really necessary or elegant but for now (just in case listitem has
-		// children)
-//		resize();        // ...
-
-		// only if parent is not a ParentGraphicsRenderer (temporary solution)
-		if (pg != parent.pg) {
-			pg = getPApplet().createGraphics(getWidth(), getHeight());
-			pg.beginDraw();
-		}
 
 		if (selected) {
 			int temp = visualBackgroundColor;
@@ -65,11 +49,7 @@ public class ListItem extends TextBased {
 			drawDefaultBackground();
 			visualBackgroundColor = temp;
 
-			temp = foregroundColor;
-			foregroundColor = selectionForegroundColor;
-
 			drawDefaultText();
-			foregroundColor = temp;
 
 		} else {
 			drawDefaultBackground();
@@ -81,7 +61,7 @@ public class ListItem extends TextBased {
 
 	@Override
 	protected int autoHeight() {
-		return (int) (getFontSize() * 1.5) + paddingTop + paddingBottom;
+		return (int) textHeight(text) + paddingTop + paddingBottom;
 	}
 
 
@@ -139,27 +119,12 @@ public class ListItem extends TextBased {
 		update();
 	}
 
-	/**
-	 * Sets the text color for when the item is selected.
-	 * 
-	 * @param selectionForegroundColor selection foreground color
-	 */
-	public void setSelectionForegroundColor(int selectionForegroundColor) {
-		this.selectionForegroundColor = selectionForegroundColor;
-		update();
-	}
-
-
 	public int getSelectionColor() {
 		return selectionColor;
 	}
 
 	public int getSelectionHoverColor() {
 		return selectionHoverColor;
-	}
-
-	public int getSelectionForegroundColor() {
-		return selectionForegroundColor;
 	}
 
 	protected boolean isSelected() {

@@ -26,23 +26,17 @@ import java.util.TimerTask;
  * the MenuStrip will be removed too.
  */
 
-/**
- * Basic brick for creating menus. Just add a new {@link MenuBar} to your {@link Frame} instance and
- * add MenuItems to it.
- * 
- * You can add other MenuItems to theses and so on to create any structure of menu items. Also take
- * a look at the {@link MenuSeparator} which provides a non-clickable and slim line for separating
- * parts of the menu strip.
- * 
- * There is only this one class for every position in the menu tree.
- *
- * MenuItems and MenuStrips can also be used to create menus that pop up when i.e. right-clicking on
- * something. This is accomplished by creating a ToolStrip and adding items to it. The ToolStrip can
- * be be shown by calling myToolStrip.show().
- * 
- * 
- */
 
+/**
+ * Sort of a singleton. It is created the first time a menu item is constructed. Its parent is the
+ * Frame and itself the parent of all MenuStrips (menu "dropdowns"). By default, it is invisible and
+ * only displayed if a MenuStrip is opened by clicking a MenuItem on the MenuBar or opening a
+ * MenuStrip otherwise (i.e. through a custom right-click event).
+ * 
+ * 
+ * @author Mc-Zen
+ *
+ */
 class MenuSurface extends Container {
 	protected static MenuSurface staticMS;
 
@@ -51,11 +45,8 @@ class MenuSurface extends Container {
 			staticMS = this;
 			getFrame().add(this);
 			setVisible(false);
-			setAnchor(LEFT, 0);
-			setAnchor(RIGHT, 0);
-			setAnchor(TOP, 0); // leave top free for change-menustrip-by-hover
-			setAnchor(BOTTOM, 0);
-			setZ(MenuItem.MenuZIndex);
+			setAnchors(LEFT, 0, RIGHT, 0, TOP, 0, BOTTOM, 0); // Fill entire Frame
+			setZ(Constants.MenuSurfaceZIndex);
 			setBackgroundColor(TRANSPARENT);
 		}
 	}
@@ -107,11 +98,27 @@ class MenuSurface extends Container {
 
 }
 
+
+/**
+ * Basic brick for creating menus. Just add a new {@link MenuBar} to your {@link Frame} instance and
+ * add MenuItems to it.
+ * 
+ * You can add other MenuItems to these and so on to create any structure of menu items. Also take a
+ * look at the {@link MenuSeparator} which provides a non-clickable and slim line for separating
+ * parts of the menu strip.
+ * 
+ * There is only this one class for every position in the menu tree.
+ *
+ * MenuItems and MenuStrips can also be used to create menus that pop up when i.e. right-clicking on
+ * something. This is accomplished by creating a ToolStrip and adding items to it. The ToolStrip can
+ * be be shown by calling myToolStrip.show().
+ * 
+ * 
+ */
+
+
 public class MenuItem extends TextBased {
 
-
-	public static final int MenuZIndex = 20;
-	public static final int MENUITEM_HEIGHT = 23; // default height for menu items and menu bars - looks good in my opinion
 
 
 	/*
@@ -128,25 +135,27 @@ public class MenuItem extends TextBased {
 	protected MenuStrip dropDown;
 
 	/*
-	 * There are two types of menuitems: one is the "menu header" which is always
-	 * visible on the screen and the parent of the entire strip it belongs to. The
-	 * other is the "menu item", the basic items/subitems that make up the structure
-	 * of the strip.
+	 * There are two types of menuitems: one is the MENU_HEADER which is always visible on the screen
+	 * and the parent of the entire strip it belongs to. MENU_HEADERs are all part of the MenuBar.
 	 * 
-	 * Both have different drawing and handling of special events etc...
+	 * The other type is the MENU_ITEM, the basic items/subitems that make up the structure of the
+	 * strip.
 	 * 
-	 * Menu items should not change their tree position at runtime because the type
-	 * change won't be recognized. Or not? Maybe it would work now.
+	 * Both have different drawing/positioning and handling of special events etc...
 	 * 
-	 * "type" gives the possibility to discern between the two versions intenally.
-	 * The type is only determined at runtime when the graphics have been
-	 * initialized and the position of the item is obvious.
+	 * Menu items should not change their tree position at runtime because the type change won't be
+	 * recognized. Or not? Maybe it would work now.
+	 * 
+	 * "type" gives the possibility to discern between the two versions intenally. The type is only
+	 * determined at runtime when the position of the item in the menu hierachy is known.
 	 * 
 	 */
 
-	protected int type = 0;
-	protected static final int MENU_HEADER = 1;
-	protected static final int MENU_ITEM = 2;
+	protected Type type = Type.UNKNOWN;
+
+	protected enum Type {
+		UNKNOWN, MENU_HEADER, NESTED_MENU_ITEM
+	}
 
 	/*
 	 * Header that the menuitem belongs to. items and subitems etc. have the same
@@ -182,35 +191,70 @@ public class MenuItem extends TextBased {
 
 	public MenuItem(String text) {
 		super();
-		setHeightImpl(MENUITEM_HEIGHT);
+		items = new ArrayList<Control>(0);
+		setHeightNoUpdate(Constants.MenuItemHeight);
 		setPadding(0, 6, 0, 6);
 		setText(text);
 
-		setBackgroundColor(TRANSPARENT);
-		setHoverColor(1342177280); 		// just darken menucontainer backgroundcolor a bit
-		setPressedColor(1677721600); 		// only used by menu headers
+		setBackgroundColor(MENUITEM_BACKGROUND_COLOR);
+		setHoverColor(MENUHEADER_HOVER_COLOR); 		// just darken menucontainer backgroundcolor a bit
+		setPressedColor(MENUITEM_PRESS_COLOR); 		// only used by menu headers
 
-		items = new ArrayList<Control>(0);
 		MenuSurface.usingMenus();
 	}
 
 
 	/**
-	 * Constructor for immediately setting text and name of method to call when selected.
+	 * Constructor for immediately setting text and name of method to call when this item is selected.
 	 * 
-	 * @param text       text
-	 * @param methodName method name
+	 * @param text           text
+	 * @param selectCallback method name of callback for select event
 	 */
-	public MenuItem(String text, String methodName) {
+	public MenuItem(String text, String selectCallback) {
 		this(text);
-		addSelectListener(methodName);
+		addSelectListener(selectCallback);
 	}
 
-	public MenuItem(String text, String methodName, Shortcut shortcut) {
-		this(text, methodName);
+	/**
+	 * Constructor for immediately setting text and a lambda function to call when this item is
+	 * selected.
+	 * 
+	 * @param text           text
+	 * @param selectCallback lambda callback for select event
+	 */
+	public MenuItem(String text, Predicate selectCallback) {
+		this(text);
+		addSelectListener(selectCallback);
+	}
+
+	/**
+	 * Similar to {@link #MenuItem(String, String)}, but also provide a shortcut. The shortcut is
+	 * displayed on the menu item and when this shortcut is hit on the keyboard, the callback is
+	 * executed as if the menu item had been pressed.
+	 * 
+	 * @param text           text
+	 * @param selectCallback method name of callback for select event
+	 * @param shortcut       shortcut
+	 */
+	public MenuItem(String text, String selectCallback, Shortcut shortcut) {
+		this(text, selectCallback);
 		setShortcut(shortcut);
-		getFrame().registerShortcut(shortcut, methodName);
-		addSelectListener(methodName);
+		getFrame().registerShortcut(shortcut, selectCallback);
+	}
+
+	/**
+	 * Similar to {@link #MenuItem(String, Predicate)}, but also provide a shortcut. The shortcut is
+	 * displayed on the menu item and when this shortcut is hit on the keyboard, the callback is
+	 * executed as if the menu item had been pressed.
+	 * 
+	 * @param text           text
+	 * @param selectCallback lambda callback for select event
+	 * @param shortcut       shortcut
+	 */
+	public MenuItem(String text, Predicate selectCallback, Shortcut shortcut) {
+		this(text, selectCallback);
+		setShortcut(shortcut);
+		getFrame().registerShortcut(shortcut, selectCallback);
 	}
 
 	/**
@@ -228,9 +272,7 @@ public class MenuItem extends TextBased {
 		addSelectListener(methodName);
 	}
 
-
-
-
+	// Used by MenuParser
 	protected void registerShortcutAndMethod(String methodName, Shortcut shortcut) {
 		setShortcut(shortcut);
 		getFrame().registerShortcut(shortcut, methodName);
@@ -243,14 +285,14 @@ public class MenuItem extends TextBased {
 	protected void render() {
 		// change color if open
 		if (open) {
-			if (type == MENU_HEADER)
+			if (type == Type.MENU_HEADER)
 				visualBackgroundColor = pressedColor;
 			else
 				visualBackgroundColor = hoverColor;
 		}
 
 		/*
-		 * grey out if disabled
+		 * gray out if disabled
 		 */
 		int temp = foregroundColor;
 		if (!enabled)
@@ -260,13 +302,13 @@ public class MenuItem extends TextBased {
 		drawDefaultText();
 
 
-		if (type == MENU_ITEM) {
+		if (type == Type.NESTED_MENU_ITEM) {
 
 			/*
 			 * Draw triangle to indicate that this item has subitems
 			 */
 			if (items.size() > 0) {
-				pg.fill(enabled ? 0 : 150);
+				pg.fill(enabled ? MENUITEM_TRIANGLE_ENABLED_COLOR : MENUITEM_TRIANGLE_DISABLED_COLOR);
 				pg.stroke(0);
 				pg.strokeWeight(0);
 				pg.triangle(getWidth() - 4, getHeight() / 2, getWidth() - 7, getHeight() / 2 + 3, getWidth() - 7, getHeight() / 2 - 3);
@@ -288,8 +330,8 @@ public class MenuItem extends TextBased {
 			 * Draw checkmark
 			 */
 			if (checked) {
-				pg.fill(180, 180, 250, 130);
-				pg.stroke(60, 60, 100, 150);
+				pg.fill(MENUITEM_CHECKMARK_FILL_COLOR);
+				pg.stroke(MENUITEM_CHECKMARK_STROKE_COLOR);
 				pg.rect(2, 3, 18, 18, 2); 	// box
 
 				pg.strokeWeight(2);
@@ -304,27 +346,26 @@ public class MenuItem extends TextBased {
 
 
 	/**
-	 * When added to their parent, it is determined whether this item is a {@link #MENU_HEADER} or a
-	 * {@link #MENU_ITEM}. Some styles are set accordingly.
+	 * When added to their parent, it is determined whether this item is a {@link Type#MENU_HEADER} or a
+	 * {@link Type#NESTED_MENU_ITEM}. Some styles are set accordingly.
 	 */
 
 	@Override
 	protected void addedToParent() {
 		if (parent instanceof MenuStrip) {
-			type = MENU_ITEM;
+			type = Type.NESTED_MENU_ITEM;
+			setStyleOfNestedMenuItem();
 
-			setTextAlign(LEFT);
-			setHoverColor(671088660);
-			setPaddingLeft(27);
 
 			// If this whole strip (that this item just has been added to) is already added
 			// to a MenuBar or similar, we need to add the dropDown for this item separately
-			if (headerStrip != null && headerStrip.parent != null) {
+			if (isHeaderStripConnected()) {
 				addMenuStrips(); // add all menustrips recursively (preserve right z-order)
 			}
 		} else {
-			type = MENU_HEADER;
-			setTextAlign(CENTER);
+			type = Type.MENU_HEADER;
+			setStyleOfMenuHeader();
+
 			// set this as header recursively for all (sub...-) children. This is only
 			// necessary for headers as it is already included in the add() method when
 			// adding MenuItems.
@@ -342,10 +383,33 @@ public class MenuItem extends TextBased {
 		autosize();
 	}
 
+	private void setStyleOfNestedMenuItem() {
+		setTextAlign(LEFT);
+		setHoverColor(MENUITEM_HOVER_COLOR);
+		setPaddingLeft(Constants.MenuItemPaddingLeft);
+	}
+
+	private void setStyleOfMenuHeader() {
+		setTextAlign(CENTER);
+	}
+
+	/*
+	 * Called when this menu item has been added to another MenuItem, ContextMenu 
+	 * that already has a direct connection to the MenuBar
+	 */
+	protected void connectedToMenuSurface() {
+
+	}
+
+	protected boolean isHeaderStripConnected() {
+		return headerStrip != null && headerStrip.parent != null;
+	}
+
 
 	protected void addMenuStrips() {
 		if (dropDown != null) {
-			MenuSurface.addMenuStrip(dropDown);
+			if (dropDown.parent == null)
+				MenuSurface.addMenuStrip(dropDown);
 			for (Control c : items) {
 				((MenuItem) c).addMenuStrips();
 			}
@@ -363,9 +427,9 @@ public class MenuItem extends TextBased {
 		 * if subitem, then only require this as minimal width; as header it's the
 		 * actual width
 		 */
-		if (type == MENU_ITEM) {
+		if (type == Type.NESTED_MENU_ITEM) {
 			setMinWidth(baseWidth + paddingLeft + paddingRight); // 27 is the left padding
-		} else if (type == MENU_HEADER) {
+		} else if (type == Type.MENU_HEADER) {
 			return baseWidth + paddingLeft + paddingRight;
 		} else {
 			// undefined state (before this item has fully been initialized).
@@ -399,7 +463,7 @@ public class MenuItem extends TextBased {
 	protected void open() {
 		if (items.size() > 0) { // has subitems itself -> open them
 
-			if (type == MENU_HEADER) {
+			if (type == Type.MENU_HEADER) {
 				closeOpenHeaders();
 			} else {
 				// first close all potentially open siblings
@@ -420,9 +484,9 @@ public class MenuItem extends TextBased {
 			 * Draw first layer items BENEATH this item and all other layers always NEXT to
 			 * this item
 			 */
-			if (type == MENU_HEADER) {
+			if (type == Type.MENU_HEADER) {
 				dropDown.x = offsetX;
-				dropDown.y = MENUITEM_HEIGHT;
+				dropDown.y = Constants.MenuItemHeight;
 
 				// reset timer (when closing the strip the timer is always ceased)
 				hoverTimer = new Timer();
@@ -478,7 +542,7 @@ public class MenuItem extends TextBased {
 			update();
 
 			// headers need to stop the timer and close the surface
-			if (type == MENU_HEADER) {
+			if (type == Type.MENU_HEADER) {
 
 				MenuSurface.closeMenuSurface();
 
@@ -558,6 +622,33 @@ public class MenuItem extends TextBased {
 		return checked;
 	}
 
+	/*
+	 * There are two cases in which the dropdown should be added to the MenuSurface.
+	 * 
+	 *  1. A MenuItem with an existing dropdown is "connected" to the gui. "Connected" means
+	 *  that there is . In this case, all child/grandchild... items need to add their dropdown 
+	 *  (if existent) to the MenuSurface. 
+	 *  2. An already connected MenuItem with no items (dropdown == null) gets a subitem. 
+	 *  The dropdown is created and now it needs to be added to the MenuSurface. 
+	 * 
+	 */
+
+
+	private void createDropDownIfNecessary() {
+		if (dropDown == null) {
+			dropDown = new MenuStrip();
+			dropDown.items = items; // sync dropDown items with items of this MenuItem
+
+			if (isHeaderStripConnected())
+				MenuSurface.addMenuStrip(dropDown);
+
+			// The dropdowns parent will be the static MenuSurface staticMS.
+			// a dropdown is added to staticMS when a menu-header is added to its container
+			// (usually a MenuBar) by calling addMenuStrips().
+			// This method recursively adds the MenuStrips for all (sub...-) items that have
+			// one.
+		}
+	}
 
 
 
@@ -568,27 +659,12 @@ public class MenuItem extends TextBased {
 
 	// internal adding method
 
-	protected void addItem(int position, MenuItem item) {
-		items.add(position, item); // update called here
-		// need to create the dropdown if not already existent
-		if (dropDown == null) {
-			dropDown = new MenuStrip();
-			// sync DropDown content with items
-			dropDown.items = items;
+	protected void insertImpl(int position, MenuItem item) {
+		items.add(position, item); // Update called here
+		createDropDownIfNecessary(); // Need to create the dropdown if not already existent
 
-			// unschön aber nötig
-			if (item.items.size() == 0)
-				MenuSurface.addMenuStrip(dropDown);
-
-			// The dropdowns parent will be the static MenuSurface staticMS.
-			// a dropdown is added to staticMS when a menu-header is added to its container
-			// (usually a MenuBar) by calling addMenuStrips().
-			// This method recursively adds the MenuStrips for all (sub...-) items that have
-			// one.
-		}
-
-		// !!!parent has to be the dropdown because dropdown is the real parent when
-		// drawing
+		// !!! Parent has to be the dropdown because dropdown is the real logic parent when drawing and
+		// receiving input events
 		item.parent = dropDown;
 		item.setHeader(this.headerStrip); // setHeader before addedToParent() because the latter checks header
 		item.addedToParent();
@@ -602,7 +678,7 @@ public class MenuItem extends TextBased {
 	 */
 	public void add(MenuItem... newItems) {
 		for (MenuItem c : newItems) {
-			addItem(items.size(), c);
+			insertImpl(items.size(), c);
 		}
 		dropDown.update(); // dont need to update this
 	}
@@ -617,10 +693,10 @@ public class MenuItem extends TextBased {
 	public void add(String... strings) {
 		for (String s : strings) {
 			if (s.length() == 0) {
-				addItem(items.size(), new MenuSeparator());
+				insertImpl(items.size(), new MenuSeparator());
 				continue;
 			}
-			addItem(items.size(), new MenuItem(s));
+			insertImpl(items.size(), new MenuItem(s));
 		}
 		dropDown.update();// dont need to update this
 	}
@@ -634,7 +710,7 @@ public class MenuItem extends TextBased {
 	 */
 	public void insert(int position, MenuItem... newItems) {
 		for (int i = 0; i < newItems.length; i++) {
-			addItem(position + i, newItems[i]);
+			insertImpl(position + i, newItems[i]);
 		}
 		dropDown.update();// dont need to update this
 	}
@@ -758,7 +834,7 @@ public class MenuItem extends TextBased {
 	 * 
 	 * @param p lambda expression with {@link #MenuItem()} parameter
 	 */
-	public void addItemSelectListener(Predicate1<MenuItem> p) {
+	public void addSelectListener(Predicate1<MenuItem> p) {
 		selectListener = new LambdaEventListener1<MenuItem>(p);
 	}
 
@@ -769,7 +845,7 @@ public class MenuItem extends TextBased {
 	 * 
 	 * @param p lambda expression
 	 */
-	public void addItemSelectListener(Predicate p) {
+	public void addSelectListener(Predicate p) {
 		selectListener = new LambdaEventListener(p);
 	}
 
@@ -886,9 +962,9 @@ public class MenuItem extends TextBased {
 	protected void enter(MouseEvent e) { // when clicked hovering is sufficient for changing the dropdown
 		visualBackgroundColor = hoverColor;
 
-		if (type == MENU_ITEM) {
+		if (type == Type.NESTED_MENU_ITEM) {
 			startHoverTimer();
-		} else if (type == MENU_HEADER) {
+		} else if (type == Type.MENU_HEADER) {
 			// check if another header is open, if so then close it and open this one
 			// immediately (doesn't apply if this header is the open one)
 
@@ -916,7 +992,7 @@ public class MenuItem extends TextBased {
 		draggedElement = null;
 
 		// if item is menu header, open and close on press
-		if (type == MENU_HEADER) {
+		if (type == Type.MENU_HEADER) {
 			if (open) {
 				close();
 				visualBackgroundColor = hoverColor;
@@ -935,7 +1011,7 @@ public class MenuItem extends TextBased {
 	protected void release(MouseEvent e) {
 
 		// if item is subitem, open and close on release
-		if (type == MENU_ITEM) {
+		if (type == Type.NESTED_MENU_ITEM) {
 			open();
 		}
 		update();
@@ -956,8 +1032,8 @@ class MenuStrip extends Container {
 
 	public MenuStrip() {
 		super();
-		setBackgroundColor(240);
-		borderColor = -5592406; // color(170)
+		setBackgroundColor(MENUSTRIP_BACKGROUND_COLOR);
+		borderColor = MENUSTRIP_BORDER_COLOR;
 		borderWidth = 1;
 		visible = false;
 	}
@@ -976,7 +1052,7 @@ class MenuStrip extends Container {
 		int h = 1;
 		for (int i = 0; i < items.size(); i++) {
 			h += items.get(i).getHeight();
-			items.get(i).setWidthImpl(getWidth());
+			items.get(i).setWidthNoUpdate(getWidth());
 		}
 		setHeight(h);
 
@@ -1010,6 +1086,7 @@ class MenuStrip extends Container {
 
 	protected void drawShadow(int w, int h, int offset) {
 		pg.noFill();
+		pg.strokeWeight(1);
 		int[] cl = { 115, 85, 41, 15, 5 };
 		for (int i = 0; i < 5; i++) {
 			pg.stroke(Color.create(0, cl[i]));

@@ -113,7 +113,7 @@ public class Animation {
 
 				// Calculate needed number of frames to complete animation, never less than 1!
 				// If not looping, the papplet.frameRate tells us nothing about time
-				float frameRate = Control.getFrame().drawMode == Frame.DrawMode.NO_LOOP ? 60 : Control.getPApplet().frameRate;
+				float frameRate = Control.getFrame().getRefreshMode() == Frame.RefreshMode.NO_LOOP ? 60 : Control.getPApplet().frameRate;
 				numberOfSteps = (int) Math.max(1, (frameRate * milliseconds / 1000));
 
 
@@ -174,9 +174,6 @@ public class Animation {
 		if (cancel)
 			return false;
 
-		if (Control.getFrame().drawMode == Frame.NO_LOOP) {
-			Frame.noLoopAfterAnimation();
-		}
 
 		// check if there's still work to do
 		if (counter <= numberOfSteps) {

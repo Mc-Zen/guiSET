@@ -5,7 +5,6 @@ import processing.event.*;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 
-
 import java.lang.reflect.InvocationTargetException;
 
 
@@ -197,8 +196,10 @@ public abstract class Control implements PConstants {
 	 * If true, then shortcuts registered to frame won't be handled if this element
 	 * is focused. I.e. useful for textboxes (ctrl-c, x etc.)
 	 */
-	protected boolean overridesFrameShortcuts = false;
 
+	protected boolean overridesFrameShortcuts() {
+		return false;
+	}
 
 
 	public enum RenderingMethod {
@@ -226,12 +227,31 @@ public abstract class Control implements PConstants {
 
 
 
-	// Some useful colors
+	// Some constant colors
 	public static final int BLACK = -16777216;
 	public static final int WHITE = -1;
 	public static final int TRANSPARENT = 0;
 	public static final int SELECTION_BLUE = -13395457;
 	public static final int TEXT_CURSOR_COLOR = -12171706; // color(70)
+
+	public static final int MENUBAR_GRADIENT_TOP_COLOR = Color.create(230);
+	public static final int MENUBAR_GRADIENT_BOTTOM_COLOR = Color.create(190);
+	public static final int MENUITEM_BACKGROUND_COLOR = TRANSPARENT;
+	public static final int MENUHEADER_HOVER_COLOR = 1342177280;
+	public static final int MENUITEM_HOVER_COLOR = 671088660;
+	public static final int MENUITEM_PRESS_COLOR = 1677721600;
+	public static final int MENUITEM_TRIANGLE_ENABLED_COLOR = Color.create(0);
+	public static final int MENUITEM_TRIANGLE_DISABLED_COLOR = Color.create(150);
+	public static final int MENUITEM_CHECKMARK_FILL_COLOR = Color.create(180, 180, 250, 130);
+	public static final int MENUITEM_CHECKMARK_STROKE_COLOR = Color.create(60, 60, 100, 150);
+	public static final int MENUSTRIP_BACKGROUND_COLOR = Color.create(240);
+	public static final int MENUSTRIP_BORDER_COLOR = Color.create(170);
+
+	public static final int SLIDER_BACKGROUND_COLOR = -2302756;
+	public static final int SLIDER_FOREGROUND_COLOR = -1926085;
+
+	public static final int BUTTON_HOVER_COLOR = Color.create(200);
+	public static final int BUTTON_PRESS_COLOR = Color.create(150);
 
 	public class Constants {
 		public static final int MinimalMinWidth = 1;
@@ -241,7 +261,16 @@ public abstract class Control implements PConstants {
 		public static final int DefaultContainerWidth = 100;
 		public static final int DefaultContainerHeight = 100;
 
-		protected final static int MinScrollHandleLength = 15;
+		public final static int MinScrollHandleLength = 15;
+
+		public static final int MenuSurfaceZIndex = 20; // The one and only MenuSurface's z-index is set to this
+		public static final int MenuItemHeight = 23; // default height for menu items and menu bars - looks good in my opinion
+		public static final int MenuItemPaddingLeft = 27;
+
+		public static final float SliderDefaultMinValue = 0;
+		public static final float SliderDefaultMaxValue = 100;
+
+
 	}
 
 	// default values
@@ -290,7 +319,7 @@ public abstract class Control implements PConstants {
 
 		borderColor = defaultBorderColor;
 		borderRadius = defaultBorderRadius;
-		this.borderWidth = Math.max(0, defaultBorderWidth);
+		borderWidth = Math.max(0, defaultBorderWidth);
 
 		if (renderingMethod == RenderingMethod.BUFFERED_RENDERING) {
 			renderer = new BasicBufferedRenderer();
@@ -304,9 +333,10 @@ public abstract class Control implements PConstants {
 
 
 
-	/*
-	 * Called before rendering the first time.
-	 * Don't call setZ(int) in initialize() nor call any function or constructor (like MenuSurface()) that does.
+	/**
+	 * Called before rendering the first time. Don't call {@link #setZ(int)}(int) in
+	 * {@link #initialize()} nor call any function or constructor (like {@link guiSET.core.MenuSurface})
+	 * that does.
 	 */
 	protected void initialize() {
 
@@ -330,7 +360,7 @@ public abstract class Control implements PConstants {
 	 * this elements focused state to true. There can only be one focused element at a time and it is
 	 * stored in the Frames focusedElement property.
 	 * 
-	 * @see Frame#focusedElement focusedElement.
+	 * @see guiSET.core.Frame#focusedElement
 	 */
 	public void focus() {
 		getFrame().requestFocus(this);
@@ -340,7 +370,7 @@ public abstract class Control implements PConstants {
 	/**
 	 * Request the Frame component to blur this object (set focus to false).
 	 * 
-	 * @see Frame#focusedElement focusedElement.
+	 * @see guiSET.core.Frame#focusedElement
 	 */
 	public void blur() {
 		getFrame().requestBlur(this);
@@ -350,7 +380,7 @@ public abstract class Control implements PConstants {
 	 * Request the Frame component to blur this object (set focus to false), duplicate of
 	 * {@link #blur()}.
 	 * 
-	 * @see Frame#focusedElement focusedElement.
+	 * @see guiSET.core.Frame#focusedElement
 	 */
 	public void unfocus() {
 		blur();
@@ -946,7 +976,6 @@ public abstract class Control implements PConstants {
 
 			// All this stuff does not work :( now using mask() instead
 			/*pg.beginShape(PApplet.QUADS);
-			pg.texture(image);
 			
 			if (borderRadius != 0) {
 				pg.vertex(width - borderRadius, 0);
@@ -1085,24 +1114,25 @@ public abstract class Control implements PConstants {
 
 	// The anchor array used to store the anchors data.
 	// In following order: TOP, RIGHT, BOTTOM, LEFT:
-	protected int[] anchors = { ANCHOR_NOT_SET, ANCHOR_NOT_SET, ANCHOR_NOT_SET, ANCHOR_NOT_SET };
+	private int[] anchors = { ANCHOR_INACTIVE, ANCHOR_INACTIVE, ANCHOR_INACTIVE, ANCHOR_INACTIVE };
 
 	// from outside, PApplet.TOP, RIGHT... is used, but these match the indices in
 	// the anchor array.
-	protected static final int TOP_ANCHOR = 0;
-	protected static final int RIGHT_ANCHOR = 1;
-	protected static final int BOTTOM_ANCHOR = 2;
-	protected static final int LEFT_ANCHOR = 3;
+	private static final int TOP_ANCHOR = 0;
+	private static final int RIGHT_ANCHOR = 1;
+	private static final int BOTTOM_ANCHOR = 2;
+	private static final int LEFT_ANCHOR = 3;
 
-	protected static final int ANCHOR_NOT_SET = Integer.MIN_VALUE;
 
-	/*
-	 * Combines if anchors are active at all (true if at least one anchor is active)
-	 * and modes for all anchors. The anchors can be in pixel or percentage mode.
-	 * If anchorMode is 0, then all anchors are off
+
+
+	private short anchorMode = 0; // Mode for each anchor. The anchors can be in pixel or percentage mode.
+	private boolean anyAnchorsActive = false; // Is any anchor active at all? Enables quick checks
+
+	/**
+	 * The value of an inactive anchor is set to {@link #ANCHOR_INACTIVE}.
 	 */
-	protected int anchorMode = 0;
-
+	public static final int ANCHOR_INACTIVE = Integer.MIN_VALUE;
 	/**
 	 * Anchor mode for percentage of parents size.
 	 */
@@ -1112,12 +1142,113 @@ public abstract class Control implements PConstants {
 	 */
 	public static final boolean PIXEL_MODE = false;
 
+	// Indicates that setWidth/HeightNoUpdate() should not update the anchors.
+	// Temporarily changed to true by parentResized() to set width without
+	// disturbing anchors.
+	private static boolean PAUSE_UPDATE_ANCHORS = false;
+
+
+
+
+	/*
+	 * Internal anchor helper functions
+	 */
+
+
+	// Check if certain anchor is active. Expects LEFT_ANCHOR, TOP_ANCHOR, RIGHT_ANCHOR or BOTTOM_ANCHOR
+	private boolean isAnchorActive(int anchor) {
+		return anchors[anchor] != ANCHOR_INACTIVE;
+	}
+
+	// Is at least one anchor active?
+	private boolean anyAnchorsActive() {
+		return anyAnchorsActive;
+	}
+
+	// Activate anchors. To be set, when an anchor is set to a specific value.
+	private void activateUseOfAnchors() {
+		anyAnchorsActive = true;
+	}
+
+	// Should only be called if all anchors are inactive.
+	private void deactivateUseOfAnchors() {
+		anyAnchorsActive = false;
+	}
+
+	// Deactivate a certain anchor. Expects LEFT_ANCHOR, TOP_ANCHOR, RIGHT_ANCHOR or BOTTOM_ANCHOR
+	private void deactivateAnchor(int anchor) {
+		anchors[anchor] = ANCHOR_INACTIVE;
+	}
+
+	private void setAnchorImpl(int anchor, int value) {
+		anchors[anchor] = value;
+		activateUseOfAnchors();
+	}
+
+	// Set the according bit in anchorMode to the given mode
+	// Expects LEFT_ANCHOR, TOP_ANCHOR, RIGHT_ANCHOR or BOTTOM_ANCHOR
+	// and
+	// PIXEL_MODE or PERCENTAGE_MODE
+	private void setAnchorModeImpl(int anchor, boolean percentage) {
+		if (percentage)
+			anchorMode |= 1 << anchor;
+		else
+			anchorMode &= ~1 << anchor;
+	}
+
+	// Returns either PIXEL_MODE or PERCENTAGE_MODE
+	private boolean getAnchorModeImpl(int anchor) {
+		return (anchorMode & (1 << anchor)) != 0;
+	}
+
+
+
+
+	// get left position in pixel according to LEFT_ANCHOR
+	private final int getLeft() {
+		if (getAnchorModeImpl(LEFT_ANCHOR) == PERCENTAGE_MODE)
+			return anchors[LEFT_ANCHOR] * parent.getWidth() / 100;
+		else
+			return anchors[LEFT_ANCHOR];
+	}
+
+	// get position of right side from left of element in pixel according to
+	// RIGHT_ANCHOR
+	private final int getRight() {
+		if (getAnchorModeImpl(RIGHT_ANCHOR) == PERCENTAGE_MODE)
+			return parent.getWidth() - anchors[RIGHT_ANCHOR] * parent.getWidth() / 100;
+		else
+			return parent.getWidth() - anchors[RIGHT_ANCHOR];
+	}
+
+	// get top position in pixel according to TOP_ANCHOR
+	private final int getTop() {
+		if (getAnchorModeImpl(TOP_ANCHOR) == PERCENTAGE_MODE)
+			return anchors[TOP_ANCHOR] * parent.getHeight() / 100;
+		else
+			return anchors[TOP_ANCHOR];
+	}
+
+	// get position of bottom side from top of element in pixel according to
+	// BOTTOM_ANCHOR
+	private final int getBottom() {
+		if (getAnchorModeImpl(BOTTOM_ANCHOR) == PERCENTAGE_MODE)
+			return parent.getHeight() - anchors[BOTTOM_ANCHOR] * parent.getHeight() / 100;
+		else
+			return parent.getHeight() - anchors[BOTTOM_ANCHOR];
+	}
+
+
+
+
+
+
 
 	/**
-	 * Set an Anchor of type TOP BOTTOM, LEFT or RIGHT to a certain value. This also immediately sets
-	 * the position or size of this element if necessary according to the anchors.
+	 * Set an anchor of type TOP BOTTOM, LEFT or RIGHT to a certain value. This also immediately sets
+	 * the position or size of this element according to the anchors if necessary.
 	 * 
-	 * It is not possible to use this method if this element has not been added to a parent.
+	 * It is not possible to use this method if this element has not been added to a parent container.
 	 * 
 	 * This version sets the anchor without changing its type like
 	 * {@link #setPercentageAnchor(int, int)} and {@link #setPixelAnchor(int, int)}.
@@ -1133,8 +1264,7 @@ public abstract class Control implements PConstants {
 
 		switch (anchor) {
 		case PApplet.TOP:
-			anchors[TOP_ANCHOR] = value;
-			anchorMode |= 1;
+			setAnchorImpl(TOP_ANCHOR, value);
 
 			// set y now, because resize only changes y if BOTTOM is set. (elements are
 			// always "anchored" to TOP). This way everything is alright. Still call
@@ -1143,21 +1273,17 @@ public abstract class Control implements PConstants {
 			parentResized();
 			break;
 		case PApplet.RIGHT:
-			anchors[RIGHT_ANCHOR] = value;
-			anchorMode |= 1;
+			setAnchorImpl(RIGHT_ANCHOR, value);
 			parentResized();
 			break;
 		case PApplet.BOTTOM:
-			anchors[BOTTOM_ANCHOR] = value;
-			anchorMode |= 1;
+			setAnchorImpl(BOTTOM_ANCHOR, value);
 			parentResized();
 			break;
 		case PApplet.LEFT:
-			anchors[LEFT_ANCHOR] = value;
-			anchorMode |= 1;
+			setAnchorImpl(LEFT_ANCHOR, value);
 
-			// set x now, because resize only changes x if RIGHT is set. This way everything
-			// is alright
+			// set x now, because resize only changes x if RIGHT is set. This way everything is alright
 			this.x = value;
 			parentResized();
 			break;
@@ -1167,14 +1293,20 @@ public abstract class Control implements PConstants {
 
 	}
 
+
 	/**
 	 * Set any number of anchors by passing first a direction and then the value (more than four - one
-	 * for each direction - don't make sense though).
+	 * for each direction - don't make sense though). The anchor mode ({@link #PIXEL_MODE} or
+	 * {@link #PERCENTAGE_MODE} is not changed. Example:
+	 * 
+	 * setAnchors(LEFT, 34, RIGHT, 50);
+	 * 
+	 * setAnchors(BOTTOM, 0, LEFT, 1, RIGHT, 20, TOP, 50);
 	 * 
 	 * @param anchors_and_values anchors and values
 	 */
 	public void setAnchors(int... anchors_and_values) {
-		if (anchors_and_values.length < 2)
+		if (anchors_and_values.length < 2) // WTF has the user entered
 			return;
 		for (int i = 0; i < anchors_and_values.length; i += 2) {
 			setAnchor(anchors_and_values[i], anchors_and_values[i + 1]);
@@ -1183,7 +1315,7 @@ public abstract class Control implements PConstants {
 
 	/**
 	 * Set an anchor like with {@link #setAnchor(int, int)} but definitely use the {@link #PIXEL_MODE}.
-	 * The anchor will be set to @param value pixels.
+	 * The anchor will be set to [value] pixels.
 	 * 
 	 * @param anchor LEFT, RIGHT, TOP or BOTTOM
 	 * @param value  value
@@ -1206,6 +1338,11 @@ public abstract class Control implements PConstants {
 		setAnchor(anchor, value);
 	}
 
+	/**
+	 * Combination of {@link #setAnchors(int...)} and {@link #setPixelAnchor(int, int)}.
+	 * 
+	 * @param anchors_and_values anchors and values
+	 */
 	public void setPixelAnchors(int... anchors_and_values) {
 		if (anchors_and_values.length < 2)
 			return;
@@ -1239,25 +1376,17 @@ public abstract class Control implements PConstants {
 		setAnchor(anchor, value);
 	}
 
+	/**
+	 * Combination of {@link #setAnchors(int...)} and {@link #setPercentageAnchor(int, int)}.
+	 * 
+	 * @param anchors_and_values anchors and values
+	 */
 	public void setPercentageAnchors(int... anchors_and_values) {
 		if (anchors_and_values.length < 2)
 			return;
 		for (int i = 0; i < anchors_and_values.length; i += 2) {
 			setPercentageAnchor(anchors_and_values[i], anchors_and_values[i + 1]);
 		}
-	}
-
-
-	// internal method used to set the according bit in anchorMode to the given mode
-	protected void setAnchorModeImpl(int anchor, boolean percentage) {
-		if (percentage)
-			anchorMode |= 1 << (anchor + 1);
-		else
-			anchorMode &= ~1 << (anchor + 1);
-	}
-
-	protected boolean getAnchorModeImpl(int anchor) {
-		return (anchorMode & (1 << (anchor + 1))) != 0;
 	}
 
 
@@ -1286,10 +1415,10 @@ public abstract class Control implements PConstants {
 	}
 
 	/**
-	 * Get the value of an anchor. Returns {@link Control#ANCHOR_NOT_SET} if the anchor is inactive.
+	 * Get the value of an anchor. Returns {@link #ANCHOR_INACTIVE} if the anchor is inactive.
 	 * 
 	 * @param anchor anchor direction
-	 * @return anchor value
+	 * @return anchor value in pixel or percent, depending on corresponding nchor mode
 	 */
 	public int getAnchorValue(int anchor) {
 		switch (anchor) {
@@ -1302,9 +1431,15 @@ public abstract class Control implements PConstants {
 		case PApplet.LEFT:
 			return anchors[LEFT_ANCHOR];
 		default:
-			return ANCHOR_NOT_SET;
+			return ANCHOR_INACTIVE;
 		}
 	}
+
+
+
+
+
+
 
 	/**
 	 * Add an anchor (types are TOP, RIGHT, BOTTOM, LEFT). Anchors ensure the element stays at fixed
@@ -1312,7 +1447,8 @@ public abstract class Control implements PConstants {
 	 * resized as well. When this function is called, the element will remember the CURRENT(!) distances
 	 * to the parents bounds. Multiple anchors can be set with this method.
 	 * 
-	 * This currently only works with {@link #PIXEL_MODE} and not with {@link #PERCENTAGE_MODE}.
+	 * This is currently only intended with {@link #PIXEL_MODE} and not with {@link #PERCENTAGE_MODE}
+	 * (mode will be set to the {@link #PIXEL_MODE} if the latter is currently selected).
 	 * 
 	 * It is not possible to use this method if this element has not been added to a parent.
 	 * 
@@ -1328,24 +1464,20 @@ public abstract class Control implements PConstants {
 		for (int a : anchor) {
 			switch (a) {
 			case PApplet.TOP:
-				anchors[TOP_ANCHOR] = y;
+				setAnchorImpl(TOP_ANCHOR, getY());
 				setAnchorModeImpl(TOP_ANCHOR, PIXEL_MODE);
-				anchorMode |= 1;
 				break;
 			case PApplet.RIGHT:
-				anchors[RIGHT_ANCHOR] = parent.width - width - x;
+				setAnchorImpl(RIGHT_ANCHOR, parent.getWidth() - getWidth() - getX());
 				setAnchorModeImpl(RIGHT_ANCHOR, PIXEL_MODE);
-				anchorMode |= 1;
 				break;
 			case PApplet.BOTTOM:
-				anchors[BOTTOM_ANCHOR] = parent.height - height - y;
+				setAnchorImpl(BOTTOM_ANCHOR, parent.getHeight() - getHeight() - getY());
 				setAnchorModeImpl(BOTTOM_ANCHOR, PIXEL_MODE);
-				anchorMode |= 1;
 				break;
 			case PApplet.LEFT:
-				anchors[LEFT_ANCHOR] = x;
+				setAnchorImpl(LEFT_ANCHOR, getX());
 				setAnchorModeImpl(LEFT_ANCHOR, PIXEL_MODE);
-				anchorMode |= 1;
 				break;
 			default:
 				continue;
@@ -1359,28 +1491,27 @@ public abstract class Control implements PConstants {
 
 
 	/**
-	 * Remove a set anchor.
+	 * Remove a set anchor. Removing the last anchor will set all anchor
 	 * 
 	 * @param anchor accepts TOP, RIGHT, LEFT or BOTTOM
 	 */
 	public void removeAnchor(int anchor) {
 		switch (anchor) {
 		case PApplet.TOP:
-			anchors[TOP_ANCHOR] = ANCHOR_NOT_SET;
+			deactivateAnchor(TOP_ANCHOR);
 			break;
 		case PApplet.RIGHT:
-			anchors[RIGHT_ANCHOR] = ANCHOR_NOT_SET;
+			deactivateAnchor(RIGHT_ANCHOR);
 			break;
 		case PApplet.BOTTOM:
-			anchors[BOTTOM_ANCHOR] = ANCHOR_NOT_SET;
+			deactivateAnchor(BOTTOM_ANCHOR);
 			break;
 		case PApplet.LEFT:
-			anchors[LEFT_ANCHOR] = ANCHOR_NOT_SET;
+			deactivateAnchor(LEFT_ANCHOR);
 			break;
 		}
-		if (anchors[TOP_ANCHOR] == ANCHOR_NOT_SET && anchors[RIGHT_ANCHOR] == ANCHOR_NOT_SET && anchors[BOTTOM_ANCHOR] == ANCHOR_NOT_SET
-				&& anchors[LEFT_ANCHOR] == ANCHOR_NOT_SET) {
-			anchorMode = 0;
+		if (!isAnchorActive(TOP_ANCHOR) && !isAnchorActive(RIGHT_ANCHOR) && !isAnchorActive(LEFT_ANCHOR) && !isAnchorActive(BOTTOM_ANCHOR)) {
+			deactivateUseOfAnchors();
 		}
 	}
 
@@ -1450,73 +1581,36 @@ public abstract class Control implements PConstants {
 	 * to adjust their size or position according to that if they have active anchors.
 	 */
 	protected final void parentResized() {
-		if (anchorMode != 0) {
-			if (anchors[RIGHT_ANCHOR] != ANCHOR_NOT_SET) {
-				if (anchors[LEFT_ANCHOR] != ANCHOR_NOT_SET) { // also left anchor
+		if (anyAnchorsActive()) {
+			if (isAnchorActive(RIGHT_ANCHOR)) {
+				if (isAnchorActive(LEFT_ANCHOR)) { // LEFT and RIGHT
 					PAUSE_UPDATE_ANCHORS = true;
 					setWidth(getRight() - getLeft());
 					setX(getLeft());
 					update();
 					PAUSE_UPDATE_ANCHORS = false;
-					// setWidth(parent.width - x - anchors[RIGHT_ANCHOR]);
-				} else { // only right anchor
+				} else { // Only RIGHT
 					setX(getRight() - width);
 				}
-			} else if (anchors[LEFT_ANCHOR] != ANCHOR_NOT_SET && getAnchorModeImpl(LEFT_ANCHOR)) {
-				setX(anchors[LEFT_ANCHOR] * parent.width / 100);
+			} else if (isAnchorActive(LEFT_ANCHOR) && getAnchorModeImpl(LEFT_ANCHOR) == PERCENTAGE_MODE) { // Only LEFT
+				setX(getLeft());
 			}
-			if (anchors[BOTTOM_ANCHOR] != ANCHOR_NOT_SET) {
-				if (anchors[TOP_ANCHOR] != ANCHOR_NOT_SET) { // also top anchor
+			if (isAnchorActive(BOTTOM_ANCHOR)) {
+				if (isAnchorActive(TOP_ANCHOR)) { // TOP and BOTTOM
 					PAUSE_UPDATE_ANCHORS = true;
 					setHeight(getBottom() - getTop());
 					setY(getTop());
 					update();
 					PAUSE_UPDATE_ANCHORS = false;
-				} else { // only right anchor
+				} else { // Only BOTTOM
 					setY(getBottom() - height);
 				}
-			} else if (anchors[TOP_ANCHOR] != ANCHOR_NOT_SET && getAnchorModeImpl(TOP_ANCHOR)) {
-				setY(anchors[TOP_ANCHOR] * parent.height / 100);
+			} else if (isAnchorActive(TOP_ANCHOR) && getAnchorModeImpl(TOP_ANCHOR) == PERCENTAGE_MODE) { // Only TOP
+				setY(getTop());
 			}
-			/*if (anchors[BOTTOM_ANCHOR] != ANCHOR_NOT_SET) {
-				if (anchors[TOP_ANCHOR] != ANCHOR_NOT_SET) { // also top anchor
-					setHeight(parent.height - y - anchors[BOTTOM_ANCHOR]);
-				} else { // only bottom anchor
-					setY(parent.height - height - anchors[BOTTOM_ANCHOR]);
-				}
-			}*/
 		}
 	}
 
-	// get left position in pixel according to LEFT_ANCHOR
-	private final int getLeft() {
-		return getAnchorModeImpl(LEFT_ANCHOR) ? anchors[LEFT_ANCHOR] * parent.width / 100 : anchors[LEFT_ANCHOR];
-	}
-
-	// get position of right side from left of element in pixel according to
-	// RIGHT_ANCHOR
-	private final int getRight() {
-		return parent.width - (getAnchorModeImpl(RIGHT_ANCHOR) ? anchors[RIGHT_ANCHOR] * parent.width / 100 : anchors[RIGHT_ANCHOR]);
-	}
-
-	// get top position in pixel according to TOP_ANCHOR
-	private final int getTop() {
-		return getAnchorModeImpl(TOP_ANCHOR) ? anchors[TOP_ANCHOR] * parent.height / 100 : anchors[TOP_ANCHOR];
-	}
-
-	// get position of bottom side from top of element in pixel according to
-	// BOTTOM_ANCHOR
-	private final int getBottom() {
-		return parent.height - (getAnchorModeImpl(BOTTOM_ANCHOR) ? anchors[BOTTOM_ANCHOR] * parent.height / 100 : anchors[BOTTOM_ANCHOR]);
-	}
-
-
-	/*
-	 * only needed when setting x, y or position but for a lot of anchors
-	 */
-	private boolean isAnchorSetAndPixelMode(int anchor) {
-		return anchors[anchor] != ANCHOR_NOT_SET && getAnchorModeImpl(anchor) == PIXEL_MODE;
-	}
 
 
 
@@ -1572,18 +1666,6 @@ public abstract class Control implements PConstants {
 	}
 
 	/**
-	 * Set size of element and disable autosizing.
-	 * 
-	 * @param width  width
-	 * @param height height
-	 */
-	public void setFixedSize(int width, int height) {
-		autosizing = AUTOSIZE_NONE;
-		setSize(width, height);
-	}
-
-
-	/**
 	 * Called indirectly through autosize(). This is the component-specific implementation of
 	 * autosizing.
 	 */
@@ -1609,21 +1691,25 @@ public abstract class Control implements PConstants {
 
 	/**
 	 * Called in setPadding, setText, setFontSize, setBold etc. Redirects to autoHeight()/autoWidth() if
-	 * autosizing is enabled
+	 * autosizing is enabled. Is protected because other classes might call it in other setters.
+	 * 
+	 * Returns true if size has actually changed.
 	 */
-	protected final void autosize() {
+	protected final boolean autosize() {
+		boolean sizeChanged = false;
 		if ((autosizing & AUTOSIZE_WIDTH) != 0) {
 			int w = autoWidth();
 			if (w >= 0) {
-				setWidthNoUpdate(w);
+				sizeChanged = setWidthNoUpdate(w);
 			}
 		}
 		if ((autosizing & AUTOSIZE_HEIGHT) != 0) {
 			int h = autoHeight();
 			if (h >= 0) {
-				setHeightNoUpdate(h);
+				sizeChanged |= setHeightNoUpdate(h);
 			}
 		}
+		return sizeChanged;
 	}
 
 
@@ -1640,20 +1726,20 @@ public abstract class Control implements PConstants {
 	 * Set x-coordinate of element relative to parent. Does not apply if element is added to containers
 	 * that provide some own layout.
 	 * 
-	 * @param x pixel integer
+	 * @param x x-coordinate in pixel
 	 */
 	public void setX(int x) {
 		if (x == this.x)
 			return;
 		this.x = x;
-		if (anchorMode != 0) {
+		if (anyAnchorsActive()) {
 			// only need to update anchor if in pixel mode
 
-			if (isAnchorSetAndPixelMode(LEFT_ANCHOR)) {
-				anchors[LEFT_ANCHOR] = x;
+			if (isAnchorActive(LEFT_ANCHOR) && getAnchorModeImpl(LEFT_ANCHOR) == PIXEL_MODE) {
+				setAnchorImpl(LEFT_ANCHOR, getX());
 			}
-			if (isAnchorSetAndPixelMode(RIGHT_ANCHOR)) {
-				anchors[RIGHT_ANCHOR] = parent.width - width - x;
+			if (isAnchorActive(RIGHT_ANCHOR) && getAnchorModeImpl(RIGHT_ANCHOR) == PIXEL_MODE) {
+				setAnchorImpl(RIGHT_ANCHOR, parent.getWidth() - getWidth() - getX());
 			}
 		}
 		update();
@@ -1665,20 +1751,20 @@ public abstract class Control implements PConstants {
 	 * Set y-coordinate of element relative to parent. Does not apply if element is added to containers
 	 * that provide some own layout.
 	 * 
-	 * @param y pixel integer
+	 * @param y y-coordinate in pixel
 	 */
 	public void setY(int y) {
 		if (y == this.y)
 			return;
 		this.y = y;
-		if (anchorMode != 0) {
+		if (anyAnchorsActive()) {
 			// only need to update anchor if in pixel mode
 
-			if (isAnchorSetAndPixelMode(TOP_ANCHOR)) {
-				anchors[TOP_ANCHOR] = y;
+			if (isAnchorActive(TOP_ANCHOR) && getAnchorModeImpl(TOP_ANCHOR) == PIXEL_MODE) {
+				setAnchorImpl(TOP_ANCHOR, getY());
 			}
-			if (isAnchorSetAndPixelMode(BOTTOM_ANCHOR)) {
-				anchors[BOTTOM_ANCHOR] = parent.height - height - y;
+			if (isAnchorActive(BOTTOM_ANCHOR) && getAnchorModeImpl(BOTTOM_ANCHOR) == PIXEL_MODE) {
+				setAnchorImpl(BOTTOM_ANCHOR, parent.getHeight() - getHeight() - getY());
 			}
 		}
 		update();
@@ -1691,13 +1777,13 @@ public abstract class Control implements PConstants {
 	 */
 	public void setZ(int z) {
 		this.z = z;
-		if (parent != null && getFrame().initialized != Frame.Initialization_State.INITIALIZING) { // during intializing setting Z is not allowed.
+		if (parent != null && getFrame().getInitializationState() != Frame.InitializationState.INITIALIZING) { // during intializing setting Z is not allowed.
 			try {
 				// no use to sort containers with autolayout (its bad actually because it could
 				// change order)
 				if (((Container) parent).needsSortingByZ())
 					((Container) parent).sortItemsbyZ();
-			} catch (ClassCastException cce) {
+			} catch (ClassCastException e) {
 			}
 		}
 		update();
@@ -1706,28 +1792,12 @@ public abstract class Control implements PConstants {
 	/**
 	 * Set position relative to parent.
 	 * 
-	 * @param x x-coordinate
-	 * @param y y-coordinate
+	 * @param x x-coordinate in pixel
+	 * @param y y-coordinate in pixel
 	 */
 	public void setPosition(int x, int y) {
-		this.x = x;
-		this.y = y;
-
-		if (anchorMode != 0) {
-			if (isAnchorSetAndPixelMode(LEFT_ANCHOR)) {
-				anchors[LEFT_ANCHOR] = x;
-			}
-			if (isAnchorSetAndPixelMode(RIGHT_ANCHOR)) {
-				anchors[RIGHT_ANCHOR] = parent.width - width - x;
-			}
-			if (isAnchorSetAndPixelMode(TOP_ANCHOR)) {
-				anchors[TOP_ANCHOR] = y;
-			}
-			if (isAnchorSetAndPixelMode(BOTTOM_ANCHOR)) {
-				anchors[BOTTOM_ANCHOR] = parent.height - height - y;
-			}
-		}
-		update();
+		setX(x); // update will be called twice, but that's better than accidently failing to match setPosition()
+		setY(y); // with the methods setX() and setY() in the future
 	}
 
 
@@ -1782,23 +1852,21 @@ public abstract class Control implements PConstants {
 
 	/*
 	 * In this library, never set width/height by calling "width = ...". Always use
-	 * setWidthImpl(int) and setHeightImpl(int).
+	 * setWidthImpl(int) and setHeightImpl(int). Other classes should use 
+	 * setWidthNoUpdate()/setHeightNoUpdate()
 	 * 
 	 * This ensures that dimensions are always constrained by min/max dimensions.
 	 * 
 	 */
-	protected void setWidthImpl(int width) {
+	private void setWidthImpl(int width) {
 		this.width = Math.max(Math.min(width, maxWidth), minWidth);
 	}
 
-	protected void setHeightImpl(int height) {
+	private void setHeightImpl(int height) {
 		this.height = Math.max(Math.min(height, maxHeight), minHeight);
 	}
 
-	protected void setSizeImpl(int width, int height) {
-		setWidthImpl(width);
-		setHeightImpl(height);
-	}
+
 
 	/*
 	 * Open questions: 
@@ -1814,23 +1882,24 @@ public abstract class Control implements PConstants {
 		if (oldWidth == this.width) 		// no unnecessary resize event calling when setting min/max
 			return false;
 
+		availableWidthChanged();
 		handleEvent(resizeListener, this); 	// width of this element has really changed
 
 		// Need to update position or anchors depending on which anchors are set.
 		if (!PAUSE_UPDATE_ANCHORS) {
-			if (anchors[RIGHT_ANCHOR] != ANCHOR_NOT_SET) {
-				if (anchors[LEFT_ANCHOR] != ANCHOR_NOT_SET) {
+			if (isAnchorActive(RIGHT_ANCHOR)) {
+				if (isAnchorActive(LEFT_ANCHOR)) {
 					// both l/r -> width is set new here, so change right anchor
 					// left anchor is not touched
 					if (getAnchorModeImpl(RIGHT_ANCHOR) == PIXEL_MODE) {
 						// makes no difference if setWidthNoUpdate() is just called by parentResized()
-						anchors[RIGHT_ANCHOR] = parent.width - width - x;
+						setAnchorImpl(RIGHT_ANCHOR, parent.getWidth() - getWidth() - getX());
 					} else {
 						// makes no difference if setWidthNoUpdate() is just called by parentResized()
-						anchors[RIGHT_ANCHOR] = Math.round((parent.width - width - getLeft()) * 100f / parent.width);
+						setAnchorImpl(RIGHT_ANCHOR, Math.round((parent.getWidth() - getWidth() - getLeft()) * 100f / parent.getWidth()));
 					}
 				} else { // only right anchor -> keep element fixed at right and change x-position
-					x = getRight() - width;
+					x = getRight() - getWidth(); // Do not call setX()
 				}
 			}
 		}
@@ -1838,10 +1907,6 @@ public abstract class Control implements PConstants {
 		return true;
 	}
 
-	// indicates that setWidth/HeightNoUpdate() should not update the anchors
-	// temporarily changed to true by parentResized() to set width without
-	// disturbing anchors.
-	private static boolean PAUSE_UPDATE_ANCHORS = false;
 
 
 
@@ -1851,22 +1916,23 @@ public abstract class Control implements PConstants {
 		if (temp == this.height) 			// no unnecessary resize event calling when setting min/max
 			return false;
 
+		availableHeightChanged();
 		handleEvent(resizeListener, this); 	// height of this element has really changed
 
 		if (!PAUSE_UPDATE_ANCHORS) {
-			if (anchors[BOTTOM_ANCHOR] != ANCHOR_NOT_SET) {
-				if (anchors[TOP_ANCHOR] != ANCHOR_NOT_SET) {
+			if (isAnchorActive(BOTTOM_ANCHOR)) {
+				if (isAnchorActive(TOP_ANCHOR)) {
 					// both t/d -> height is set new here, so change bottom anchor
 					// top anchor is not touched
 					if (getAnchorModeImpl(BOTTOM_ANCHOR) == PIXEL_MODE) {
 						// makes no difference if setHeightNoUpdate() is just called by parentResized()
-						anchors[BOTTOM_ANCHOR] = parent.height - height - y;
+						setAnchorImpl(BOTTOM_ANCHOR, parent.getHeight() - getHeight() - getY());
 					} else {
 						// makes no difference if setHeightNoUpdate() is just called by parentResized()
-						anchors[BOTTOM_ANCHOR] = Math.round((parent.height - height - getTop()) * 100f / parent.height);
+						setAnchorImpl(BOTTOM_ANCHOR, Math.round((parent.getHeight() - getHeight() - getTop()) * 100f / parent.getHeight()));
 					}
 				} else { // only bottom anchor -> keep element fixed at bottom and change y-position
-					y = getBottom() - height;
+					y = getBottom() - getHeight(); // Do not call setY()
 				}
 			}
 		}
@@ -1875,6 +1941,10 @@ public abstract class Control implements PConstants {
 	}
 
 
+	protected void setSizeWithoutUpdate(int width, int height) {
+		setWidthNoUpdate(width);
+		setHeightNoUpdate(height);
+	}
 
 	/**
 	 * Set width of element.
@@ -1908,8 +1978,8 @@ public abstract class Control implements PConstants {
 	/**
 	 * Set width and height of element.
 	 * 
-	 * @param width  width
-	 * @param height height
+	 * @param width  width in pixel
+	 * @param height height in pixel
 	 */
 	public void setSize(int width, int height) {
 		boolean widthChanged = setWidthNoUpdate(width);
@@ -1918,6 +1988,27 @@ public abstract class Control implements PConstants {
 			update();
 	}
 
+	/**
+	 * Set size of element and disable autosizing.
+	 * 
+	 * @param width  width
+	 * @param height height
+	 */
+	public void setFixedSize(int width, int height) {
+		autosizing = AUTOSIZE_NONE;
+		setSize(width, height);
+	}
+
+	/*
+	 * To be overriden by subclasses. availableWidth and availableHeight change as paddings or width change.  
+	 */
+	protected void availableWidthChanged() {
+
+	}
+
+	protected void availableHeightChanged() {
+
+	}
 
 	/**
 	 * Set minimum width of element in pixel. Width of element will never be less than minWidth and
@@ -2151,15 +2242,15 @@ public abstract class Control implements PConstants {
 	 * Set background to a vertical gradient between the two given colors. This removes the background
 	 * image if set.
 	 * 
-	 * @param clr1 top color
-	 * @param clr2 bottom color
+	 * @param topColor    top gradient color
+	 * @param bottomColor bottom gradient color
 	 */
-	public void setGradient(int clr1, int clr2) {
+	public void setGradient(int topColor, int bottomColor) {
 		PGraphics gradient = getPApplet().createGraphics(width, height);
 		gradient.beginDraw();
 		for (int i = 0; i < height; i++) {
 			float inter = PApplet.map(i, 0, height, 0, 1);
-			int c = PGraphics.lerpColor(clr1, clr2, inter, PGraphics.RGB);
+			int c = PGraphics.lerpColor(topColor, bottomColor, inter, PGraphics.RGB);
 			gradient.stroke(c);
 			gradient.line(0, i, width, i);
 		}
@@ -2298,21 +2389,11 @@ public abstract class Control implements PConstants {
 	 * @param all padding in pixel
 	 */
 	public void setPadding(int all) {
-		paddingTop = all;
-		paddingRight = all;
-		paddingBottom = all;
-		paddingLeft = all;
-		autosize();
-		update();
+		setPadding(all, all, all, all);
 	}
 
 	public void setPadding(int top_bottom, int left_right) {
-		paddingTop = top_bottom;
-		paddingRight = left_right;
-		paddingBottom = top_bottom;
-		paddingLeft = left_right;
-		autosize();
-		update();
+		setPadding(top_bottom, left_right, top_bottom, left_right);
 	}
 
 	/**
@@ -2325,36 +2406,54 @@ public abstract class Control implements PConstants {
 	 * @param left   left padding in pixel
 	 */
 	public void setPadding(int top, int right, int bottom, int left) {
-		paddingTop = top;
-		paddingRight = right;
-		paddingBottom = bottom;
-		paddingLeft = left;
-		autosize();
+		if (top != paddingTop || bottom != paddingBottom) {
+			paddingTop = top;
+			paddingBottom = bottom;
+			availableHeightChanged();
+		}
+		if (left != paddingLeft || right != paddingRight) {
+			paddingLeft = left;
+			paddingRight = right;
+			availableWidthChanged();
+		}
+		autosize(); // might be called although nothing changed but that is unlikely.
 		update();
 	}
 
 	public void setPaddingTop(int top) {
-		paddingTop = top;
-		autosize();
-		update();
+		if (top != paddingTop) { // Don't call autosize() and availableWidthChanged() unnecessarily
+			paddingTop = top;
+			availableHeightChanged();
+			autosize();
+			update();
+		}
 	}
 
 	public void setPaddingRight(int right) {
-		paddingRight = right;
-		autosize();
-		update();
+		if (right != paddingRight) {
+			paddingRight = right;
+			availableWidthChanged();
+			autosize();
+			update();
+		}
 	}
 
 	public void setPaddingBottom(int bottom) {
-		paddingBottom = bottom;
-		autosize();
-		update();
+		if (bottom != paddingBottom) {
+			paddingBottom = bottom;
+			availableHeightChanged();
+			autosize();
+			update();
+		}
 	}
 
 	public void setPaddingLeft(int left) {
-		paddingLeft = left;
-		autosize();
-		update();
+		if (left != paddingLeft) {
+			paddingLeft = left;
+			availableWidthChanged();
+			autosize();
+			update();
+		}
 	}
 
 
@@ -2586,13 +2685,13 @@ public abstract class Control implements PConstants {
 
 
 	/**
-	 * Enable user of the library to adopt a set of visual style properties from another element. <br>
-	 * Call copyStyle(Control, attribs) to read given attributes (separated by bitwise OR) from given
-	 * element c: <br>
-	 * <br>
+	 * Enable user of the library to adopt a set of visual style properties from another element.
 	 * 
-	 * <code><pre>myElement.copyStyle(otherElement, PADDING_LEFT | MARGIN_BOTTOM, FOREGROUND_COLOR);</pre></code>
-	 * <br>
+	 * Call copyStyle(Control, attribs) to read given attributes (separated by bitwise OR) from given
+	 * element c:
+	 * 
+	 * {@code myElement.copyStyle(otherElement, PADDING_LEFT | MARGIN_BOTTOM, FOREGROUND_COLOR); }
+	 * 
 	 * <br>
 	 * <br>
 	 * 
@@ -2666,7 +2765,7 @@ public abstract class Control implements PConstants {
 
 
 	/**
-	 * @see {@link Control#doForAll(Setter, Object...)}
+	 * @see #doForAll(Setter, Object...)
 	 *
 	 * @param <T> type
 	 */
@@ -2679,8 +2778,8 @@ public abstract class Control implements PConstants {
 	 * idea is to apply setters to several elements without boilerplate code.
 	 * 
 	 * <br>
-	 * You can pass an instance of Control.Setter&#62;T&#62;, override its run() method and then pass
-	 * any number of elements.
+	 * You can pass an instance of {@code Control.Setter<>}, override its run() method and then pass any
+	 * number of elements.
 	 * 
 	 * <br>
 	 * You need to specify an object class, i.e. Control if you only need to use methods from Control or
@@ -2690,14 +2789,14 @@ public abstract class Control implements PConstants {
 	 * <br>
 	 * <br>
 	 * 
-	 * <code><pre>
-	Control.doForAll(new Control.Setter&#62;Control&#62;() {
-	  &#64;Override 
+	 * <pre>{@code
+	Control.doForAll(new Control.Setter<Control>() {
+	  &#64;literal Override 
 	  public void run(Control c) {
 	    c.setBackgroundColor(color(0)); 
 	  }
-	}, myButton, byLabel, myTextbox);
-	</pre></code>
+	}, myButton, myLabel, myTextbox);
+	}</pre>
 	 * 
 	 * 
 	 * 
@@ -2975,14 +3074,15 @@ public abstract class Control implements PConstants {
 	}
 
 	/**
-	 * @see {@link Control#addMouseListener(String, String)}. Allows to pass a target object where the
-	 *      given method is declared.
+	 * Allows to pass a target object where the given method is declared.
 	 * 
 	 * @param type       String for event type
 	 * @param methodName name of callback method
 	 * @param target     Object where the callback method is declared.
 	 * @return false if type is invalid, method is not accessible or a listener has already been
 	 *         registered for this type. Returns true if successful.
+	 * 
+	 * @see #addMouseListener(String, String)
 	 */
 	public boolean addMouseListener(String type, String methodName, Object target) {
 		switch (type) {
@@ -3012,12 +3112,12 @@ public abstract class Control implements PConstants {
 	}
 
 	/**
-	 * Add a mouse listener in form of a lambda expression. For possible types @see
+	 * Add a mouse listener in form of a lambda expression. For possible types see
 	 * {@link Control#addMouseListener(String, String)}.
 	 * 
 	 * Event parameters: none
 	 * 
-	 * @param type @see {@link Control#addMouseListener(String, Object)}
+	 * @param type {@link Control#addMouseListener(String, Object)}
 	 * @param p    lambda expression
 	 */
 	public void addMouseListener(String type, Predicate p) {
@@ -3048,11 +3148,11 @@ public abstract class Control implements PConstants {
 
 	/**
 	 * Add a mouse listener in form of a lambda expression with a {@link MouseEvent} as argument. For
-	 * possible types @see {@link Control#addMouseListener(String, String)}.
+	 * possible types see {@link Control#addMouseListener(String, String)}.
 	 * 
 	 * Event parameters: {@link MouseEvent}
 	 * 
-	 * @param type @see {@link Control#addMouseListener(String, Object)}
+	 * @param type {@link Control#addMouseListener(String, Object)}
 	 * @param p    lambda expression with a {@link MouseEvent} as argument.
 	 */
 	public void addMouseListener(String type, Predicate1<MouseEvent> p) {
@@ -3250,11 +3350,12 @@ public abstract class Control implements PConstants {
 	 */
 
 	// Origin coordinates relative to parent. Set by parent in containerRenderItem(Control, int, int)
-	protected int offsetX, offsetY;
-	
+	protected int offsetX = 0, offsetY = 0;
+
 	public int getOffsetX() {
 		return offsetX;
 	}
+
 	public int getOffsetY() {
 		return offsetY;
 	}
