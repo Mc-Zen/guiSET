@@ -107,7 +107,7 @@ public class Textbox extends HScrollContainer {
 	protected void render() {
 		drawDefaultBackground();
 
-		if (borderWidth == 0 && borderRadius == 0) {
+		if (getBorderWidth() == 0 && getBorderRadius() == 0) {
 			// draw "3D"-Border
 			pg.strokeWeight(1);
 			pg.stroke(70);
@@ -122,7 +122,7 @@ public class Textbox extends HScrollContainer {
 		pg.textAlign(PApplet.LEFT, PApplet.TOP);
 
 		// do this before drawing cursor!! - needs new fullScrollWidth
-		fullScrollWidth = (int) textWidth(text) + paddingLeft + paddingRight;
+		fullScrollWidth = (int) textWidth(getText()) + getPaddingLeft() + getPaddingRight();
 		scrollPosition = Math.max(0, Math.min(scrollPosition, Math.max(0, fullScrollWidth - getWidth())));
 
 		/*
@@ -136,12 +136,13 @@ public class Textbox extends HScrollContainer {
 		 * draw selection
 		 */
 		if (focused && selectionStart < selectionEnd) {
-			if (selectionStart <= text.length() && selectionEnd <= text.length()) {
-				int selectionX = (int) textWidth(text.substring(0, selectionStart));
-				int selectionWidth = (int) textWidth(text.substring(selectionStart, selectionEnd));
+			if (selectionStart <= getText().length() && selectionEnd <= getText().length()) {
+				int selectionX = (int) textWidth(getText().substring(0, selectionStart));
+				int selectionWidth = (int) textWidth(getText().substring(selectionStart, selectionEnd));
 				pg.fill(selectionColor);
 				pg.noStroke();
-				pg.rect(paddingLeft - scrollPosition + selectionX + getFontSize() / 40f, paddingTop, selectionWidth + getFontSize() / 40f, getFontSize() + textDescent());
+				pg.rect(getPaddingLeft() - getScrollPosition() + selectionX + getFontSize() / 40f, getPaddingTop(), selectionWidth + getFontSize() / 40f,
+						getFontSize() + textDescent());
 			}
 		}
 
@@ -150,10 +151,10 @@ public class Textbox extends HScrollContainer {
 		 */
 		if (!text.equals("")) {
 			pg.fill(getTextColor());
-			pg.text(text, paddingLeft - scrollPosition, paddingTop);
+			pg.text(getText(), getPaddingLeft() - getScrollPosition(), getPaddingTop());
 		} else {
 			pg.fill(120);
-			pg.text(hint, paddingLeft, paddingTop);
+			pg.text(getHint(), getPaddingLeft(), getPaddingTop());
 		}
 
 		/*
@@ -183,17 +184,17 @@ public class Textbox extends HScrollContainer {
 
 		// do this before drawing the cursor - scrollPositionX has to be set first!!
 		if (needsScrolling) {
-			if (wordWidth - scrollPosition > getWidth() - paddingRight - paddingLeft) { // cursor has left visible box at the right
-				setScrollPosition((int) (wordWidth - getWidth() + paddingRight + paddingLeft));
-				scrollPosition = Math.min(scrollPosition, fullScrollWidth - getWidth()); // cursor moves a bit strange otherwise
-			} else if (wordWidth < scrollPosition + paddingLeft) { // cursor has left visible box at the left
+			if (wordWidth - scrollPosition > getWidth() - getPaddingRight() - getPaddingLeft()) { // cursor has left visible box at the right
+				setScrollPosition((int) (wordWidth - getWidth() + getPaddingRight() + getPaddingLeft()));
+				scrollPosition = Math.min(scrollPosition, getFullScrollWidth() - getWidth()); // cursor moves a bit strange otherwise
+			} else if (wordWidth < scrollPosition + getPaddingLeft()) { // cursor has left visible box at the left
 				setScrollPosition((int) wordWidth);
 			}
 			needsScrolling = false;
 		}
-		float x = paddingLeft + wordWidth - scrollPosition;
+		float x = getPaddingLeft() + wordWidth - scrollPosition;
 		pg.stroke(cursorColor);
-		pg.line(x, paddingTop, x, cursorHeight + paddingTop);
+		pg.line(x, getPaddingTop(), x, cursorHeight + getPaddingTop());
 	}
 
 
@@ -861,7 +862,7 @@ public class Textbox extends HScrollContainer {
 		handleEvent(keyPressListener, e);
 	}
 
-	
+
 
 	/*
 	 * (non-Javadoc)
@@ -873,8 +874,8 @@ public class Textbox extends HScrollContainer {
 	protected boolean overridesFrameShortcuts() {
 		return true;
 	}
-	
-	
+
+
 	/**
 	 * Copy selection to clipboard
 	 */

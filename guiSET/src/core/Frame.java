@@ -437,9 +437,9 @@ public class Frame extends Container {
 
 
 
-	@Override 
+	@Override
 	protected void update() {
-		
+
 		if (refreshMode == NO_LOOP) {
 			try {
 				// No other way to access this. But we are in NO_LOOP mode and performance is not a real issue.
@@ -458,7 +458,7 @@ public class Frame extends Container {
 		dirty = true;
 	}
 
-	
+
 	@Override
 	protected void initialize() {
 		initializationState = InitializationState.INITIALIZING;
@@ -652,7 +652,7 @@ public class Frame extends Container {
 	 * 
 	 * @param shortcut shortcut to register
 	 * @param callback lambda callback
-	 * @return
+	 * @return success
 	 */
 	public boolean registerShortcut(Shortcut shortcut, Predicate callback) {
 		shortcutMethods.put(shortcut, new ShortcutCallbackLambda(callback, false));
@@ -667,7 +667,7 @@ public class Frame extends Container {
 	 * @param callback                                            lambda callback
 	 * @param executeEvenIfFocusedElementOverridesNormalShortcuts Should this shortcut even work when
 	 *                                                            i.e. a textbox has focus?
-	 * @return
+	 * @return success
 	 */
 	public boolean registerShortcut(Shortcut shortcut, Predicate callback, boolean executeEvenIfFocusedElementOverridesNormalShortcuts) {
 		shortcutMethods.put(shortcut, new ShortcutCallbackLambda(callback, executeEvenIfFocusedElementOverridesNormalShortcuts));
@@ -997,7 +997,7 @@ public class Frame extends Container {
 	/**
 	 * Add a key listener which fires on key press, type and release events.
 	 * 
-	 * Event arguments: {@link #KeyEvent}
+	 * Event arguments: {@link KeyEvent}
 	 * 
 	 * @param methodName method name
 	 * @param target     object
@@ -1049,7 +1049,7 @@ public class Frame extends Container {
 	/**
 	 * Called when the application window is resized.
 	 * 
-	 * Event arguments: {@link #MouseEvent}
+	 * Event arguments: {@link MouseEvent}
 	 * 
 	 * @param methodName method name
 	 * @param target     object
@@ -1077,7 +1077,7 @@ public class Frame extends Container {
 	/**
 	 * Listen for the mouse entering the window.
 	 * 
-	 * Event arguments: {@link #MouseEvent}
+	 * Event arguments: {@link MouseEvent}
 	 * 
 	 * @param methodName method name
 	 * @param target     object
@@ -1105,7 +1105,7 @@ public class Frame extends Container {
 	/**
 	 * Listen for the mouse exiting the window.
 	 * 
-	 * Event arguments: {@link #MouseEvent}
+	 * Event arguments: {@link MouseEvent}
 	 * 
 	 * @param methodName method name
 	 * @param target     object
@@ -1136,7 +1136,7 @@ public class Frame extends Container {
 	 * Internal drop listener for any element in the application. First arg: dropped element, Second
 	 * arg: target on which the first on has been dropped.
 	 * 
-	 * Event arguments: {@link #Control}, {@link #Control}
+	 * Event arguments: {@link Control}, {@link Control}
 	 * 
 	 * @param methodName method name
 	 * @param target     object
@@ -1340,7 +1340,10 @@ public class Frame extends Container {
 
 		// enter currently hovered element
 		if (hoveredElement != null) {
-			papplet.cursor(hoveredElement.cursor);
+			if (hoveredElement.cursor != currentCursor) {
+				currentCursor = hoveredElement.cursor;
+				papplet.cursor(currentCursor);
+			}
 
 			if (!hoveredElement.pHovered) {
 				hoveredElement.pHovered = true;
@@ -1353,6 +1356,8 @@ public class Frame extends Container {
 		// before, in case render mode is EFFICIENT)
 		resetPropagationState();
 	}
+
+	private int currentCursor = PApplet.ARROW;
 
 
 	@Override
@@ -1433,19 +1438,6 @@ public class Frame extends Container {
 
 
 
-
-
-
-
-
-	/**
-	 * Get guiSET version. I really hope I'll always remember syncing this.
-	 * 
-	 * @return version
-	 */
-	public String getVersion() {
-		return "Version 0.0.11";
-	}
 
 
 

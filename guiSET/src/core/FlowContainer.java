@@ -23,22 +23,22 @@ public class FlowContainer extends Container {
 	@Override
 	protected void render() {
 		drawDefaultBackground();
-		int usedX = paddingLeft;
-		int usedY = paddingTop;
+		int usedX = getPaddingLeft();
+		int usedY = getPaddingTop();
 		int lineY = 0;
 
 		for (Control c : items) {
-			if (c.visible) {
-				lineY = Math.max(lineY, c.getHeight() + c.marginTop + c.marginBottom);
-				int itemWid = c.getWidth() + c.marginLeft + c.marginRight;
+			if (c.isVisible()) {
+				lineY = Math.max(lineY, c.getHeight() + c.getMarginTop() + c.getMarginBottom());
+				int itemWid = c.getWidth() + c.getMarginLeft() + c.getMarginRight();
 
-				if (usedX + itemWid > getWidth() - paddingRight) {
+				if (usedX + itemWid > getWidth() - getPaddingRight()) {
 					// new line
 					usedY += lineY;
-					usedX = paddingLeft;
+					usedX = getPaddingLeft();
 					lineY = 0;
 				}
-				renderItem(c, usedX + c.marginLeft, usedY + c.marginTop);
+				renderItem(c, usedX + c.getMarginLeft(), usedY + c.getMarginTop());
 				usedX += itemWid;
 			}
 		}

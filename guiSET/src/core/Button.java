@@ -16,8 +16,8 @@ public class Button extends TextBased {
 
 	public Button() {
 		super();
-		setPadding(7);
-		setBorderWidth(1);
+		setPadding(Constants.DefaultButtonPadding);
+		setBorderWidth(Constants.DefaultButtonBorderWidth);
 		setHoverColor(BUTTON_HOVER_COLOR);
 		setPressedColor(BUTTON_PRESS_COLOR);
 	}
@@ -178,12 +178,12 @@ public class Button extends TextBased {
 
 	@Override
 	protected int autoHeight() {
-		return (int) textHeight(text) + paddingTop + paddingBottom;
+		return (int) textHeight(getText()) + getPaddingTop() + getPaddingBottom();
 	}
 
 	@Override
 	protected int autoWidth() {
-		return (int) textWidth(text) + paddingLeft + paddingRight;
+		return (int) textWidth(getText()) + getPaddingLeft ()+ getPaddingRight();
 	}
 
 

@@ -47,9 +47,9 @@ public class ScrollArea extends Container {
 		fullScrollHeight = 0;
 
 		for (Control c : items) {
-			if (c.visible) {
-				fullScrollWidth = Math.max(fullScrollWidth, c.x + c.getWidth() + c.marginLeft);
-				fullScrollHeight = Math.max(fullScrollHeight, c.y + c.getHeight() + c.marginBottom);
+			if (c.isVisible()) {
+				fullScrollWidth = Math.max(fullScrollWidth, c.getX() + c.getWidth() + c.getMarginLeft());
+				fullScrollHeight = Math.max(fullScrollHeight, c.getY() + c.getHeight() + c.getMarginBottom());
 			}
 		}
 		fullScrollWidth += scrollHandleStrength + 3;
@@ -61,8 +61,8 @@ public class ScrollArea extends Container {
 
 
 		for (Control c : items) {
-			if (c.visible) {
-				renderItem(c, c.x - scrollPositionX, c.y - scrollPositionY);
+			if (c.isVisible()) {
+				renderItem(c, c.getX() - scrollPositionX, c.getY() - scrollPositionY);
 			}
 		}
 
@@ -92,7 +92,7 @@ public class ScrollArea extends Container {
 
 			} else {
 				pg.rect(getWidth() - 2 - scrollHandleStrength, 0, scrollHandleStrength + 3, scrollbar_height());
-				pg.fill(startHandleDragPos > -1 ? SCROLL_HANDLE_COLOR : SCROLL_HANDLE_PRESSED_COLOR);
+				pg.fill(isDraggingVScrollHandle() ? SCROLL_HANDLE_COLOR : SCROLL_HANDLE_PRESSED_COLOR);
 				pg.stroke(SCROLL_HANDLE_BORDER_COLOR);
 				pg.rect(getWidth() - 2 - scrollHandleStrength, scrollhandle_posY(), scrollHandleStrength + 1, scrollhandle_height(), SCROLL_HANDLE_BORDER_RADIUS);
 
@@ -120,7 +120,7 @@ public class ScrollArea extends Container {
 //				pg.rect(scrollhandle_posX(), height - 1 - scrollHandleStrength, scrollhandle_width(), scrollHandleStrength, 3);
 
 				pg.rect(0, getHeight() - 2 - scrollHandleStrength, scrollbar_width(), scrollHandleStrength + 3);
-				pg.fill((startHandleDragPos > -1 && whichScrollBar == H_SCROLLBAR) ? SCROLL_HANDLE_COLOR : SCROLL_HANDLE_PRESSED_COLOR);
+				pg.fill(isDraggingHScrollHandle() ? SCROLL_HANDLE_COLOR : SCROLL_HANDLE_PRESSED_COLOR);
 				pg.stroke(SCROLL_HANDLE_BORDER_COLOR);
 				pg.rect(scrollhandle_posX(), getHeight() - 2 - scrollHandleStrength, scrollhandle_width(), scrollHandleStrength, SCROLL_HANDLE_BORDER_RADIUS);
 
@@ -325,9 +325,20 @@ public class ScrollArea extends Container {
 	protected static final int SCROLL_HANDLE_STRENGTH_STD = 12;
 	protected static final int SCROLL_HANDLE_STRENGTH_SLIM = 3;
 
+
+	protected boolean isDraggingScrollHandle() {
+		return startHandleDragPos != -1;
+	}
+	protected boolean isDraggingVScrollHandle() {
+		return isDraggingScrollHandle() && whichScrollBar == V_SCROLLBAR;
+	}
+	protected boolean isDraggingHScrollHandle() {
+		return isDraggingScrollHandle() && whichScrollBar == H_SCROLLBAR;
+	}
+	
 	@Override
 	protected void drag(MouseEvent e) {
-		if (startHandleDragPos > -1) {
+		if (isDraggingScrollHandle()) {
 			if (whichScrollBar == H_SCROLLBAR) {
 
 				int newScrollHandle_Pos = e.getX() - getOffsetXWindow() - startHandleDragPos;
@@ -349,7 +360,10 @@ public class ScrollArea extends Container {
 	@Override
 	protected void release(MouseEvent e) {
 		super.release(e);
-		startHandleDragPos = -1;
+		if (isDraggingScrollHandle()) {
+			startHandleDragPos = -1;
+			update();
+		}
 	}
 
 	/**
@@ -371,9 +385,11 @@ public class ScrollArea extends Container {
 
 
 		if (currentMouseEvent.getAction() == MouseEvent.PRESS) {
+			
 			if (mouseIsOverScrollBarH) {
 				whichScrollBar = H_SCROLLBAR;
 				int scrollhandle_posX = scrollhandle_posX();
+				update();
 
 				// if clicked on scrollhandle itself (instead of entire scroll area) the
 				// dragging is started
@@ -383,8 +399,8 @@ public class ScrollArea extends Container {
 
 			} else if (mouseIsOverScrollBarV) {
 				whichScrollBar = V_SCROLLBAR;
-
 				int scrollhandle_posY = scrollhandle_posY();
+				update();
 
 				// if clicked on scrollhandle itself (instead of entire scroll area) the
 				// dragging is started

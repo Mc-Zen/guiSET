@@ -64,13 +64,6 @@ public class Container extends TextBased {
 
 
 
-	// For containers with scroll bars
-	public static int SCROLL_HANDLE_BORDER_RADIUS = 0;
-	public static int SCROLL_BAR_COLOR = Color.create(150);
-	public static int SCROLL_HANDLE_COLOR = Color.create(170);
-	public static int SCROLL_HANDLE_PRESSED_COLOR = Color.create(190);
-	public static int SCROLL_HANDLE_BORDER_COLOR = Color.create(90);
-
 	/**
 	 * Default constructor sets width and height to 100
 	 */
@@ -93,8 +86,7 @@ public class Container extends TextBased {
 		// no iterator here, as list might be modified
 		// still a call to setZ() will modify the list and then it will break;
 		for (int i = 0; i < items.size(); i++) {
-			Control c = items.get(i);
-			c.initialize();
+			items.get(i).initialize();
 		}
 	}
 
@@ -145,9 +137,9 @@ public class Container extends TextBased {
 	protected void render() {
 		drawDefaultBackground();
 
-		for (Control c : items) {
-			if (c.visible) {
-				renderItem(c, c.x, c.y);
+		for (Control item : items) {
+			if (item.isVisible()) {
+				renderItem(item, item.getX(), item.getY());
 			}
 		}
 		drawDefaultDisabled();
@@ -177,8 +169,8 @@ public class Container extends TextBased {
 	 * @param items arbitrary number of items.
 	 */
 	public void add(Control... items) {
-		for (Control c : items) {
-			insertImpl(this.items.size(), c);
+		for (Control item : items) {
+			insertImpl(this.items.size(), item);
 		}
 		if (needsSortingByZ()) { // don't sort layouting containers!
 			sortItemsbyZ();
@@ -293,8 +285,8 @@ public class Container extends TextBased {
 	protected void sortItemsbyZ() {
 		sortItems(new Comparator<Control>() {
 			@Override
-			public int compare(Control c1, Control c2) {
-				return c1.z - c2.z;
+			public int compare(Control a, Control b) {
+				return a.getZ() - b.getZ();
 			}
 		});
 	}
@@ -340,12 +332,12 @@ public class Container extends TextBased {
 
 	@Override
 	protected void mouseEvent(int x, int y) {
-		if (!visible || !enabled)
+		if (!isVisible() || !isEnabled())
 			return;
 
 		if (relativeCoordsAreWithin(x, y)) {
-			int x_ = x - offsetX;
-			int y_ = y - offsetY;
+			int x_ = x - getOffsetX();
+			int y_ = y - getOffsetY();
 
 
 			if (containerPreItemsMouseEvent(x_, y_)) { // allows container to peek into the event
@@ -469,10 +461,10 @@ public class Container extends TextBased {
 	}
 
 	@Override
-	protected void traceCoordsImpl(int relX, int relY) {
-		if (visible && enabled && relativeCoordsAreWithin(relX, relY)) {
+	protected void traceCoordsImpl(int relativeX, int relativeY) {
+		if (visible && enabled && relativeCoordsAreWithin(relativeX, relativeY)) {
 			for (int i = items.size() - 1; i >= 0; i--) {
-				items.get(i).traceCoordsImpl(relX - offsetX, relY - offsetY);
+				items.get(i).traceCoordsImpl(relativeX - offsetX, relativeY - offsetY);
 			}
 			coordinateTrace.add(this);
 		}
