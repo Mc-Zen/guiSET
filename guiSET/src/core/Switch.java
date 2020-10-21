@@ -42,9 +42,9 @@ public class Switch extends Checkbox {
 	public Switch(String text, boolean checked) {
 		super(text, checked);
 
-		setUncheckedBackgroundColor(Color.create(160));
-		setCheckedBackgroundColor(Color.create(46, 116, 122));
-		setCheckmarkColor(Color.create(100, 50, 50));
+		setUncheckedBackgroundColor(GuisetColor.create(160));
+		setCheckedBackgroundColor(GuisetColor.create(46, 116, 122));
+		setCheckmarkColor(GuisetColor.create(100, 50, 50));
 
 		// initialize currentPosition
 		int checkboxSize = getCheckboxSize();

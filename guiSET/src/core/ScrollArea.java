@@ -4,10 +4,9 @@ import processing.core.PApplet;
 import processing.event.MouseEvent;
 
 /**
- * A Container that allows both horizontal and vertical scrolling if the content
- * exceeds the ScrollAreas size. It does not layout its content as
- * {@link VScrollContainer} or {@link VScrollContainer} but keeps the relative x
- * and y positions of the items.
+ * A Container that allows both horizontal and vertical scrolling if the content exceeds the
+ * ScrollAreas size. It does not layout its content as {@link VScrollContainer} or
+ * {@link VScrollContainer} but keeps the relative x and y positions of the items.
  * 
  * @author Mc-Zen
  *
@@ -20,8 +19,8 @@ public class ScrollArea extends Container {
 	protected int fullScrollWidth;
 	protected int fullScrollHeight;
 
-	protected int scrollSpeedX = defaultScrollSpeed;
-	protected int scrollSpeedY = defaultScrollSpeed;
+	protected int scrollSpeedX = GuisetDefaultValues.scrollSpeed;
+	protected int scrollSpeedY = GuisetDefaultValues.scrollSpeed;
 
 
 	protected boolean slim_scrollhandle = false;
@@ -68,9 +67,9 @@ public class ScrollArea extends Container {
 
 		// rect at right bottom corner if both scrollbars active
 		if (needsScrollbarH() && needsScrollbarV() && !slim_scrollhandle) {
-			pg.fill(130);
+			pg.fill(GuisetGlobalValues.scrollAreaBetweenScrollHandlesSquare);
 			pg.noStroke();
-			pg.rect(getWidth() - scrollHandleStrength - 3, getHeight() - scrollHandleStrength - 3, scrollHandleStrength + 3, scrollHandleStrength + 3);
+			pg.rect(getWidth() - getScrollbarStrength(), getHeight() - getScrollbarStrength(), getScrollbarStrength(), getScrollbarStrength());
 		}
 
 		drawScrollbarH();
@@ -84,21 +83,19 @@ public class ScrollArea extends Container {
 	protected void drawScrollbarV() {
 		if (needsScrollbarV()) { // don't display scroll-bar when there's nothing to scroll
 
-			pg.fill(SCROLL_BAR_COLOR);
+			pg.fill(GuisetGlobalValues.scrollBarColor);
 			pg.noStroke();
 
 			if (slim_scrollhandle) {
-				pg.rect(getWidth() - 4, scrollhandle_posY(), scrollHandleStrength, scrollhandle_height(), 15);
+				pg.rect(getWidth() - 1 - Constants.SCROLL_HANDLE_STRENGTH_SLIM, scrollhandle_posY(), Constants.SCROLL_HANDLE_STRENGTH_SLIM, scrollhandle_height(), 15);
 
 			} else {
-				pg.rect(getWidth() - 2 - scrollHandleStrength, 0, scrollHandleStrength + 3, scrollbar_height());
-				pg.fill(isDraggingVScrollHandle() ? SCROLL_HANDLE_COLOR : SCROLL_HANDLE_PRESSED_COLOR);
-				pg.stroke(SCROLL_HANDLE_BORDER_COLOR);
-				pg.rect(getWidth() - 2 - scrollHandleStrength, scrollhandle_posY(), scrollHandleStrength + 1, scrollhandle_height(), SCROLL_HANDLE_BORDER_RADIUS);
-
-//				pg.rect(width - 2 - scrollHandleStrength, 0, scrollHandleStrength + 2, scrollbar_height());
-//				pg.fill((startHandleDragPos > -1 && whichScrollBar == V_SCROLLBAR) ? 170 : 190);
-//				pg.rect(width - 1 - scrollHandleStrength, scrollhandle_posY(), scrollHandleStrength, scrollhandle_height(), 3);
+				pg.rect(getWidth() - getScrollbarStrength(), 0, getScrollbarStrength(), scrollbar_height());
+				pg.fill(isDraggingVScrollHandle() ? GuisetGlobalValues.scrollHandleColor : GuisetGlobalValues.scrollHandlePressColor);
+				pg.strokeWeight(1);
+				pg.stroke(GuisetGlobalValues.scrollHandleBorderColor);
+				pg.rect(getWidth() - getScrollbarStrength(), scrollhandle_posY(), scrollHandleStrength, scrollhandle_height(),
+						GuisetGlobalValues.scrollHandleBorderRadius);
 			}
 		}
 	}
@@ -108,21 +105,18 @@ public class ScrollArea extends Container {
 	protected void drawScrollbarH() {
 		if (needsScrollbarH()) { // don't display scroll-bar when there's nothing to scroll
 
-			pg.fill(SCROLL_BAR_COLOR);
+			pg.fill(GuisetGlobalValues.scrollBarColor);
 			pg.noStroke();
 
 			if (slim_scrollhandle) {
-				pg.rect(scrollhandle_posX(), getHeight() - 4, scrollhandle_width(), 3, 15);
+				pg.rect(scrollhandle_posX(), getHeight() - 1 - Constants.SCROLL_HANDLE_STRENGTH_SLIM, scrollhandle_width(), Constants.SCROLL_HANDLE_STRENGTH_SLIM, 15);
 			} else {
-				pg.rect(0, getHeight() - 2 - scrollHandleStrength, scrollbar_width(), scrollHandleStrength + 3); // height is one more than necessary
-//																											 // (just) // a buffer)
-//				pg.fill((startHandleDragPos > -1 && whichScrollBar == H_SCROLLBAR) ? 170 : 190);
-//				pg.rect(scrollhandle_posX(), height - 1 - scrollHandleStrength, scrollhandle_width(), scrollHandleStrength, 3);
-
-				pg.rect(0, getHeight() - 2 - scrollHandleStrength, scrollbar_width(), scrollHandleStrength + 3);
-				pg.fill(isDraggingHScrollHandle() ? SCROLL_HANDLE_COLOR : SCROLL_HANDLE_PRESSED_COLOR);
-				pg.stroke(SCROLL_HANDLE_BORDER_COLOR);
-				pg.rect(scrollhandle_posX(), getHeight() - 2 - scrollHandleStrength, scrollhandle_width(), scrollHandleStrength, SCROLL_HANDLE_BORDER_RADIUS);
+				pg.rect(0, getHeight() - getScrollbarStrength(), scrollbar_width(), getScrollbarStrength());
+				pg.fill(isDraggingHScrollHandle() ? GuisetGlobalValues.scrollHandleColor : GuisetGlobalValues.scrollHandlePressColor);
+				pg.strokeWeight(1);
+				pg.stroke(GuisetGlobalValues.scrollHandleBorderColor);
+				pg.rect(scrollhandle_posX(), getHeight() - getScrollbarStrength(), scrollhandle_width(), scrollHandleStrength,
+						GuisetGlobalValues.scrollHandleBorderRadius);
 
 			}
 		}
@@ -146,23 +140,28 @@ public class ScrollArea extends Container {
 	// get height of entire vertical scrollbar (usually full height of element
 	// except when also having a horizontal scrollbar
 	protected int scrollbar_height() {
-		return getHeight() - (needsScrollbarH() ? scrollHandleStrength + 3 : 0);
+		return getHeight() - (needsScrollbarH() ? getScrollbarStrength() : 0);
 	}
 
 	// get width of entire horizontal scrollbar (usually full width of element
 	// except when also having a vertical scrollbar
 	protected int scrollbar_width() {
-		return getWidth() - (needsScrollbarV() ? scrollHandleStrength + 3 : 0);
+		return getWidth() - (needsScrollbarV() ? getScrollbarStrength() : 0);
 	}
+
+	int getScrollbarStrength() {
+		return scrollHandleStrength + 2;
+	}
+
 
 	// get height of handle (of the vertical scrollbar)
 	protected int scrollhandle_height() {
-		return Math.max(Constants.MinScrollHandleLength, getHeight() * scrollbar_height() / fullScrollHeight);
+		return Math.max(Constants.MinimalScrollHandleLength, getHeight() * scrollbar_height() / fullScrollHeight);
 	}
 
 	// get width of handle (of the horizontal scrollbar)
 	protected int scrollhandle_width() {
-		return Math.max(Constants.MinScrollHandleLength, getWidth() * scrollbar_width() / fullScrollWidth);
+		return Math.max(Constants.MinimalScrollHandleLength, getWidth() * scrollbar_width() / fullScrollWidth);
 	}
 
 	// get position of handle (of the vertical scrollbar)
@@ -191,8 +190,7 @@ public class ScrollArea extends Container {
 	 * SETTER
 	 */
 	/**
-	 * Amount of pixels to scroll for each step with the mouse wheel in horizontal
-	 * direction.
+	 * Amount of pixels to scroll for each step with the mouse wheel in horizontal direction.
 	 * 
 	 * @param scrollSpeedX scrollSpeedX
 	 */
@@ -201,8 +199,7 @@ public class ScrollArea extends Container {
 	}
 
 	/**
-	 * Amount of pixels to scroll for each step with the mouse wheel in vertical
-	 * direction.
+	 * Amount of pixels to scroll for each step with the mouse wheel in vertical direction.
 	 * 
 	 * @param scrollSpeedY scrollSpeedY
 	 */
@@ -238,9 +235,9 @@ public class ScrollArea extends Container {
 	public void setSlimScrollHandle(boolean slim_scrollhandle) {
 		this.slim_scrollhandle = slim_scrollhandle;
 		if (slim_scrollhandle) {
-			scrollHandleStrength = SCROLL_HANDLE_STRENGTH_SLIM;
+			scrollHandleStrength = Constants.SCROLL_HANDLE_STRENGTH_SLIM;
 		} else {
-			scrollHandleStrength = SCROLL_HANDLE_STRENGTH_STD;
+			scrollHandleStrength = Constants.SCROLL_HANDLE_STRENGTH_STD;
 		}
 		update();
 	}
@@ -321,21 +318,21 @@ public class ScrollArea extends Container {
 	private static final int H_SCROLLBAR = 0;
 	private static final int V_SCROLLBAR = 1;
 
-	protected int scrollHandleStrength = SCROLL_HANDLE_STRENGTH_STD; // thickness
-	protected static final int SCROLL_HANDLE_STRENGTH_STD = 12;
-	protected static final int SCROLL_HANDLE_STRENGTH_SLIM = 3;
+	protected int scrollHandleStrength = Constants.SCROLL_HANDLE_STRENGTH_STD; // thickness
 
 
 	protected boolean isDraggingScrollHandle() {
 		return startHandleDragPos != -1;
 	}
+
 	protected boolean isDraggingVScrollHandle() {
 		return isDraggingScrollHandle() && whichScrollBar == V_SCROLLBAR;
 	}
+
 	protected boolean isDraggingHScrollHandle() {
 		return isDraggingScrollHandle() && whichScrollBar == H_SCROLLBAR;
 	}
-	
+
 	@Override
 	protected void drag(MouseEvent e) {
 		if (isDraggingScrollHandle()) {
@@ -367,9 +364,8 @@ public class ScrollArea extends Container {
 	}
 
 	/**
-	 * Need to check if mouse is over one of the scroll bars. If so, then content
-	 * items should not receive this mouse event (thus return false here in this
-	 * case).
+	 * Need to check if mouse is over one of the scroll bars. If so, then content items should not
+	 * receive this mouse event (thus return false here in this case).
 	 * 
 	 * 
 	 * (non-Javadoc)
@@ -378,14 +374,14 @@ public class ScrollArea extends Container {
 	 */
 	@Override
 	protected boolean containerPreItemsMouseEvent(int x, int y) {
-		boolean mouseIsOverScrollBarV = needsScrollbarV() && x > getWidth() - scrollHandleStrength - 3 && x < getWidth() && y > 0
-				&& y < getHeight() - (needsScrollbarV() ? scrollHandleStrength + 3 : 0);
-		boolean mouseIsOverScrollBarH = needsScrollbarH() && y > getHeight() - scrollHandleStrength - 3 && y < getHeight() && x > 0
-				&& x < getWidth() - (needsScrollbarH() ? scrollHandleStrength + 3 : 0);
+		boolean mouseIsOverScrollBarV = needsScrollbarV() && x > getWidth() - getScrollbarStrength() && x < getWidth() && y > 0
+				&& y < getHeight() - (needsScrollbarV() ? getScrollbarStrength() : 0);
+		boolean mouseIsOverScrollBarH = needsScrollbarH() && y > getHeight() - getScrollbarStrength() && y < getHeight() && x > 0
+				&& x < getWidth() - (needsScrollbarH() ? getScrollbarStrength() : 0);
 
 
 		if (currentMouseEvent.getAction() == MouseEvent.PRESS) {
-			
+
 			if (mouseIsOverScrollBarH) {
 				whichScrollBar = H_SCROLLBAR;
 				int scrollhandle_posX = scrollhandle_posX();

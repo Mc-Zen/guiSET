@@ -24,10 +24,10 @@ public class ListItem extends TextBased {
 		super();
 		setPadding(3);
 		setBorderWidth(1);
-		setSelectionColor(SELECTION_BLUE);
-		setBackgroundColor(TRANSPARENT);
-		setHoverColor(Color.create(0, 0, 0, 30));
-		setPressedColor(Color.create(0, 0, 0, 50));
+		setSelectionColor(GuisetColor.SELECTION_BLUE);
+		setBackgroundColor(GuisetColor.TRANSPARENT);
+		setHoverColor(GuisetColor.create(0, 0, 0, 30));
+		setPressedColor(GuisetColor.create(0, 0, 0, 50));
 	}
 
 	/**
@@ -101,10 +101,10 @@ public class ListItem extends TextBased {
 
 		if (getPApplet().brightness(selectionColor) > 40) {
 			// darken color for selectionHoverColor when color is bright enough
-			selectionHoverColor = Color.create(r - 20, g - 20, b - 20);
+			selectionHoverColor = GuisetColor.create(r - 20, g - 20, b - 20);
 		} else {
 			// lighten color for selectionHoverColor when color too dark
-			selectionHoverColor = Color.create(r + 20, g + 20, b + 20);
+			selectionHoverColor = GuisetColor.create(r + 20, g + 20, b + 20);
 		}
 		update();
 	}

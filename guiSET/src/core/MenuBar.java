@@ -15,7 +15,7 @@ import processing.event.MouseEvent;
 public class MenuBar extends HFlowContainer {
 
 	public MenuBar() {
-		setGradient(MENUBAR_GRADIENT_TOP_COLOR, MENUBAR_GRADIENT_BOTTOM_COLOR);
+		setGradient(GuisetDefaultValues.menubarGradientTopColor, GuisetDefaultValues.menubarGradientBottomColor);
 		setZ(Constants.MenuSurfaceZIndex);
 		setHeightNoUpdate(Constants.MenuItemHeight);
 	}

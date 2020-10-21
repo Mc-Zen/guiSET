@@ -39,8 +39,8 @@ import java.awt.datatransfer.DataFlavor;
  */
 public class Textbox extends HScrollContainer {
 
-	protected int selectionColor = SELECTION_BLUE;
-	protected int cursorColor = TEXT_CURSOR_COLOR;
+	protected int selectionColor = GuisetColor.SELECTION_BLUE;
+	protected int cursorColor = GuisetColor.TEXT_CURSOR_COLOR;
 
 	// Text to display when textbox is empty
 	protected String hint = "";

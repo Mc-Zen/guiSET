@@ -486,19 +486,19 @@ public class Frame extends Container {
 		}
 
 		/*
-		 * handle animations
+		 * re-render if graphics have been changed
+		 */
+		if (visible) {
+			render();
+		}
+		
+		/*
+		 * handle animations (after render, because only then redraw can work when sketch is not looping
 		 */
 		for (int i = 0; i < animations.size(); i++) {
 			if (!animations.get(i).animate()) { // if animation returns false it has finished and can be removed
 				animations.remove(i);
 			}
-		}
-
-		/*
-		 * re-render if graphics have been changed
-		 */
-		if (visible) {
-			render();
 		}
 	}
 
@@ -1286,6 +1286,7 @@ public class Frame extends Container {
 				stopPropagation(); // not even necessary, we dont call mouseEvent()
 
 				draggedElement.release(e);
+				draggedElement.dragRelease(e);
 				draggedElement.pPressed = false;
 				draggedElement.handleEvent(draggedElement.releaseListener, e);
 

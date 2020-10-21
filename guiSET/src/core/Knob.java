@@ -72,7 +72,7 @@ public class Knob extends Slider {
 		pg.ellipse(getWidth() * 0.5f, getHeight() * 0.5f, innerCircleRadius, innerCircleRadius);
 
 		// Draw value as text
-		pg.fill(BLACK);
+		pg.fill(GuisetColor.BLACK);
 		pg.textAlign(CENTER, CENTER);
 		pg.textSize(outerCircleRadius / 5);
 

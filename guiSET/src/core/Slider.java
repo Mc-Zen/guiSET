@@ -23,9 +23,9 @@ import processing.event.*;
  */
 public class Slider extends Control {
 
-	protected float value = Constants.DefaultSliderMinValue;
-	protected float minValue = Constants.DefaultSliderMinValue;
-	protected float maxValue = Constants.DefaultSliderMaxValue;
+	protected float value;
+	protected float minValue;
+	protected float maxValue;
 
 
 	public enum Orientation {
@@ -41,8 +41,8 @@ public class Slider extends Control {
 	// is it a vertical or horzontal slider?
 	protected Orientation orientation = Orientation.HORIZONTAL;
 
-	protected boolean wheelEnabled = false;
-	protected float relativeWheelSpeed = Constants.DefaultSliderRelativeWheelSpeed; // Percentage-based scroll speed. Value of 1 means from min to max in one wheel
+	protected boolean wheelEnabled = true;
+	protected float relativeWheelSpeed = GuisetDefaultValues.sliderRelativeWheelSpeed; // Percentage-based scroll speed. Value of 1 means from min to max in one wheel
 																					 // movement
 
 
@@ -50,8 +50,11 @@ public class Slider extends Control {
 
 	public Slider() {
 		super();
-		setBackgroundColor(SLIDER_BACKGROUND_COLOR); // some gray
-		setForegroundColor(SLIDER_FOREGROUND_COLOR); // orange
+		setBackgroundColor(GuisetDefaultValues.sliderBackgroundColor); // some gray
+		setForegroundColor(GuisetDefaultValues.sliderForegroundColor); // orange
+		setMinValue(GuisetDefaultValues.sliderMinValue);
+		setMaxValue(GuisetDefaultValues.sliderMaxValue);
+		setValue(GuisetDefaultValues.sliderMinValue);
 		setSizeWithoutUpdate(150, (int) (ballSize * 1.3));
 		setPadding(3, 0);
 	}
@@ -224,7 +227,7 @@ public class Slider extends Control {
 
 
 	/**
-	 * Specify if scrolling while mouse is over the slider changes the value. Default is false.
+	 * Specify if scrolling while mouse is over the slider changes the value. Default is true.
 	 * 
 	 * @param wheelEnabled wheelEnabled
 	 */

@@ -68,7 +68,7 @@ public class Container extends TextBased {
 	 * Default constructor sets width and height to 100
 	 */
 	public Container() {
-		this(Constants.DefaultContainerWidth, Constants.DefaultContainerHeight);
+		this(GuisetDefaultValues.containerWidth, GuisetDefaultValues.containerHeight);
 	}
 
 

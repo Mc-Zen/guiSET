@@ -62,10 +62,10 @@ public class Checkbox extends TextBased {
 	public Checkbox(String text, boolean checked) {
 		super();
 
-		setBackgroundColor(TRANSPARENT); // tranparent
-		setUncheckedBackgroundColor(Constants.DefaultCheckboxUncheckedColor);
-		setCheckedBackgroundColor(Constants.DefaultCheckboxCheckedColor); 
-		setCheckmarkColor(Constants.DefaultCheckboxCheckmarkColor); 
+		setBackgroundColor(GuisetColor.TRANSPARENT); // tranparent
+		setUncheckedBackgroundColor(GuisetDefaultValues.checkboxUncheckedColor);
+		setCheckedBackgroundColor(GuisetDefaultValues.checkboxCheckedColor); 
+		setCheckmarkColor(GuisetDefaultValues.checkboxCheckmarkColor); 
 		setText(text);
 		setTextAlign(LEFT);
 		setPaddingLeft(checkboxSize + checkboxSize / 4);

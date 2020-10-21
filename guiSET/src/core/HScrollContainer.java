@@ -1,5 +1,6 @@
 package guiSET.core;
 
+
 /*
  * HScrollContainer is a container that allows horizontal scrolling. 
  * This way items can exceed the displayed width of the container. 
@@ -31,7 +32,7 @@ public class HScrollContainer extends HFlowContainer {
 	protected int scrollPosition;
 
 	// speed at which container will be scrolled, can be set externally
-	protected int scrollSpeed = defaultScrollSpeed;
+	protected int scrollSpeed = GuisetDefaultValues.scrollSpeed;
 
 	// enable a thin version of scroll handle for small containers (i.e. smaller
 	// textboxes)
@@ -99,20 +100,18 @@ public class HScrollContainer extends HFlowContainer {
 	protected void drawScrollbar() {
 		if (needsScrollbarH()) { // don't display scroll-bar when there's nothing to scroll
 
-			pg.fill(SCROLL_BAR_COLOR);
+			pg.fill(GuisetGlobalValues.scrollBarColor);
 			pg.noStroke();
 
 			if (slim_scrollhandle) {
-				pg.rect(scrollhandle_posX(), getHeight() - 1 - scrollHandleStrength, scrollhandle_width(), scrollHandleStrength, 15);
+				pg.rect(scrollhandle_posX(), getHeight() - 1 - Constants.SCROLL_HANDLE_STRENGTH_SLIM, scrollhandle_width(), Constants.SCROLL_HANDLE_STRENGTH_SLIM, 15);
 			} else {
-//				pg.rect(0, height - 2 - scrollHandleStrength, scrollbar_width(), scrollHandleStrength + 3); // height is one more than necessary (just)
-//				pg.fill(startHandleDragPos > -1 ? SCROLL_HANDLE_COLOR : SCROLL_HANDLE_PRESSED_COLOR);
-//				pg.rect(scrollhandle_posX(), height - 1 - scrollHandleStrength, scrollhandle_width(), scrollHandleStrength, SCROLL_HANDLE_BORDER_RADIUS);
-
-				pg.rect(0, getHeight() - 2 - scrollHandleStrength, scrollbar_width(), scrollHandleStrength + 3);
-				pg.fill(isDraggingScrollHandle() ? SCROLL_HANDLE_COLOR : SCROLL_HANDLE_PRESSED_COLOR);
-				pg.stroke(SCROLL_HANDLE_BORDER_COLOR);
-				pg.rect(scrollhandle_posX(), getHeight() - 2 - scrollHandleStrength, scrollhandle_width(), scrollHandleStrength, SCROLL_HANDLE_BORDER_RADIUS);
+				pg.rect(0, getHeight() - getScrollbarStrength(), scrollbar_width(), getScrollbarStrength());
+				pg.fill(isDraggingScrollHandle() ? GuisetGlobalValues.scrollHandleColor : GuisetGlobalValues.scrollHandlePressColor);
+				pg.strokeWeight(1);
+				pg.stroke(GuisetGlobalValues.scrollHandleBorderColor);
+				pg.rect(scrollhandle_posX(), getHeight() - getScrollbarStrength(), scrollhandle_width(), scrollHandleStrength,
+						GuisetGlobalValues.scrollHandleBorderRadius);
 
 			}
 		}
@@ -137,7 +136,7 @@ public class HScrollContainer extends HFlowContainer {
 
 	// get width of handle (of the horizontal scrollbar)
 	protected int scrollhandle_width() {
-		return Math.max(Constants.MinScrollHandleLength, getWidth() * scrollbar_width() / fullScrollWidth);
+		return Math.max(Constants.MinimalScrollHandleLength, getWidth() * scrollbar_width() / fullScrollWidth);
 	}
 
 	// get position of handle (of the horizontal scrollbar)
@@ -149,6 +148,9 @@ public class HScrollContainer extends HFlowContainer {
 				scrollbar_width - scrollhandle_width - 2);
 	}
 
+	int getScrollbarStrength() {
+		return scrollHandleStrength + 2;
+	}
 
 	/*
 	 * useful function to ensure the given item or item to given index is displayed
@@ -219,9 +221,9 @@ public class HScrollContainer extends HFlowContainer {
 	public void setSlimScrollHandle(boolean slim_scrollhandle) {
 		this.slim_scrollhandle = slim_scrollhandle;
 		if (slim_scrollhandle) {
-			scrollHandleStrength = SCROLL_HANDLE_STRENGTH_SLIM;
+			scrollHandleStrength = Constants.SCROLL_HANDLE_STRENGTH_SLIM;
 		} else {
-			scrollHandleStrength = SCROLL_HANDLE_STRENGTH_STD;
+			scrollHandleStrength = Constants.SCROLL_HANDLE_STRENGTH_STD;
 		}
 		update();
 	}
@@ -284,9 +286,7 @@ public class HScrollContainer extends HFlowContainer {
 
 	protected int startHandleDragPos = -1;
 
-	protected int scrollHandleStrength = SCROLL_HANDLE_STRENGTH_STD;
-	protected static final int SCROLL_HANDLE_STRENGTH_STD = 12;
-	protected static final int SCROLL_HANDLE_STRENGTH_SLIM = 3;
+	protected int scrollHandleStrength = Constants.SCROLL_HANDLE_STRENGTH_STD;
 
 	@Override
 	protected void drag(MouseEvent e) {
@@ -325,7 +325,7 @@ public class HScrollContainer extends HFlowContainer {
 	 */
 	@Override
 	protected boolean containerPreItemsMouseEvent(int x, int y) {
-		boolean mouseIsOverScrollBar = needsScrollbarH() && y > getHeight() - scrollHandleStrength - 3 && y < getHeight() && x > 0 && x < getWidth();
+		boolean mouseIsOverScrollBar = needsScrollbarH() && y > getHeight() - getScrollbarStrength() && y < getHeight() && x > 0 && x < getWidth();
 
 		if (currentMouseEvent.getAction() == MouseEvent.PRESS && mouseIsOverScrollBar) {
 			int scrollhandle_posX = scrollhandle_posX();
