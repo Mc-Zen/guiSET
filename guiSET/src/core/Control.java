@@ -176,7 +176,7 @@ public abstract class Control implements PConstants {
 	protected int borderWidth;
 	protected int borderRadius;
 
-	protected int cursor;				// Type of cursor to display when hovering over this control
+	protected int cursor = PApplet.ARROW;	// Type of cursor to display when hovering over this control
 
 	protected float opacity = 1.0f; 	// Opacity in percent from 0 to 1
 
@@ -253,6 +253,18 @@ public abstract class Control implements PConstants {
 	public static final int BUTTON_HOVER_COLOR = Color.create(200);
 	public static final int BUTTON_PRESS_COLOR = Color.create(150);
 
+
+	// For containers with scroll bars
+	public static int SCROLL_HANDLE_BORDER_RADIUS = 0;
+	public static int SCROLL_BAR_COLOR = Color.create(150);
+	public static int SCROLL_HANDLE_COLOR = Color.create(170);
+	public static int SCROLL_HANDLE_PRESSED_COLOR = Color.create(190);
+	public static int SCROLL_HANDLE_BORDER_COLOR = Color.create(90);
+
+
+
+
+
 	public class Constants {
 		public static final int MinimalMinWidth = 1;
 		public static final int MinimalMinHeight = 1;
@@ -264,11 +276,23 @@ public abstract class Control implements PConstants {
 		public final static int MinScrollHandleLength = 15;
 
 		public static final int MenuSurfaceZIndex = 20; // The one and only MenuSurface's z-index is set to this
-		public static final int MenuItemHeight = 23; // default height for menu items and menu bars - looks good in my opinion
+		public static final int MenuItemHeight = 23;    // default height for menu items and menu bars - looks good in my opinion
 		public static final int MenuItemPaddingLeft = 27;
+		public static final int MenuItemPaddingRight = 10;
+		public static final int DefaultMenuItemHoverTime = 300; // Time to wait until to open a sub-menustrip (in milliseconds)
 
-		public static final float SliderDefaultMinValue = 0;
-		public static final float SliderDefaultMaxValue = 100;
+		public static final float DefaultSliderMinValue = 0;
+		public static final float DefaultSliderMaxValue = 100;
+		public static final float DefaultSliderRelativeWheelSpeed = 0.02f;
+
+		public static final int DefaultButtonPadding = 7;
+		public static final int DefaultButtonBorderWidth = 1;
+		public static final int DefaultLabelPadding = 3;
+		public static final int DefaultTextSize = 12;
+
+		public static final int DefaultCheckboxUncheckedColor = -6250336; // gray
+		public static final int DefaultCheckboxCheckedColor = -13732742;  // greenish
+		public static final int DefaultCheckboxCheckmarkColor = -328966;  // almost white
 
 
 	}
@@ -324,7 +348,7 @@ public abstract class Control implements PConstants {
 		if (renderingMethod == RenderingMethod.BUFFERED_RENDERING) {
 			renderer = new BasicBufferedRenderer();
 		} else {
-			renderer = new ParentGraphicsRenderer();
+			renderer = new BasicUnbufferedRenderer();
 		}
 	}
 
@@ -473,7 +497,7 @@ public abstract class Control implements PConstants {
 		}
 	}
 
-	abstract class NonBufferedRenderer extends Renderer {
+	abstract class UnufferedRenderer extends Renderer {
 
 		// constrain drawing to this elements area and its parents area
 		protected void clip(PGraphics parentGraphics) {
@@ -507,8 +531,14 @@ public abstract class Control implements PConstants {
 	 *  
 	 * Extended renderers:
 	 * 	- opacity
-	 * 	- future: shadow
+	 * 	- shadow
 	 */
+
+	interface ExtendedRenderer {
+		void setShadow(int size, int offsetX, int offsetY, int color, float transparency);
+
+		void removeShadow();
+	}
 
 	// The standard renderer. Draw looks on own buffer graphics. Can get expensive
 	// with memory if using a lot of elements.
@@ -532,7 +562,10 @@ public abstract class Control implements PConstants {
 
 	// Renderer that implements opacity and in future also box-shadows. Also draw
 	// looks on own buffer graphics.
-	class ExtendedBufferedRenderer extends Renderer {
+	class ExtendedBufferedRenderer extends Renderer implements ExtendedRenderer {
+
+		private ShadowInformation shadowInformation;
+
 		@Override
 		void renderAll(int x, int y, PGraphics parentGraphics) {
 			offsetX = x;
@@ -549,7 +582,9 @@ public abstract class Control implements PConstants {
 				pg.endDraw();
 			}
 
-			// TODO: draw shadow
+			if (shadowInformation != null) {
+				drawBoxShadow(parentGraphics, shadowInformation);
+			}
 			if (opacity < 1.0f) {
 				parentGraphics.tint(255, (int) (opacity * 256));
 				parentGraphics.image(pg, x, y);
@@ -558,12 +593,25 @@ public abstract class Control implements PConstants {
 				parentGraphics.image(pg, x, y);
 			}
 		}
+
+		public void setShadow(int size, int offsetX, int offsetY, int color, float transparency) {
+			shadowInformation = new ShadowInformation(size, offsetX, offsetY, color, transparency);
+		}
+
+		public void removeShadow() {
+			shadowInformation = null;
+		}
 	}
+
+
+
+
+
 
 	// This renderer doesn't use a buffer PGraphics -> save RAM
 	// Instead draw on parent graphics.
 	// Issues: Items can overflow parent and their own bounds
-	class ParentGraphicsRenderer extends NonBufferedRenderer {
+	class BasicUnbufferedRenderer extends UnufferedRenderer {
 		@Override
 		void renderAll(int x, int y, PGraphics parentGraphics) {
 			offsetX = x;
@@ -585,22 +633,72 @@ public abstract class Control implements PConstants {
 	}
 
 
+
+
+
+
+	class ShadowInformation {
+		int size;
+		int offsetX;
+		int offsetY;
+		int color;
+		float transparency;
+
+		ShadowInformation(int size, int offsetX, int offsetY, int color, float transparency) {
+			this.size = size;
+			this.offsetX = offsetX;
+			this.offsetY = offsetY;
+			this.color = color;
+			this.transparency = transparency;
+		}
+	}
+
+	protected void drawBoxShadow(PGraphics pg, ShadowInformation shadowInformation) {
+		int r = (shadowInformation.color >> 16) & 0xFF;
+		int g = (shadowInformation.color >> 8) & 0xFF;
+		int b = shadowInformation.color & 0xFF;
+		int size = shadowInformation.size;
+		int halfsize = size / 2;
+		int x = Control.this.offsetX + shadowInformation.offsetX - halfsize;
+		int y = Control.this.offsetY + shadowInformation.offsetY - halfsize;
+
+		pg.translate(x, y);
+		pg.fill(Color.create(r, g, b, shadowInformation.transparency * 255));
+		pg.noStroke();
+		pg.rect(0, 0, width - size, height - size);
+
+		pg.noFill();
+		pg.strokeWeight(1);
+		for (int i = 1; i < size; i++) {
+			int alpha = Math.max(0, (int) (shadowInformation.transparency * (255 - i * (255 / size))));
+			pg.stroke(Color.create(r, g, b, alpha));
+			pg.rect(-i, -i, width + 2 * i - 1 - size, height + 2 * i - 1 - size);
+		}
+		pg.translate(-x, -y);
+	}
+
+
 	// As ParentGraphicsRenderer but implementing opactiy and in future box-shadows.
-	class ParentGraphicsExtendedRenderer extends NonBufferedRenderer {
+	private class ExtendedUnbufferedRenderer extends UnufferedRenderer implements ExtendedRenderer {
+		private ShadowInformation shadowInformation;
+
+
 		@Override
-		void renderAll(int x, int y, PGraphics parentGraphics) {
+		public void renderAll(int x, int y, PGraphics parentGraphics) {
 			offsetX = x;
 			offsetY = y;
 
 			if (opacity == 0)
 				return;
 
+			if (shadowInformation != null) {
+				drawBoxShadow(parentGraphics, shadowInformation);
+			}
 
 			if (opacity < 1.0f) {
 				pg = getPApplet().createGraphics(getWidth(), getHeight());
 				pg.beginDraw();
 
-				// TODO: draw shadow
 				render(); // no preRender() needed
 				drawBorder();
 				pg.endDraw();
@@ -610,12 +708,11 @@ public abstract class Control implements PConstants {
 				parentGraphics.image(pg, x, y);
 				parentGraphics.tint = false;
 
-				pg = null; // gc may delete the temporary graphics
+				pg = null; // gc may delete the temporary graphics now
 
 			} else {
 				prepareGraphics(parentGraphics);
 				PFont f = parentGraphics.textFont;
-
 				render(); // no preRender()/pg.endDraw() needed
 				drawBorder();
 
@@ -625,22 +722,56 @@ public abstract class Control implements PConstants {
 				parentGraphics.noClip();
 			}
 		}
+
+		@Override
+		public void setShadow(int size, int offsetX, int offsetY, int color, float transparency) {
+			shadowInformation = new ShadowInformation(size, offsetX, offsetY, color, transparency);
+		}
+
+		@Override
+		public void removeShadow() {
+			shadowInformation = null;
+		}
+	}
+
+	protected void setToBufferedRenderer() {
+		if (renderer instanceof BasicUnbufferedRenderer) {
+			renderer = new BasicBufferedRenderer();
+		} else if (renderer instanceof ExtendedUnbufferedRenderer) {
+			ShadowInformation si = ((ExtendedUnbufferedRenderer) renderer).shadowInformation;
+			renderer = new ExtendedBufferedRenderer();
+			((ExtendedBufferedRenderer) renderer).shadowInformation = si;
+		}
+	}
+
+	protected void setToUnbufferedRenderer() {
+		if (renderer instanceof BasicBufferedRenderer) {
+			renderer = new BasicUnbufferedRenderer();
+		} else if (renderer instanceof ExtendedBufferedRenderer) {
+			ShadowInformation si = ((ExtendedBufferedRenderer) renderer).shadowInformation;
+			renderer = new ExtendedUnbufferedRenderer();
+			((ExtendedUnbufferedRenderer) renderer).shadowInformation = si;
+		}
 	}
 
 
+	protected void enableExtendedRenderer() {
+		if (renderer instanceof BasicBufferedRenderer) {
+			renderer = new ExtendedBufferedRenderer();
+		} else if (renderer instanceof BasicUnbufferedRenderer) {
+			renderer = new ExtendedUnbufferedRenderer();
+		}
+	}
 
+	public void setBoxShadow(int size, int offsetX, int offsetY, int color, float transparency) {
+		enableExtendedRenderer();
+		((ExtendedRenderer) renderer).setShadow(size, offsetX, offsetY, color, transparency);
+	}
 
-//	protected PGraphics getGraphicsAndRenderIfDirty() {
-//		if (dirty) {
-//			dirty = false; // do this before render, so it can use animations by calling update again
-//
-//			preRender();
-//			render();
-//			pg.endDraw();
-//		}
-//		return pg;
-//	}
-
+	public void removeBoxShadow() {
+		if (renderer instanceof ExtendedRenderer)
+			((ExtendedRenderer) renderer).removeShadow();
+	}
 
 
 	// just return the looks of this control, without drawing
@@ -952,6 +1083,51 @@ public abstract class Control implements PConstants {
 	}
 	*/
 
+//	protected void drawShadow(PGraphics pg, int w, int h, int size, int offset) {
+//		pg.noFill();
+//		pg.strokeWeight(1);
+//		pg.translate(offsetX, offsetY);
+//		// pg.beginShape(PApplet.LINES);
+//		for (int i = 0; i < size; i++) {
+//			int alpha = 117 - 29 * i;
+//			pg.stroke(Color.create(0, alpha));
+//			// pg.stroke(Color.create(0, cl[i]));
+//			pg.line(w + i, offset - i + 1, w + i, h + i - 1); // v line
+//			pg.line(offset - i + 1, h + i, w + i, h + i); // lower h line
+//			pg.line(offset - i, h, offset - i, h + i); // left v line
+//			pg.line(w, size - i, w + i, size - i); // upper h line
+//			// pg.rect((offset - 1) * 2 - i, (offset - 1) * 2 - i, w - 2 * (size-1 - i), h - 2 * (size-1 - i));
+//			// pg.line(x1, y1, x2, y2);
+//		}
+//		pg.translate(-(offsetX), -(offsetY));
+//		// pg.endShape();
+//	}
+
+//	public void drawBoxShadow(PGraphics pg, int size, int offsetX, int offsetY, int color, float transparency) {
+//		int r = (color >> 16) & 0xFF;
+//		int g = (color >> 8) & 0xFF;
+//		int b = color & 0xFF;
+//		int halfsize = size / 2;
+//		int x = Control.this.offsetX + offsetX - halfsize;
+//		int y = Control.this.offsetY + offsetY - halfsize;
+//
+//		pg.translate(x, y);
+//		pg.fill(Color.create(r, g, b, transparency * 255));
+//		pg.noStroke();
+//		pg.rect(0, 0, width - size, height - size);
+//
+//		pg.noFill();
+//		pg.strokeWeight(1);
+//		// getPApplet().red();
+//		// pg.beginShape(PApplet.LINES);
+//		for (int i = 1; i < size; i++) {
+//			int alpha = Math.max(0, (int) (transparency * (255 - i * (255 / size))));
+//			pg.stroke(Color.create(r, g, b, alpha));
+//			pg.rect(-i, -i, width + 2 * i - 1 - size, height + 2 * i - 1 - size);
+//		}
+//		pg.translate(-x, -y);
+//		// pg.endShape();
+//	}
 
 
 
@@ -2310,13 +2486,10 @@ public abstract class Control implements PConstants {
 	public void setOpacity(float opacity) {
 		this.opacity = Math.max(0, Math.min(1, opacity));
 
-		if (renderer instanceof BasicBufferedRenderer) {
-			renderer = new ExtendedBufferedRenderer();
-		} else if (renderer instanceof ParentGraphicsRenderer) {
-			renderer = new ParentGraphicsExtendedRenderer();
-		}
+		enableExtendedRenderer();
 		update();
 	}
+
 
 	/**
 	 * Apply margins to all sides of the element. In FlowContainers and similar containers neighboring
@@ -2805,14 +2978,14 @@ public abstract class Control implements PConstants {
 	 * or:
 	 * 
 	 * <br>
-	 * <code><pre>
-	Control.doForAll( new Control.Setter&#62;Control&#62;() {
-	  &#64;Override 
+	 * <pre>{@code
+	Control.doForAll( new Control.Setter<Control>() {
+	  &#64;literal Override 
 	  public void run(Control c) {
 	    c.fitContent();
 	  }
 	}, myContainer, myHScrollContainer, myScrollArea, myFlowContainer);
-	</pre></code>
+	}</pre>
 	 * 
 	 * @param          <T> type of object
 	 * @param setter   a setter (need to override the run() method and specify template type)
@@ -3076,13 +3249,14 @@ public abstract class Control implements PConstants {
 	/**
 	 * Allows to pass a target object where the given method is declared.
 	 * 
+	 * @see #addMouseListener(String, String)
+	 * 
 	 * @param type       String for event type
 	 * @param methodName name of callback method
 	 * @param target     Object where the callback method is declared.
 	 * @return false if type is invalid, method is not accessible or a listener has already been
 	 *         registered for this type. Returns true if successful.
 	 * 
-	 * @see #addMouseListener(String, String)
 	 */
 	public boolean addMouseListener(String type, String methodName, Object target) {
 		switch (type) {
@@ -3113,11 +3287,11 @@ public abstract class Control implements PConstants {
 
 	/**
 	 * Add a mouse listener in form of a lambda expression. For possible types see
-	 * {@link Control#addMouseListener(String, String)}.
+	 * {@link #addMouseListener(String, String)}.
 	 * 
 	 * Event parameters: none
 	 * 
-	 * @param type {@link Control#addMouseListener(String, Object)}
+	 * @param type see {@link #addMouseListener(String, String)}
 	 * @param p    lambda expression
 	 */
 	public void addMouseListener(String type, Predicate p) {
@@ -3148,11 +3322,11 @@ public abstract class Control implements PConstants {
 
 	/**
 	 * Add a mouse listener in form of a lambda expression with a {@link MouseEvent} as argument. For
-	 * possible types see {@link Control#addMouseListener(String, String)}.
+	 * possible types see {@link #addMouseListener(String, String)}.
 	 * 
 	 * Event parameters: {@link MouseEvent}
 	 * 
-	 * @param type {@link Control#addMouseListener(String, Object)}
+	 * @param type see {@link #addMouseListener(String, String)}
 	 * @param p    lambda expression with a {@link MouseEvent} as argument.
 	 */
 	public void addMouseListener(String type, Predicate1<MouseEvent> p) {
@@ -3604,7 +3778,7 @@ public abstract class Control implements PConstants {
 	// debugging function - get text if textbased
 	protected String textIfTextBased() {
 		if (this instanceof TextBased) {
-			return ((TextBased) this).text;
+			return ((TextBased) this).getText();
 		} else
 			return this.toString();
 	}
@@ -3615,6 +3789,17 @@ public abstract class Control implements PConstants {
 
 	protected static Frame getFrame() {
 		return Frame.getFrame();
+	}
+
+
+
+	/**
+	 * Get guiSET version. I really hope I'll always remember syncing this.
+	 * 
+	 * @return version
+	 */
+	public String getVersion() {
+		return "Version 0.0.12";
 	}
 
 }

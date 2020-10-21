@@ -17,8 +17,7 @@ import processing.event.*;
 
 
 /**
- * A Container that layouts its content vertically and enables a scrollbar if
- * the content overflows.
+ * A Container that layouts its content vertically and enables a scrollbar if the content overflows.
  * 
  * @author Mc-Zen
  *
@@ -61,24 +60,24 @@ public class VScrollContainer extends VFlowContainer {
 
 		drawDefaultBackground();
 
-		fullScrollHeight = paddingTop + paddingBottom;
+		fullScrollHeight = getPaddingTop() + getPaddingBottom();
 
 		for (Control c : items) {
-			if (c.visible) {
-				fullScrollHeight += c.marginTop + c.getHeight() + c.marginBottom;
+			if (c.isVisible()) {
+				fullScrollHeight += c.getMarginTop() + c.getHeight() + c.getMarginBottom();
 			}
 		}
 		// do this here and not in setScrollPosition() as fullscrollHeight might have
 		// changed.
 		scrollPosition = PApplet.constrain(scrollPosition, 0, PApplet.max(0, fullScrollHeight - getHeight()));
 
-		int usedSpace = paddingTop;
+		int usedSpace = getPaddingTop();
 		for (Control c : items) {
-			if (c.visible) {
+			if (c.isVisible()) {
 				// don't draw and render if control is not visible
 
-				int cx0 = c.marginLeft + paddingLeft;
-				int cy0 = usedSpace + c.marginTop - scrollPosition;
+				int cx0 = c.getMarginLeft() + getPaddingLeft();
+				int cy0 = usedSpace + c.getMarginTop() - scrollPosition;
 
 				if (cy0 > getHeight() || cy0 + c.getHeight() < 0) { // out of the containers bounds due to scrolling
 					c.offsetX = getWidth(); // one should suffice
@@ -87,13 +86,14 @@ public class VScrollContainer extends VFlowContainer {
 					renderItem(c, cx0, cy0);
 				}
 
-				usedSpace += (c.getHeight() + c.marginTop + c.marginBottom);
+				usedSpace += (c.getHeight() + c.getMarginTop() + c.getMarginBottom());
 			}
 		}
 
 		drawScrollbar();
 		drawDefaultDisabled();
 	}
+
 //
 //
 //	// draw vertical scrollbar if needed
@@ -114,23 +114,23 @@ public class VScrollContainer extends VFlowContainer {
 //		}
 //	}
 	// draw vertical scrollbar if needed
-		protected void drawScrollbar() {
-			if (needsScrollbarV()) { // don't display scroll-bar when there's nothing to scroll
+	protected void drawScrollbar() {
+		if (needsScrollbarV()) { // don't display scroll-bar when there's nothing to scroll
 
-				pg.fill(SCROLL_BAR_COLOR);
-				pg.noStroke();
+			pg.fill(SCROLL_BAR_COLOR);
+			pg.noStroke();
 
-				if (slim_scrollhandle) {
-					pg.rect(getWidth() - 1 - scrollHandleStrength, scrollhandle_posY(), scrollHandleStrength, scrollhandle_height(), 15);
-				} else {
-					
-					pg.rect(getWidth() - 2 - scrollHandleStrength, 0, scrollHandleStrength + 3, scrollbar_height());
-					pg.fill(startHandleDragPos > -1 ? SCROLL_HANDLE_COLOR : SCROLL_HANDLE_PRESSED_COLOR);
-					pg.stroke(SCROLL_HANDLE_BORDER_COLOR);
-					pg.rect(getWidth() - 2 - scrollHandleStrength, scrollhandle_posY(), scrollHandleStrength+1, scrollhandle_height(), SCROLL_HANDLE_BORDER_RADIUS);
-				}
+			if (slim_scrollhandle) {
+				pg.rect(getWidth() - 1 - scrollHandleStrength, scrollhandle_posY(), scrollHandleStrength, scrollhandle_height(), 15);
+			} else {
+
+				pg.rect(getWidth() - 2 - scrollHandleStrength, 0, scrollHandleStrength + 3, scrollbar_height());
+				pg.fill(isDraggingScrollHandle() ? SCROLL_HANDLE_COLOR : SCROLL_HANDLE_PRESSED_COLOR);
+				pg.stroke(SCROLL_HANDLE_BORDER_COLOR);
+				pg.rect(getWidth() - 2 - scrollHandleStrength, scrollhandle_posY(), scrollHandleStrength + 1, scrollhandle_height(), SCROLL_HANDLE_BORDER_RADIUS);
 			}
 		}
+	}
 
 	/*
 	 * some methods needed for controlling and drawing the scrollbars
@@ -175,15 +175,15 @@ public class VScrollContainer extends VFlowContainer {
 
 	public void scrollToItem(int index) {
 		if (index >= 0 && index < items.size()) {
-			int y = paddingTop;
+			int y = getPaddingTop();
 			for (int i = 0; i < index; i++) {
-				y += items.get(i).marginTop + items.get(i).getHeight() + items.get(i).marginBottom;
+				y += items.get(i).getMarginTop() + items.get(i).getHeight() + items.get(i).getMarginBottom();
 			}
 			Control item = items.get(index);
 			if (scrollPosition > y) {
 				setScrollPosition(y);
 			} else if (scrollPosition + getHeight() < y + item.getHeight()) {
-				setScrollPosition(y - getHeight() + item.getHeight() + item.marginTop + item.marginBottom);
+				setScrollPosition(y - getHeight() + item.getHeight() + item.getMarginTop() + item.getMarginBottom());
 			}
 		}
 	}
@@ -192,16 +192,16 @@ public class VScrollContainer extends VFlowContainer {
 		if (items.indexOf(item) == -1)
 			return;
 
-		int y = paddingTop;
+		int y = getPaddingTop();
 		for (int i = 0; i < items.size(); i++) {
 			if (item == items.get(i))
 				break;
-			y += items.get(i).marginTop + items.get(i).getHeight() + items.get(i).marginBottom;
+			y += items.get(i).getMarginTop() + items.get(i).getHeight() + items.get(i).getMarginBottom();
 		}
 		if (scrollPosition > y) {
 			setScrollPosition(y);
 		} else if (scrollPosition + getHeight() < y + item.getHeight()) {
-			setScrollPosition(y - getHeight() + item.getHeight() + item.marginTop + item.marginBottom);
+			setScrollPosition(y - getHeight() + item.getHeight() + item.getMarginTop() + item.getMarginBottom());
 		}
 	}
 
@@ -321,7 +321,7 @@ public class VScrollContainer extends VFlowContainer {
 
 	@Override
 	protected void drag(MouseEvent e) {
-		if (startHandleDragPos > -1) {
+		if (isDraggingScrollHandle()) {
 			int newScrollHandle_Pos = e.getY() - getOffsetYWindow() - startHandleDragPos;
 			int newScrollPosition = newScrollHandle_Pos * (fullScrollHeight - getHeight()) / (scrollbar_height() - scrollhandle_height());
 			setScrollPosition(newScrollPosition);
@@ -335,9 +335,15 @@ public class VScrollContainer extends VFlowContainer {
 	@Override
 	protected void release(MouseEvent e) {
 		super.release(e);
-		startHandleDragPos = -1;
+		if (isDraggingScrollHandle()) {
+			startHandleDragPos = -1;
+			update();
+		}
 	}
 
+	protected boolean isDraggingScrollHandle() {
+		return startHandleDragPos != -1;
+	}
 
 
 	/*
@@ -355,6 +361,7 @@ public class VScrollContainer extends VFlowContainer {
 
 		if (MouseEvent.PRESS == currentMouseEvent.getAction() && mouseIsOverScrollBar) {
 			int scrollhandle_posY = scrollhandle_posY();
+			update();
 
 			// if clicked on scrollhandle itself (instead of entire scroll area) the
 			// dragging is started

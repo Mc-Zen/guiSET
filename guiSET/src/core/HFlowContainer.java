@@ -20,17 +20,16 @@ public class HFlowContainer extends Container {
 	protected void render() {
 		drawDefaultBackground();
 
-		int usedSpace = paddingLeft;
+		int usedSpace = getPaddingLeft();
 
 		for (Control c : items) {
-			if (c.visible) {
-				renderItem(c, usedSpace + c.marginLeft, c.marginTop + paddingTop);
-				usedSpace += (c.getWidth() + c.marginLeft + c.marginRight);
+			if (c.isVisible()) {
+				renderItem(c, usedSpace + c.getMarginLeft(), c.getMarginTop() + getPaddingTop());
+				usedSpace += (c.getWidth() + c.getMarginLeft() + c.getMarginRight());
 			}
 		}
 		drawDefaultDisabled();
 	}
-
 
 	// this container overrides items x/y property and gives them new location. All items are next to
 	// each other and will not overlap
@@ -38,6 +37,5 @@ public class HFlowContainer extends Container {
 	protected boolean needsSortingByZ() {
 		return false;
 	}
-
 
 }

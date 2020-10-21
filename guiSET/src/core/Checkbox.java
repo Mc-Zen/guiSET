@@ -63,9 +63,9 @@ public class Checkbox extends TextBased {
 		super();
 
 		setBackgroundColor(TRANSPARENT); // tranparent
-		setUncheckedBackgroundColor(-6250336); // grey
-		setCheckedBackgroundColor(-13732742); // greenish
-		setCheckmarkColor(-328966); // almost white
+		setUncheckedBackgroundColor(Constants.DefaultCheckboxUncheckedColor);
+		setCheckedBackgroundColor(Constants.DefaultCheckboxCheckedColor); 
+		setCheckmarkColor(Constants.DefaultCheckboxCheckmarkColor); 
 		setText(text);
 		setTextAlign(LEFT);
 		setPaddingLeft(checkboxSize + checkboxSize / 4);
@@ -90,17 +90,17 @@ public class Checkbox extends TextBased {
 		drawDefaultBackground();
 
 		// draw checkbox
-		pg.fill(checked ? checkedBackgroundColor : uncheckedBackgroundColor);
+		pg.fill(isChecked() ? checkedBackgroundColor : uncheckedBackgroundColor);
 		pg.strokeWeight(checkboxSize / 20f);
 		pg.stroke(borderColor);
-		pg.rect(1, 1 + paddingTop, checkboxSize - 2, checkboxSize - 2, 2);
+		pg.rect(1, 1 + getPaddingTop(), checkboxSize - 2, checkboxSize - 2, 2);
 
 		// draw check mark
-		if (checked) {
+		if (isChecked()) {
 			pg.strokeWeight(checkboxSize / 10.0f);
 			pg.stroke(checkmarkColor);
-			pg.line(checkboxSize / 4, checkboxSize / 2 + paddingTop, checkboxSize / 2.5f, 3 * checkboxSize / 4 + paddingTop);
-			pg.line(checkboxSize / 2.5f, 3 * checkboxSize / 4 + paddingTop, 3 * checkboxSize / 4, checkboxSize / 4 + paddingTop);
+			pg.line(checkboxSize / 4, checkboxSize / 2 + getPaddingTop(), checkboxSize / 2.5f, 3 * checkboxSize / 4 + getPaddingTop());
+			pg.line(checkboxSize / 2.5f, 3 * checkboxSize / 4 + getPaddingTop(), 3 * checkboxSize / 4, checkboxSize / 4 + getPaddingTop());
 		}
 
 		// draw text
@@ -110,7 +110,7 @@ public class Checkbox extends TextBased {
 		if (!enabled) {
 			pg.noStroke();
 			pg.fill(150, 150);
-			pg.rect(1, 1 + paddingTop, checkboxSize - 2, checkboxSize - 2, 2);
+			pg.rect(1, 1 + getPaddingTop(), checkboxSize - 2, checkboxSize - 2, 2);
 		}
 	}
 
@@ -122,12 +122,12 @@ public class Checkbox extends TextBased {
 //	}
 	@Override
 	protected int autoHeight() {
-		return (int) (Math.max(checkboxSize, textHeight(text)) + paddingTop + paddingBottom);
+		return (int) (Math.max(checkboxSize, textHeight(getText())) + getPaddingTop() + getPaddingBottom());
 	}
 
 	@Override
 	protected int autoWidth() {
-		return (int) textWidth(text) + paddingLeft + paddingRight;
+		return (int) textWidth(getText()) + getPaddingLeft() + getPaddingRight();
 	}
 
 
@@ -296,7 +296,7 @@ public class Checkbox extends TextBased {
 		if (!reactToEntireField) {
 			int x_ = e.getX() - getOffsetXWindow();
 			int y_ = e.getY() - getOffsetYWindow();
-			if (!(x_ < checkboxSize && y_ > paddingTop && y_ < checkboxSize + paddingTop))
+			if (!(x_ < checkboxSize && y_ > getPaddingTop() && y_ < checkboxSize + getPaddingTop()))
 				return;
 		}
 		setChecked(!checked);

@@ -12,7 +12,7 @@ import processing.core.*;
 public class Label extends TextBased {
 
 	public Label() {
-		this("", 12);
+		this("", Constants.DefaultTextSize);
 	}
 
 	/**
@@ -22,7 +22,7 @@ public class Label extends TextBased {
 	 * @param text text for label
 	 */
 	public Label(String text) {
-		this(text, 12);
+		this(text, Constants.DefaultTextSize);
 	}
 
 	/**
@@ -34,7 +34,7 @@ public class Label extends TextBased {
 	 * @param y    y position
 	 */
 	public Label(String text, int x, int y) {
-		this(text, 12);
+		this(text, Constants.DefaultTextSize);
 		setPosition(x, y);
 	}
 
@@ -51,7 +51,7 @@ public class Label extends TextBased {
 		setText(text);
 		setFontSize(fontSize);
 		setBackgroundColor(TRANSPARENT);
-		setPadding(3);
+		setPadding(Constants.DefaultLabelPadding);
 	}
 
 	/**
@@ -97,11 +97,12 @@ public class Label extends TextBased {
 
 	@Override
 	protected int autoHeight() {
-		return (int) textHeight(text) + paddingTop + paddingBottom;
+		return (int) textHeight(getText()) + getPaddingTop() + getPaddingBottom();
 	}
 
 	@Override
 	protected int autoWidth() {
-		return (int) textWidth(text) + paddingLeft + paddingRight;
+		return (int) textWidth(getText()) + getPaddingLeft ()+ getPaddingRight();
 	}
+
 }

@@ -129,6 +129,10 @@ public class MenuItem extends TextBased {
 	 * It's easier to keep this list a Control-list and not a MenuItem-list because
 	 * the MenuStrip extends Container which has a Control-list and the lists are
 	 * synchronized.
+	 * 
+	 * MenuItem does not simply subclass container because the event handling of container 
+	 * is not desired to be inherited. Also the item adding methods should only allow 
+	 * MenuItems. 
 	 */
 	protected ArrayList<Control> items;
 
@@ -180,8 +184,17 @@ public class MenuItem extends TextBased {
 	 * closing entire strips when another one ie opened - or opening on hover when
 	 * any header is already open (no clicking needed).
 	 */
-	protected static MenuItem headers[] = {};
+	protected static ArrayList<MenuItem> headers = new ArrayList<MenuItem>();
+	
+	
+	/*
+	 * Time to wait until to open a sub-menustrip (in milliseconds)
+	 */
+	public static int hoverTime = Constants.DefaultMenuItemHoverTime;
 
+	/*
+	 * Display checkmark if true
+	 */
 	protected boolean checked = false;
 
 
@@ -352,6 +365,10 @@ public class MenuItem extends TextBased {
 
 	@Override
 	protected void addedToParent() {
+		determineTypeAndSetup();
+	}
+
+	protected void determineTypeAndSetup() {
 		if (parent instanceof MenuStrip) {
 			type = Type.NESTED_MENU_ITEM;
 			setStyleOfNestedMenuItem();
@@ -366,19 +383,14 @@ public class MenuItem extends TextBased {
 			type = Type.MENU_HEADER;
 			setStyleOfMenuHeader();
 
-			// set this as header recursively for all (sub...-) children. This is only
+			// Set this as header recursively for all (sub...-) children. This is only
 			// necessary for headers as it is already included in the add() method when
 			// adding MenuItems.
 			setHeader(this);
 			addMenuStrips(); // add all menustrips recursively (preserve right z-order)
 
-			// add this item to static headers array
-			MenuItem headersTemp[] = new MenuItem[headers.length + 1];
-			for (int i = 0; i < headers.length; i++) {
-				headersTemp[i] = headers[i];
-			}
-			headersTemp[headers.length] = this;
-			headers = headersTemp;
+			// Add this item to static headers array
+			headers.add(this);
 		}
 		autosize();
 	}
@@ -387,22 +399,15 @@ public class MenuItem extends TextBased {
 		setTextAlign(LEFT);
 		setHoverColor(MENUITEM_HOVER_COLOR);
 		setPaddingLeft(Constants.MenuItemPaddingLeft);
+		setPaddingRight(Constants.MenuItemPaddingRight);
 	}
 
 	private void setStyleOfMenuHeader() {
 		setTextAlign(CENTER);
 	}
 
-	/*
-	 * Called when this menu item has been added to another MenuItem, ContextMenu 
-	 * that already has a direct connection to the MenuBar
-	 */
-	protected void connectedToMenuSurface() {
-
-	}
-
 	protected boolean isHeaderStripConnected() {
-		return headerStrip != null && headerStrip.parent != null;
+		return headerStrip != null && (headerStrip.parent != null || headerStrip instanceof ContextMenu);
 	}
 
 
@@ -429,6 +434,7 @@ public class MenuItem extends TextBased {
 		 */
 		if (type == Type.NESTED_MENU_ITEM) {
 			setMinWidth(baseWidth + paddingLeft + paddingRight); // 27 is the left padding
+			return (int) (baseWidth + shortcutWidth + paddingLeft + paddingRight);
 		} else if (type == Type.MENU_HEADER) {
 			return baseWidth + paddingLeft + paddingRight;
 		} else {
@@ -560,8 +566,8 @@ public class MenuItem extends TextBased {
 
 
 	protected static void closeOpenHeaders() {
-		for (MenuItem h : headers) {
-			h.close();
+		for (MenuItem header : headers) {
+			header.close();
 		}
 	}
 
@@ -584,19 +590,19 @@ public class MenuItem extends TextBased {
 	 * Only for header items. When an item is selected by clicking then it calls
 	 * this method for its header. The header then closes up the entire strip.
 	 */
-	protected void childSelected(MenuItem c) {
+	protected void childSelected(MenuItem item) {
 		close();
-		if (c != this) { // not sure if this can even happen
-			c.selected(c);
+		if (item != this) { // not sure if this can even happen
+			item.selected(item);
 		}
-		handleEvent(childSelectListener, c);
+		handleEvent(childSelectListener, item);
 	}
 
 	/*
 	 * For all items. Header calls this after being selected
 	 */
-	protected void selected(MenuItem c) {
-		handleEvent(selectListener, c);
+	protected void selected(MenuItem item) {
+		handleEvent(selectListener, item);
 	}
 
 
@@ -634,7 +640,7 @@ public class MenuItem extends TextBased {
 	 */
 
 
-	private void createDropDownIfNecessary() {
+	protected void createDropDownIfNecessary() {
 		if (dropDown == null) {
 			dropDown = new MenuStrip();
 			dropDown.items = items; // sync dropDown items with items of this MenuItem
@@ -674,11 +680,11 @@ public class MenuItem extends TextBased {
 	/**
 	 * Add subitems for this item.
 	 * 
-	 * @param newItems newItems
+	 * @param items newItems
 	 */
-	public void add(MenuItem... newItems) {
-		for (MenuItem c : newItems) {
-			insertImpl(items.size(), c);
+	public void add(MenuItem... items) {
+		for (MenuItem c : items) {
+			insertImpl(this.items.size(), c);
 		}
 		dropDown.update(); // dont need to update this
 	}
@@ -706,11 +712,11 @@ public class MenuItem extends TextBased {
 	 * Insert subitems at given position.
 	 * 
 	 * @param position position
-	 * @param newItems arbitrary number of items
+	 * @param items arbitrary number of items
 	 */
-	public void insert(int position, MenuItem... newItems) {
-		for (int i = 0; i < newItems.length; i++) {
-			insertImpl(position + i, newItems[i]);
+	public void insert(int position, MenuItem... items) {
+		for (int i = 0; i < items.length; i++) {
+			insertImpl(position + i, items[i]);
 		}
 		dropDown.update();// dont need to update this
 	}
@@ -943,13 +949,13 @@ public class MenuItem extends TextBased {
 	}
 
 	protected void startHoverTimer() {
-		// cancel task when having left another item in under 0.4s
+		// cancel task when having left another item in under MenuItemHoverMilliseconds
 		if (hoverTimerTask != null)
 			hoverTimerTask.cancel();
 
 		// create task new
 		hoverTimerTask = new HoverTimerTask(this);
-		hoverTimer.schedule(hoverTimerTask, 400);
+		hoverTimer.schedule(hoverTimerTask, hoverTime);
 	}
 
 	/*
@@ -969,9 +975,9 @@ public class MenuItem extends TextBased {
 			// immediately (doesn't apply if this header is the open one)
 
 			if (!open) {
-				for (int i = 0; i < headers.length; i++) {
-					if (headers[i].open) {
-						headers[i].close();
+				for (MenuItem header : headers) {
+					if (header.open) {
+						header.close();
 						open();
 						break;
 					}
@@ -1033,9 +1039,9 @@ class MenuStrip extends Container {
 	public MenuStrip() {
 		super();
 		setBackgroundColor(MENUSTRIP_BACKGROUND_COLOR);
-		borderColor = MENUSTRIP_BORDER_COLOR;
-		borderWidth = 1;
-		visible = false;
+		setBorder(1, MENUSTRIP_BORDER_COLOR);
+		setVisible(false);
+		setBoxShadow(4, 7, 7, BLACK, .4f);
 	}
 
 
@@ -1043,16 +1049,16 @@ class MenuStrip extends Container {
 	protected void render() {
 		// obtain needed width (maximum of item minWidth)
 		int w = 100;
-		for (int i = 0; i < items.size(); i++) {
-			w = Math.max(w, items.get(i).minWidth);
+		for(Control item : items) {
+			w = Math.max(w, item.minWidth);
 		}
 		setWidth(w);
 
 		// obtain needed height (sum of item heights), also set items width
 		int h = 1;
-		for (int i = 0; i < items.size(); i++) {
-			h += items.get(i).getHeight();
-			items.get(i).setWidthNoUpdate(getWidth());
+		for(Control item : items) {
+			h += item.getHeight();
+			item.setWidthNoUpdate(getWidth()); // is already being updated
 		}
 		setHeight(h);
 
@@ -1063,7 +1069,7 @@ class MenuStrip extends Container {
 			pg.beginDraw();
 		}
 
-		drawShadow(getWidth(), getHeight(), 5);
+		//drawShadow(getWidth(), getHeight(), 5);
 
 		drawDefaultBackground();
 
@@ -1076,10 +1082,10 @@ class MenuStrip extends Container {
 
 		int usedSpace = paddingTop;
 
-		for (Control c : items) {
-			if (c.visible) {
-				renderItem(c, c.marginLeft + paddingLeft, usedSpace + c.marginTop);
-				usedSpace += (c.getHeight() + c.marginTop + c.marginBottom);
+		for (Control item : items) {
+			if (item.visible) {
+				renderItem(item, item.marginLeft + paddingLeft, usedSpace + item.marginTop);
+				usedSpace += (item.getHeight() + item.marginTop + item.marginBottom);
 			}
 		}
 	}

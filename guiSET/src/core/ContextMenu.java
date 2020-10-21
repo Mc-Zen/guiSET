@@ -2,10 +2,10 @@ package guiSET.core;
 
 
 /**
- * Create a tool/menu strip outside the main menu, i.e. for dropdown menus that
- * open upon rightclick. The dropdown can be shown/hidden width the show() and
- * hide() methods. The position is automatically set to the current mouse
- * position
+ * Create a tool/menu strip outside the main menu, i.e. for dropdown menus that open upon
+ * rightclick. A ContextMenu does not need to (and should not) be added to a container. The dropdown
+ * can be shown/hidden width the show() and hide() methods. The position is automatically set to the
+ * current mouse position.
  * 
  * @author Mc-Zen
  *
@@ -13,18 +13,11 @@ package guiSET.core;
 public class ContextMenu extends MenuItem {
 
 	public ContextMenu() {
-		dropDown = new MenuStrip();
-		// sync DropDown content with items
-		dropDown.items = items;
-		addedToParent();
-		setVisible(false); // needs never to be visible
+		createDropDownIfNecessary();
+		setVisible(false); // Needs never to be visible
+		determineTypeAndSetup();
 
-		// this is also always the header of the strip
-	}
-
-	@Override
-	protected void update() {
-		// needs no updates
+		// This is also always the header of the strip
 	}
 
 	/**

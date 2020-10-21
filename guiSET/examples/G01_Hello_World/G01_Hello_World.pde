@@ -16,6 +16,9 @@ void setup(){
     f = new Frame(this);        // this is important to do first !
     myButton = new Button();
     myTextbox = new Textbox();
+    
+    // In Processing 4, you also will be able to use Lambda Expressions as callback functions:
+    // myButton = new Button("Hello World", ()->println("Pressed Hello World, the textbox' content is: \"" + myTextbox.getText() + "\""));
 
     f.add(myButton, myTextbox); // adds both components to the Frame
 
@@ -23,9 +26,9 @@ void setup(){
     myButton.setBackgroundColor(color(200, 150, 200)); // set the background color of the button to some purple tone
     myButton.setPosition(20, 20);             // set the position of the button on the sketch in pixel
    
-    // This is called a "listener". When myButton is pressed we want the 
-    //   myButton_pressed() method (see below) to be called. 
-    myButton.addMouseListener("press", "myButton_pressed");
+    // This is called a "listener". When myButton is clicked we want the 
+    //   myButton_clicked() method (see below) to be called. 
+    myButton.addClickListener("myButton_clicked");
 
     myTextbox.setPosition(20, 70);            // set the position of the textbox on the sketch in pixel
     myTextbox.setWidth(myButton.getWidth());  // make width match with button 
@@ -40,6 +43,6 @@ void draw(){
 
 
 // This will be called when the button has been pressed. 
-void myButton_pressed(){
-  println("Pressed Hello World, the textbox' content is: \"" + myTextbox.getText() + "\"");
+void myButton_clicked(){
+  println("Clicked Hello World button, the textbox content is: \"" + myTextbox.getText() + "\"");
 }

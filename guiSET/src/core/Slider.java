@@ -23,9 +23,9 @@ import processing.event.*;
  */
 public class Slider extends Control {
 
-	protected float value;
-	protected float minValue = Constants.SliderDefaultMinValue;
-	protected float maxValue = Constants.SliderDefaultMaxValue;
+	protected float value = Constants.DefaultSliderMinValue;
+	protected float minValue = Constants.DefaultSliderMinValue;
+	protected float maxValue = Constants.DefaultSliderMaxValue;
 
 
 	public enum Orientation {
@@ -42,7 +42,8 @@ public class Slider extends Control {
 	protected Orientation orientation = Orientation.HORIZONTAL;
 
 	protected boolean wheelEnabled = false;
-	protected float relativeScrollSpeed = 0.02f; // Percentage-based scroll speed. Value of 1 means from min to max in one wheel movement
+	protected float relativeWheelSpeed = Constants.DefaultSliderRelativeWheelSpeed; // Percentage-based scroll speed. Value of 1 means from min to max in one wheel
+																					 // movement
 
 
 
@@ -80,11 +81,11 @@ public class Slider extends Control {
 
 
 			// slider background
-			pg.fill(backgroundColor);
+			pg.fill(getBackgroundColor());
 			pg.rect(1 + ballSize / 2, getHeight() / 2 - lineHeight / 2, sliderWidth, lineHeight);
 
 			// slider active background
-			pg.fill(foregroundColor);
+			pg.fill(getForegroundColor());
 			pg.rect(1 + ballSize / 2, getHeight() / 2 - lineHeight / 2, (float) (sliderWidth) / intervalLength * (value - minValue), lineHeight);
 
 			// slider ball
@@ -98,12 +99,12 @@ public class Slider extends Control {
 
 
 			// slider background
-			pg.fill(backgroundColor);
+			pg.fill(getBackgroundColor());
 			pg.rect(getWidth() / 2 - lineWidth / 2, 1 + ballSize / 2, lineWidth, sliderHeight);
 
 			// slider active background
 			float activePartHeight = (float) (sliderHeight) / intervalLength * (value - minValue);
-			pg.fill(foregroundColor);
+			pg.fill(getForegroundColor());
 			pg.rect(getWidth() / 2 - lineWidth / 2, getHeight() - (1 + ballSize / 2) - activePartHeight, lineWidth, activePartHeight);
 
 			// slider ball
@@ -232,12 +233,15 @@ public class Slider extends Control {
 	}
 
 	/**
-	 * Set the scroll speed a.k.a the amount to scroll if wheelEnabled is set to true.
+	 * Set the speed for changing the value with the mouse wheel; the value represents the relative
+	 * speed in percent of the set interval length (abs(min-max)). The default value of 0.02 changes the
+	 * current value by 2 percent of the interval length. The user needs to turn his/her mouse wheel 50
+	 * ticks to get from minimum value to maximum value.
 	 * 
-	 * @param scrollSpeed scrollSpeed
+	 * @param setRelativeWheelSpeed setRelativeWheelSpeed
 	 */
-	public void setWheelAmmount(float scrollSpeed) {
-		this.relativeScrollSpeed = scrollSpeed;
+	public void setRelativeWheelSpeed(float setRelativeWheelSpeed) {
+		this.relativeWheelSpeed = setRelativeWheelSpeed;
 	}
 
 
@@ -271,8 +275,8 @@ public class Slider extends Control {
 		return wheelEnabled;
 	}
 
-	public float getWheelAmmount() {
-		return relativeScrollSpeed;
+	public float getRelativeWheelSpeed() {
+		return relativeWheelSpeed;
 	}
 
 
@@ -365,8 +369,7 @@ public class Slider extends Control {
 	protected void mouseWheel(MouseEvent e) {
 		int delta = e.getCount() < 0 ? 1 : -1;
 		if (wheelEnabled)
-			setValue(value + delta * relativeScrollSpeed * getIntervalLength());
-		print(delta * relativeScrollSpeed, getIntervalLength());
+			setValue(value + delta * relativeWheelSpeed * getIntervalLength());
 	}
 }
 

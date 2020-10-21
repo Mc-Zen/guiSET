@@ -25,7 +25,7 @@ public class Knob extends Slider {
 	public Knob() {
 		setSize(70, 70);
 		setWheelEnabled(true);
-		setWheelAmmount(-getWheelAmmount());
+		setRelativeWheelSpeed(-getRelativeWheelSpeed());
 		setMinValue(-20f);
 		setMaxValue(1);
 	}

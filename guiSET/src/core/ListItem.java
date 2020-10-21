@@ -61,7 +61,7 @@ public class ListItem extends TextBased {
 
 	@Override
 	protected int autoHeight() {
-		return (int) textHeight(text) + paddingTop + paddingBottom;
+		return (int) textHeight(getText()) + getPaddingTop() + getPaddingBottom();
 	}
 
 

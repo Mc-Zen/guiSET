@@ -180,7 +180,7 @@ public class ListView extends VScrollContainer {
 			Control c = items.get(index);
 			if (c instanceof ListItem) {
 				// only raise event if item has not been selected before
-				if (((ListItem) c).selected) {
+				if (((ListItem) c).isSelected()) {
 					((ListItem) c).selected = false; // dont use setter here
 					c.update();
 				}
@@ -281,21 +281,21 @@ public class ListView extends VScrollContainer {
 		newListItem.setText(newItem);
 		newListItem.setFontSize(getFontSize());
 		newListItem.setTextAlign(getTextAlign());
-		newListItem.setSelectionColor(selectionColor);
-		newListItem.setSelectionHoverColor(selectionHoverColor);
-		newListItem.setTextColor(foregroundColor);
+		newListItem.setSelectionColor(getSelectionColor());
+		newListItem.setSelectionHoverColor(getSelectionHoverColor());
+		newListItem.setTextColor(getTextColor());
 
 		this.add(newListItem);
 	}
 
 
 	@Override
-	public void add(Control... newItems) {
-		for (Control c : newItems) {
-			if (c instanceof ListItem) {
-				c.setWidth(getAvailableWidth());
+	public void add(Control... items) {
+		for (Control item : items) {
+			if (item instanceof ListItem) {
+				item.setWidth(getAvailableWidth());
 			}
-			insertImpl(items.size(), c);
+			insertImpl(this.items.size(), item);
 		}
 		// no sorting
 		update();
@@ -360,9 +360,9 @@ public class ListView extends VScrollContainer {
 	public void sortAlphaNumerically(boolean reversed) {
 		sortItems(new Comparator<Control>() {
 			@Override
-			public int compare(Control c1, Control c2) {
-				if (c1 instanceof TextBased && c2 instanceof TextBased) {
-					return ((TextBased) c1).getText().compareTo(((TextBased) c2).getText()) * (reversed ? -1 : 1);
+			public int compare(Control a, Control b) {
+				if (a instanceof TextBased && b instanceof TextBased) {
+					return ((TextBased) a).getText().compareTo(((TextBased) b).getText()) * (reversed ? -1 : 1);
 				} else {
 					return 0;
 				}
@@ -495,7 +495,7 @@ public class ListView extends VScrollContainer {
 	/**
 	 * Add a listener for when an item is selected.
 	 * 
-	 * Event arguments: the {@link #Control()} whose state has changed
+	 * Event arguments: the {@link Control} whose state has changed
 	 * 
 	 * @param methodName methodName
 	 * @param target     target
@@ -513,9 +513,9 @@ public class ListView extends VScrollContainer {
 	 * Add a listener lambda for when an item is selected. The event passes the item that has been
 	 * selected.
 	 * 
-	 * Event arguments: the {@link #Control()} whose state has changed
+	 * Event arguments: the {@link Control} whose state has changed
 	 * 
-	 * @param p lambda expression with {@link #Control()} parameter
+	 * @param p lambda expression with {@link Control} parameter
 	 */
 	public void addItemSelectListener(Predicate1<Control> p) {
 		selectListener = new LambdaEventListener1<Control>(p);

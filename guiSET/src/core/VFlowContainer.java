@@ -1,6 +1,5 @@
 package guiSET.core;
 
-
 /**
  * A Container that layouts its content vertically.
  * 
@@ -21,12 +20,12 @@ public class VFlowContainer extends Container {
 	protected void render() {
 		drawDefaultBackground();
 
-		int usedSpace = paddingTop;
+		int usedSpace = getPaddingTop();
 
 		for (Control c : items) {
-			if (c.visible) {
-				renderItem(c, c.marginLeft + paddingLeft, usedSpace + c.marginTop);
-				usedSpace += (c.getHeight() + c.marginTop + c.marginBottom);
+			if (c.isVisible()) {
+				renderItem(c, c.getMarginLeft() + getPaddingLeft(), usedSpace + c.getMarginTop());
+				usedSpace += (c.getHeight() + c.getMarginTop() + c.getMarginBottom());
 			}
 		}
 		drawDefaultDisabled();
