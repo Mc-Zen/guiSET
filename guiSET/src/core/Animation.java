@@ -188,7 +188,7 @@ public class Animation {
 				double gc = (g1 + (g2 - g1) / (float) numberOfSteps * counter);
 				double bc = (b1 + (b2 - b1) / (float) numberOfSteps * counter);
 
-				currentValue = Color.create((int) rc, (int) gc, (int) bc, (int) ac);
+				currentValue = GuisetColor.create((int) rc, (int) gc, (int) bc, (int) ac);
 				break;
 			}
 			counter++;

@@ -1,5 +1,6 @@
 package guiSET.core;
 
+
 import processing.core.*;
 
 
@@ -12,7 +13,7 @@ import processing.core.*;
 public class Label extends TextBased {
 
 	public Label() {
-		this("", Constants.DefaultTextSize);
+		this("", GuisetDefaultValues.fontSize);
 	}
 
 	/**
@@ -22,7 +23,7 @@ public class Label extends TextBased {
 	 * @param text text for label
 	 */
 	public Label(String text) {
-		this(text, Constants.DefaultTextSize);
+		this(text, GuisetDefaultValues.fontSize);
 	}
 
 	/**
@@ -34,7 +35,7 @@ public class Label extends TextBased {
 	 * @param y    y position
 	 */
 	public Label(String text, int x, int y) {
-		this(text, Constants.DefaultTextSize);
+		this(text, GuisetDefaultValues.fontSize);
 		setPosition(x, y);
 	}
 
@@ -50,8 +51,8 @@ public class Label extends TextBased {
 		super();
 		setText(text);
 		setFontSize(fontSize);
-		setBackgroundColor(TRANSPARENT);
-		setPadding(Constants.DefaultLabelPadding);
+		setBackgroundColor(GuisetDefaultValues.labelBackgroundColor);
+		setPadding(GuisetDefaultValues.labelPadding);
 	}
 
 	/**

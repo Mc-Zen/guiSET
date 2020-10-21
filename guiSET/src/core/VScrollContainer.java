@@ -2,6 +2,7 @@ package guiSET.core;
 
 
 
+
 /*
  * VScrollContainer is a container that allows vertical scrolling. 
  * This way items can exceed the displayed height of the container. 
@@ -32,7 +33,7 @@ public class VScrollContainer extends VFlowContainer {
 	protected int scrollPosition;
 
 	// speed at which container will be scrolled, can be set externally
-	protected int scrollSpeed = defaultScrollSpeed;
+	protected int scrollSpeed = GuisetDefaultValues.scrollSpeed;
 
 	// enable a thin version of scroll handle for small containers (i.e. smaller
 	// textboxes)
@@ -95,39 +96,23 @@ public class VScrollContainer extends VFlowContainer {
 	}
 
 //
-//
-//	// draw vertical scrollbar if needed
-//	protected void drawScrollbar() {
-//		if (needsScrollbarV()) { // don't display scroll-bar when there's nothing to scroll
-//
-//			pg.fill(130);
-//			pg.noStroke();
-//
-//			if (slim_scrollhandle) {
-//				pg.rect(width - 1 - scrollHandleStrength, scrollhandle_posY(), scrollHandleStrength, scrollhandle_height(), 15);
-//			} else {
-//				pg.stroke(0);
-//				pg.rect(width - 2 - scrollHandleStrength, 0, scrollHandleStrength + 3, scrollbar_height());
-//				pg.fill(startHandleDragPos > -1 ? 170 : 190);
-//				pg.rect(width - 1 - scrollHandleStrength, scrollhandle_posY(), scrollHandleStrength, scrollhandle_height(), 3);
-//			}
-//		}
-//	}
 	// draw vertical scrollbar if needed
 	protected void drawScrollbar() {
 		if (needsScrollbarV()) { // don't display scroll-bar when there's nothing to scroll
 
-			pg.fill(SCROLL_BAR_COLOR);
+			pg.fill(GuisetGlobalValues.scrollBarColor);
 			pg.noStroke();
 
 			if (slim_scrollhandle) {
-				pg.rect(getWidth() - 1 - scrollHandleStrength, scrollhandle_posY(), scrollHandleStrength, scrollhandle_height(), 15);
-			} else {
+				pg.rect(getWidth() - 1 - Constants.SCROLL_HANDLE_STRENGTH_SLIM, scrollhandle_posY(), Constants.SCROLL_HANDLE_STRENGTH_SLIM, scrollhandle_height(), 15);
 
-				pg.rect(getWidth() - 2 - scrollHandleStrength, 0, scrollHandleStrength + 3, scrollbar_height());
-				pg.fill(isDraggingScrollHandle() ? SCROLL_HANDLE_COLOR : SCROLL_HANDLE_PRESSED_COLOR);
-				pg.stroke(SCROLL_HANDLE_BORDER_COLOR);
-				pg.rect(getWidth() - 2 - scrollHandleStrength, scrollhandle_posY(), scrollHandleStrength + 1, scrollhandle_height(), SCROLL_HANDLE_BORDER_RADIUS);
+			} else {
+				pg.rect(getWidth() - getScrollbarStrength(), 0, getScrollbarStrength(), scrollbar_height());
+				pg.fill(isDraggingScrollHandle() ? GuisetGlobalValues.scrollHandleColor : GuisetGlobalValues.scrollHandlePressColor);
+				pg.strokeWeight(1);
+				pg.stroke(GuisetGlobalValues.scrollHandleBorderColor);
+				pg.rect(getWidth() - getScrollbarStrength(), scrollhandle_posY(), scrollHandleStrength, scrollhandle_height(),
+						GuisetGlobalValues.scrollHandleBorderRadius);
 			}
 		}
 	}
@@ -149,7 +134,11 @@ public class VScrollContainer extends VFlowContainer {
 
 	// get height of handle
 	protected int scrollhandle_height() {
-		return Math.max(Constants.MinScrollHandleLength, getHeight() * scrollbar_height() / fullScrollHeight);
+		return Math.max(Constants.MinimalScrollHandleLength, getHeight() * scrollbar_height() / fullScrollHeight);
+	}
+
+	int getScrollbarStrength() {
+		return scrollHandleStrength + 2;
 	}
 
 	// get position of handle
@@ -244,9 +233,9 @@ public class VScrollContainer extends VFlowContainer {
 	public void setSlimScrollHandle(boolean slim_scrollhandle) {
 		this.slim_scrollhandle = slim_scrollhandle;
 		if (slim_scrollhandle) {
-			scrollHandleStrength = SCROLL_HANDLE_STRENGTH_SLIM;
+			scrollHandleStrength = Constants.SCROLL_HANDLE_STRENGTH_SLIM;
 		} else {
-			scrollHandleStrength = SCROLL_HANDLE_STRENGTH_STD;
+			scrollHandleStrength = Constants.SCROLL_HANDLE_STRENGTH_STD;
 		}
 		update();
 	}
@@ -313,9 +302,7 @@ public class VScrollContainer extends VFlowContainer {
 
 	protected int startHandleDragPos = -1;
 
-	protected int scrollHandleStrength = SCROLL_HANDLE_STRENGTH_STD;
-	protected static final int SCROLL_HANDLE_STRENGTH_STD = 12;
-	protected static final int SCROLL_HANDLE_STRENGTH_SLIM = 3;
+	protected int scrollHandleStrength = Constants.SCROLL_HANDLE_STRENGTH_STD;
 
 
 
@@ -357,7 +344,7 @@ public class VScrollContainer extends VFlowContainer {
 	 */
 	@Override
 	protected boolean containerPreItemsMouseEvent(int x, int y) {
-		boolean mouseIsOverScrollBar = needsScrollbarV() && x > getWidth() - scrollHandleStrength - 3 && x < getWidth() && y > 0 && y < getHeight();
+		boolean mouseIsOverScrollBar = needsScrollbarV() && x > getWidth() - getScrollbarStrength() && x < getWidth() && y > 0 && y < getHeight();
 
 		if (MouseEvent.PRESS == currentMouseEvent.getAction() && mouseIsOverScrollBar) {
 			int scrollhandle_posY = scrollhandle_posY();

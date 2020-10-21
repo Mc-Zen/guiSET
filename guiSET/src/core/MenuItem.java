@@ -47,7 +47,7 @@ class MenuSurface extends Container {
 			setVisible(false);
 			setAnchors(LEFT, 0, RIGHT, 0, TOP, 0, BOTTOM, 0); // Fill entire Frame
 			setZ(Constants.MenuSurfaceZIndex);
-			setBackgroundColor(TRANSPARENT);
+			setBackgroundColor(GuisetColor.TRANSPARENT);
 		}
 	}
 
@@ -185,12 +185,6 @@ public class MenuItem extends TextBased {
 	 * any header is already open (no clicking needed).
 	 */
 	protected static ArrayList<MenuItem> headers = new ArrayList<MenuItem>();
-	
-	
-	/*
-	 * Time to wait until to open a sub-menustrip (in milliseconds)
-	 */
-	public static int hoverTime = Constants.DefaultMenuItemHoverTime;
 
 	/*
 	 * Display checkmark if true
@@ -209,9 +203,8 @@ public class MenuItem extends TextBased {
 		setPadding(0, 6, 0, 6);
 		setText(text);
 
-		setBackgroundColor(MENUITEM_BACKGROUND_COLOR);
-		setHoverColor(MENUHEADER_HOVER_COLOR); 		// just darken menucontainer backgroundcolor a bit
-		setPressedColor(MENUITEM_PRESS_COLOR); 		// only used by menu headers
+		setBackgroundColor(GuisetDefaultValues.menuItemBackgroundColor);
+		setPressedColor(GuisetDefaultValues.menuItemPressColor); 		// only used by menu headers
 
 		MenuSurface.usingMenus();
 	}
@@ -309,7 +302,7 @@ public class MenuItem extends TextBased {
 		 */
 		int temp = foregroundColor;
 		if (!enabled)
-			foregroundColor = Color.create(120);
+			foregroundColor = GuisetColor.create(120);
 
 		drawDefaultBackground();
 		drawDefaultText();
@@ -321,7 +314,7 @@ public class MenuItem extends TextBased {
 			 * Draw triangle to indicate that this item has subitems
 			 */
 			if (items.size() > 0) {
-				pg.fill(enabled ? MENUITEM_TRIANGLE_ENABLED_COLOR : MENUITEM_TRIANGLE_DISABLED_COLOR);
+				pg.fill(enabled ? GuisetGlobalValues.menuItemTriangleEnabledColor : GuisetGlobalValues.menuItemTriangleDisabledColor);
 				pg.stroke(0);
 				pg.strokeWeight(0);
 				pg.triangle(getWidth() - 4, getHeight() / 2, getWidth() - 7, getHeight() / 2 + 3, getWidth() - 7, getHeight() / 2 - 3);
@@ -343,8 +336,8 @@ public class MenuItem extends TextBased {
 			 * Draw checkmark
 			 */
 			if (checked) {
-				pg.fill(MENUITEM_CHECKMARK_FILL_COLOR);
-				pg.stroke(MENUITEM_CHECKMARK_STROKE_COLOR);
+				pg.fill(GuisetGlobalValues.menuItemCheckmarkFillColor);
+				pg.stroke(GuisetGlobalValues.menuItemCheckmarkStrokeColor);
 				pg.rect(2, 3, 18, 18, 2); 	// box
 
 				pg.strokeWeight(2);
@@ -397,13 +390,14 @@ public class MenuItem extends TextBased {
 
 	private void setStyleOfNestedMenuItem() {
 		setTextAlign(LEFT);
-		setHoverColor(MENUITEM_HOVER_COLOR);
+		setHoverColor(GuisetDefaultValues.menuItemHoverColor);
 		setPaddingLeft(Constants.MenuItemPaddingLeft);
 		setPaddingRight(Constants.MenuItemPaddingRight);
 	}
 
 	private void setStyleOfMenuHeader() {
 		setTextAlign(CENTER);
+		setHoverColor(GuisetDefaultValues.menuHeaderHoverColor);
 	}
 
 	protected boolean isHeaderStripConnected() {
@@ -712,7 +706,7 @@ public class MenuItem extends TextBased {
 	 * Insert subitems at given position.
 	 * 
 	 * @param position position
-	 * @param items arbitrary number of items
+	 * @param items    arbitrary number of items
 	 */
 	public void insert(int position, MenuItem... items) {
 		for (int i = 0; i < items.length; i++) {
@@ -955,7 +949,7 @@ public class MenuItem extends TextBased {
 
 		// create task new
 		hoverTimerTask = new HoverTimerTask(this);
-		hoverTimer.schedule(hoverTimerTask, hoverTime);
+		hoverTimer.schedule(hoverTimerTask, Math.max(0, GuisetGlobalValues.menuItemHoverTime));
 	}
 
 	/*
@@ -1038,10 +1032,10 @@ class MenuStrip extends Container {
 
 	public MenuStrip() {
 		super();
-		setBackgroundColor(MENUSTRIP_BACKGROUND_COLOR);
-		setBorder(1, MENUSTRIP_BORDER_COLOR);
+		setBackgroundColor(GuisetGlobalValues.menuStripBackgroundColor);
+		setBorder(1, GuisetGlobalValues.menuStripBorderColor);
 		setVisible(false);
-		setBoxShadow(4, 7, 7, BLACK, .4f);
+		setBoxShadow(4, 7, 7, GuisetColor.BLACK, .4f);
 	}
 
 
@@ -1049,14 +1043,14 @@ class MenuStrip extends Container {
 	protected void render() {
 		// obtain needed width (maximum of item minWidth)
 		int w = 100;
-		for(Control item : items) {
+		for (Control item : items) {
 			w = Math.max(w, item.minWidth);
 		}
 		setWidth(w);
 
 		// obtain needed height (sum of item heights), also set items width
 		int h = 1;
-		for(Control item : items) {
+		for (Control item : items) {
 			h += item.getHeight();
 			item.setWidthNoUpdate(getWidth()); // is already being updated
 		}
@@ -1069,7 +1063,7 @@ class MenuStrip extends Container {
 			pg.beginDraw();
 		}
 
-		//drawShadow(getWidth(), getHeight(), 5);
+		// drawShadow(getWidth(), getHeight(), 5);
 
 		drawDefaultBackground();
 
@@ -1095,7 +1089,7 @@ class MenuStrip extends Container {
 		pg.strokeWeight(1);
 		int[] cl = { 115, 85, 41, 15, 5 };
 		for (int i = 0; i < 5; i++) {
-			pg.stroke(Color.create(0, cl[i]));
+			pg.stroke(GuisetColor.create(0, cl[i]));
 			pg.rect((offset - 1) * 2 - i, (offset - 1) * 2 - i, w - 2 * (4 - i), h - 2 * (4 - i));
 		}
 	}

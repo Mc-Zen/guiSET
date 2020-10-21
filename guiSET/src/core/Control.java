@@ -203,7 +203,7 @@ public abstract class Control implements PConstants {
 
 
 	public enum RenderingMethod {
-		BUFFERED_RENDERING, NON_BUFFERED_RENDERING
+		BUFFERED_RENDERING, UNBUFFERED_RENDERING
 	}
 
 	/**
@@ -217,139 +217,67 @@ public abstract class Control implements PConstants {
 	 * {@link #BUFFERED_RENDERING} and a sibling of the parent has changed, then the element that is
 	 * buffered by the parent needs no redrawing.
 	 */
-	public static final RenderingMethod NON_BUFFERED_RENDERING = RenderingMethod.NON_BUFFERED_RENDERING;
+	public static final RenderingMethod UNBUFFERED_RENDERING = RenderingMethod.UNBUFFERED_RENDERING;
 
 	/**
 	 * Specify rendering type for any new element instances.
 	 */
-	public static RenderingMethod renderingMethod = BUFFERED_RENDERING;
-
-
-
-
-	// Some constant colors
-	public static final int BLACK = -16777216;
-	public static final int WHITE = -1;
-	public static final int TRANSPARENT = 0;
-	public static final int SELECTION_BLUE = -13395457;
-	public static final int TEXT_CURSOR_COLOR = -12171706; // color(70)
-
-	public static final int MENUBAR_GRADIENT_TOP_COLOR = Color.create(230);
-	public static final int MENUBAR_GRADIENT_BOTTOM_COLOR = Color.create(190);
-	public static final int MENUITEM_BACKGROUND_COLOR = TRANSPARENT;
-	public static final int MENUHEADER_HOVER_COLOR = 1342177280;
-	public static final int MENUITEM_HOVER_COLOR = 671088660;
-	public static final int MENUITEM_PRESS_COLOR = 1677721600;
-	public static final int MENUITEM_TRIANGLE_ENABLED_COLOR = Color.create(0);
-	public static final int MENUITEM_TRIANGLE_DISABLED_COLOR = Color.create(150);
-	public static final int MENUITEM_CHECKMARK_FILL_COLOR = Color.create(180, 180, 250, 130);
-	public static final int MENUITEM_CHECKMARK_STROKE_COLOR = Color.create(60, 60, 100, 150);
-	public static final int MENUSTRIP_BACKGROUND_COLOR = Color.create(240);
-	public static final int MENUSTRIP_BORDER_COLOR = Color.create(170);
-
-	public static final int SLIDER_BACKGROUND_COLOR = -2302756;
-	public static final int SLIDER_FOREGROUND_COLOR = -1926085;
-
-	public static final int BUTTON_HOVER_COLOR = Color.create(200);
-	public static final int BUTTON_PRESS_COLOR = Color.create(150);
-
-
-	// For containers with scroll bars
-	public static int SCROLL_HANDLE_BORDER_RADIUS = 0;
-	public static int SCROLL_BAR_COLOR = Color.create(150);
-	public static int SCROLL_HANDLE_COLOR = Color.create(170);
-	public static int SCROLL_HANDLE_PRESSED_COLOR = Color.create(190);
-	public static int SCROLL_HANDLE_BORDER_COLOR = Color.create(90);
-
-
+	public static RenderingMethod defaultRenderingMethod = UNBUFFERED_RENDERING;
 
 
 
 	public class Constants {
+
 		public static final int MinimalMinWidth = 1;
 		public static final int MinimalMinHeight = 1;
 		public static final int DefaultMaxWidth = 10000;
 		public static final int DefaultMaxHeight = 10000;
-		public static final int DefaultContainerWidth = 100;
-		public static final int DefaultContainerHeight = 100;
 
-		public final static int MinScrollHandleLength = 15;
+		public final static int MinimalScrollHandleLength = 15;
 
 		public static final int MenuSurfaceZIndex = 20; // The one and only MenuSurface's z-index is set to this
 		public static final int MenuItemHeight = 23;    // default height for menu items and menu bars - looks good in my opinion
 		public static final int MenuItemPaddingLeft = 27;
 		public static final int MenuItemPaddingRight = 10;
-		public static final int DefaultMenuItemHoverTime = 300; // Time to wait until to open a sub-menustrip (in milliseconds)
-
-		public static final float DefaultSliderMinValue = 0;
-		public static final float DefaultSliderMaxValue = 100;
-		public static final float DefaultSliderRelativeWheelSpeed = 0.02f;
-
-		public static final int DefaultButtonPadding = 7;
-		public static final int DefaultButtonBorderWidth = 1;
-		public static final int DefaultLabelPadding = 3;
-		public static final int DefaultTextSize = 12;
-
-		public static final int DefaultCheckboxUncheckedColor = -6250336; // gray
-		public static final int DefaultCheckboxCheckedColor = -13732742;  // greenish
-		public static final int DefaultCheckboxCheckmarkColor = -328966;  // almost white
-
+		
+		
+		public static final int SCROLL_HANDLE_STRENGTH_STD = 12;
+		public static final int SCROLL_HANDLE_STRENGTH_SLIM = 3;
 
 	}
 
-	// default values
-
-	public static int defaultBackgroundColor = WHITE;
-	public static int defaultForegroudColor = BLACK;
-	public static int defaultTextColor = defaultForegroudColor;
-	public static int defaultBorderColor = -15461356;
-	public static int defaultBorderWidth = 0;
-	public static int defaultBorderRadius = 0;
-	// public static int defaultOpacity = 1; // not with opactiy
-
-	public static int defaultPaddingLeft = 0;
-	public static int defaultPaddingRight = 0;
-	public static int defaultPaddingTop = 0;
-	public static int defaultPaddingBottom = 0;
-
-
-	public static int defaultMarginLeft = 0;
-	public static int defaultMarginRight = 0;
-	public static int defaultMarginTop = 0;
-	public static int defaultMarginBottom = 0;
-
-	protected static int defaultScrollSpeed = 40; // px per frame
 
 	public Control() {
 
 		height = 50;
 		width = 50;
 
-		backgroundColor = defaultBackgroundColor;
-		visualBackgroundColor = defaultBackgroundColor;
-		foregroundColor = defaultForegroudColor;
-		hoverColor = defaultBackgroundColor;
-		pressedColor = defaultBackgroundColor;
+		backgroundColor = GuisetDefaultValues.backgroundColor;
+		visualBackgroundColor = GuisetDefaultValues.backgroundColor;
+		foregroundColor = GuisetDefaultValues.foregroudColor;
+		hoverColor = GuisetDefaultValues.backgroundColor;
+		pressedColor = GuisetDefaultValues.backgroundColor;
 
-		paddingLeft = defaultPaddingLeft;
-		paddingRight = defaultPaddingRight;
-		paddingTop = defaultPaddingTop;
-		paddingBottom = defaultPaddingBottom;
+		paddingLeft = GuisetDefaultValues.paddingLeft;
+		paddingRight = GuisetDefaultValues.paddingRight;
+		paddingTop = GuisetDefaultValues.paddingTop;
+		paddingBottom = GuisetDefaultValues.paddingBottom;
 
-		marginLeft = defaultMarginLeft;
-		marginRight = defaultMarginRight;
-		marginTop = defaultMarginTop;
-		marginBottom = defaultMarginBottom;
+		marginLeft = GuisetDefaultValues.marginLeft;
+		marginRight = GuisetDefaultValues.marginRight;
+		marginTop = GuisetDefaultValues.marginTop;
+		marginBottom = GuisetDefaultValues.marginBottom;
 
-		borderColor = defaultBorderColor;
-		borderRadius = defaultBorderRadius;
-		borderWidth = Math.max(0, defaultBorderWidth);
+		borderColor = GuisetDefaultValues.borderColor;
+		borderRadius = GuisetDefaultValues.borderRadius;
+		borderWidth = Math.max(0, GuisetDefaultValues.borderWidth);
 
-		if (renderingMethod == RenderingMethod.BUFFERED_RENDERING) {
+		if (defaultRenderingMethod == RenderingMethod.BUFFERED_RENDERING) {
 			renderer = new BasicBufferedRenderer();
 		} else {
 			renderer = new BasicUnbufferedRenderer();
 		}
+
 	}
 
 
@@ -489,15 +417,42 @@ public abstract class Control implements PConstants {
 		// only to be called by renderer
 		protected void drawBorder() {
 			if (borderWidth > 0) {
+				//borderWidth = 4;
 				pg.noFill();
 				pg.strokeWeight(borderWidth);
 				pg.stroke(borderColor);
-				pg.rect(borderWidth / 2, borderWidth / 2, width - borderWidth, height - borderWidth, borderRadius);
+				/*pg.strokeWeight(5);
+				pg.point(0,0);
+				pg.point(5,0);
+				pg.point(getWidth(), getHeight());
+				pg.line(0, 20, getWidth(), 20);
+				pg.line(0, 3, 4, 3);
+				pg.rect(0, 9, 4, 6);
+				pg.rect(0, 5, getWidth(), 10);
+				int a = Math.round(borderWidth / 2f);*/
+				// A 3x3 rect is drawn by PGraphics like this:
+				// * * *
+				// * * *
+				// * * *
+				// A 3x3 rect with 1px border is drawn by PGraphics like this:
+				// + + + + ("+" demarking border pixels)
+				// + * * +
+				// + * * +
+				// + + + +
+				// Therefore, 1 px needs to be subtracted from border width/height
+				float a = (borderWidth - 1) / 2f;
+				/// print(a);
+				if (borderRadius > 0)
+					pg.rect(a, a, width - borderWidth, height - borderWidth, borderRadius); // this is slower
+				else
+					pg.rect(a, a, width - borderWidth, height - borderWidth);
+
+
 			}
 		}
 	}
 
-	abstract class UnufferedRenderer extends Renderer {
+	abstract class UnbufferedRenderer extends Renderer {
 
 		// constrain drawing to this elements area and its parents area
 		protected void clip(PGraphics parentGraphics) {
@@ -512,7 +467,6 @@ public abstract class Control implements PConstants {
 			parentGraphics.translate(offsetX, offsetY);
 			pg = parentGraphics;
 		}
-
 
 	}
 
@@ -611,13 +565,12 @@ public abstract class Control implements PConstants {
 	// This renderer doesn't use a buffer PGraphics -> save RAM
 	// Instead draw on parent graphics.
 	// Issues: Items can overflow parent and their own bounds
-	class BasicUnbufferedRenderer extends UnufferedRenderer {
+	class BasicUnbufferedRenderer extends UnbufferedRenderer {
 		@Override
 		void renderAll(int x, int y, PGraphics parentGraphics) {
 			offsetX = x;
 			offsetY = y;
 
-			// no need to check for opacity. If it weren't 1 this would be a ParentGraphicsExtendedRenderer
 
 			prepareGraphics(parentGraphics);
 			PFont f = parentGraphics.textFont;
@@ -663,7 +616,7 @@ public abstract class Control implements PConstants {
 		int y = Control.this.offsetY + shadowInformation.offsetY - halfsize;
 
 		pg.translate(x, y);
-		pg.fill(Color.create(r, g, b, shadowInformation.transparency * 255));
+		pg.fill(GuisetColor.create(r, g, b, shadowInformation.transparency * 255));
 		pg.noStroke();
 		pg.rect(0, 0, width - size, height - size);
 
@@ -671,7 +624,7 @@ public abstract class Control implements PConstants {
 		pg.strokeWeight(1);
 		for (int i = 1; i < size; i++) {
 			int alpha = Math.max(0, (int) (shadowInformation.transparency * (255 - i * (255 / size))));
-			pg.stroke(Color.create(r, g, b, alpha));
+			pg.stroke(GuisetColor.create(r, g, b, alpha));
 			pg.rect(-i, -i, width + 2 * i - 1 - size, height + 2 * i - 1 - size);
 		}
 		pg.translate(-x, -y);
@@ -679,7 +632,7 @@ public abstract class Control implements PConstants {
 
 
 	// As ParentGraphicsRenderer but implementing opactiy and in future box-shadows.
-	private class ExtendedUnbufferedRenderer extends UnufferedRenderer implements ExtendedRenderer {
+	private class ExtendedUnbufferedRenderer extends UnbufferedRenderer implements ExtendedRenderer {
 		private ShadowInformation shadowInformation;
 
 
@@ -1147,6 +1100,7 @@ public abstract class Control implements PConstants {
 			}
 			pg.noStroke();
 			pg.rect(borderWidth / 2, borderWidth / 2, width - borderWidth, height - borderWidth, borderRadius);
+			pg.rect(0, 0, getWidth(), getHeight(), borderRadius);
 
 		} else {
 
@@ -2275,12 +2229,12 @@ public abstract class Control implements PConstants {
 		if (getPApplet().brightness(clr) > 40) { // darken color for HoverColor and PressedColor when color is
 												 // bright enough
 			int alpha = a == 255 ? 255 : a + 20;
-			hoverColor = Color.create(r - 20, g - 20, b - 20, alpha);
-			pressedColor = Color.create(r - 40, g - 40, b - 40, alpha);
+			hoverColor = GuisetColor.create(r - 20, g - 20, b - 20, alpha);
+			pressedColor = GuisetColor.create(r - 40, g - 40, b - 40, alpha);
 		} else { // lighten color for HoverColor and PressedColor when color too dark
 			int alpha = a == 255 ? 255 : a + 40;
-			hoverColor = Color.create(r + 20, g + 20, b + 20, alpha);
-			pressedColor = Color.create(r + 40, g + 40, b + 40, alpha);
+			hoverColor = GuisetColor.create(r + 20, g + 20, b + 20, alpha);
+			pressedColor = GuisetColor.create(r + 40, g + 40, b + 40, alpha);
 		}
 		image = null; // just in case
 		update();
@@ -2393,10 +2347,10 @@ public abstract class Control implements PConstants {
 		try {
 			this.image = (PImage) image.clone();
 			if (hoverColor == backgroundColor) {
-				hoverColor = Color.create(0, 40);
+				hoverColor = GuisetColor.create(0, 40);
 			}
 			if (pressedColor == backgroundColor) {
-				pressedColor = Color.create(0, 80);
+				pressedColor = GuisetColor.create(0, 80);
 			}
 			update();
 		} catch (Exception e) {

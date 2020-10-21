@@ -243,8 +243,8 @@ abstract public class TextBased extends Control {
 
 
 	class BasicTextRenderer implements TextRenderer {
-		protected float size = 12;
-		protected int color = Control.defaultTextColor;
+		protected float size = Math.max(1, GuisetDefaultValues.fontSize);
+		protected int color = GuisetDefaultValues.textColor;
 		protected int textAlign = CENTER;
 		protected int textAlignY = CENTER;
 

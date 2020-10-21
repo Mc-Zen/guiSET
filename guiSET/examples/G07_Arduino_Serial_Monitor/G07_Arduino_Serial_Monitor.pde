@@ -72,7 +72,7 @@ void setup() {
   // button for clearing the output
   Button clearConsoleButton = new Button("Clear output");
   clearConsoleButton.setMargin(0, 10); // left and right distance to surroundings 10px
-  clearConsoleButton.addMouseListener("press", "clearConsole");
+  clearConsoleButton.addClickListener("clearConsole");
 
   // checkbox for enabling autoscroll to bottom
   autoscrollCheckbox = new Checkbox("Auto scroll", true);
@@ -86,7 +86,7 @@ void setup() {
 
 
 
-
+  int portListBackgroundColor = color(#E5EAFC);
 
   /*
    * Right area of the window: options for selecting the port etc.
@@ -99,14 +99,14 @@ void setup() {
   sidearea.setBorderWidth(1);
 
   currentPortLabel = new Label("Current port: none");
-  currentPortLabel.setWidth(sideareaWidth);
-  currentPortLabel.setHeight(inputTextbox.getHeight()); // looks better if they align
+  currentPortLabel.setFixedSize(sideareaWidth, inputTextbox.getHeight()); // setting fixed size will prevent label from auto-resizing when the text is changed later 
   Label l2 = new Label("Select port from list");
   l2.setWidth(sideareaWidth);
   l2.setBorderWidth(1);
+  l2.setBackgroundColor(portListBackgroundColor);
 
-  Button b1 = new Button("Update", "getAvailablePorts"); // this buttons text will be "Update" and pressing it calls getAvailablePorts()
-  Button b2 = new Button("Disconnect", "disconnect"); // this buttons text will be "Disconnect" and pressing it calls disconnect()
+  Button b1 = new Button("Update", "getAvailablePorts"); // this buttons text will be "Update" and clicking it calls getAvailablePorts()
+  Button b2 = new Button("Disconnect", "disconnect"); // this buttons text will be "Disconnect" and clicking it calls disconnect()
   b2.setForegroundColor(color(#98151A));
   HFlowContainer portControls = new HFlowContainer(sideareaWidth, b1.getHeight()); // put this two in a horizontal flow container
 
@@ -114,8 +114,8 @@ void setup() {
   portList.addItemSelectListener("portSelected"); // everytime the user selects an item, call portSelected()
   portList.setPadding(5);
   portList.setBorderWidth(1);
-  portList.setBackgroundColor(color(#E5EAFC));
-  l2.setBackgroundColor(portList.getBackgroundColor());
+  portList.setBackgroundColor(portListBackgroundColor);
+  portList.setMaxHeight(400);
 
   portControls.add(b1, b2);
   sidearea.add(currentPortLabel, l2, portList, portControls);
@@ -129,7 +129,6 @@ void setup() {
   sidearea.addAutoAnchors(RIGHT, TOP, BOTTOM);        // always keep the sidearea at the very right
   currentPortLabel.addAutoAnchors(LEFT); // just prevent label from autosizing when changing text
   portList.addAutoAnchors(TOP, BOTTOM);
-  portList.setMaxHeight(400);
 
   // update port list
   getAvailablePorts();

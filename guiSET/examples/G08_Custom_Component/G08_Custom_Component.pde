@@ -45,12 +45,12 @@ public class VerticalLabel extends Label {
     drawDefaultBackground();
 
     pg.pushMatrix();             // remember the transformation from before
-    pg.translate(this.width, 0); // move 
+    pg.translate(getWidth(), 0); // move 
     pg.rotate(radians(90));      // rotate
 
     // temporarily switch width and height for drawDefaultText() to work out nicely
-    int tempWidth = width;
-    int tempHeight = height;
+    int tempWidth = getWidth();
+    int tempHeight = getHeight();
     setHeightNoUpdate(tempWidth);  // Set height to width without updating
     setWidthNoUpdate(tempHeight);  // Set width to height without updating
 
@@ -69,10 +69,10 @@ public class VerticalLabel extends Label {
    */
   @Override
     int autoWidth() {
-    return (int)textHeight(text) + paddingLeft + paddingRight;
+    return (int)textHeight(getText()) + getPaddingLeft() + getPaddingRight();
   }
   @Override
-  int autoHeight() {
-    return (int)textWidth(text) + paddingTop + paddingBottom;
+    int autoHeight() {
+    return (int)textWidth(getText()) + getPaddingTop() + getPaddingBottom();
   }
 }

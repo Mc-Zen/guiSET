@@ -16,10 +16,11 @@ public class Button extends TextBased {
 
 	public Button() {
 		super();
-		setPadding(Constants.DefaultButtonPadding);
-		setBorderWidth(Constants.DefaultButtonBorderWidth);
-		setHoverColor(BUTTON_HOVER_COLOR);
-		setPressedColor(BUTTON_PRESS_COLOR);
+		setPadding(GuisetDefaultValues.buttonPadding);
+		setBorderWidth(GuisetDefaultValues.buttonBorderWidth);
+		setBackgroundColor(GuisetDefaultValues.buttonBackgroundColor);
+		setHoverColor(GuisetDefaultValues.buttonHoverColor);
+		setPressedColor(GuisetDefaultValues.buttonPressColor);
 	}
 
 	/**

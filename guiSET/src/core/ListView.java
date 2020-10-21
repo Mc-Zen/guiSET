@@ -54,9 +54,9 @@ public class ListView extends VScrollContainer {
 		selectedItems = new ArrayList<Control>(0);
 
 		setBorderWidth(1);
-		setBackgroundColor(WHITE);
-		setSelectionColor(SELECTION_BLUE);
-		setNewItemBackgroundColor(TRANSPARENT);
+		setBackgroundColor(GuisetColor.WHITE);
+		setSelectionColor(GuisetColor.SELECTION_BLUE);
+		setNewItemBackgroundColor(GuisetColor.TRANSPARENT);
 	}
 
 
@@ -404,10 +404,10 @@ public class ListView extends VScrollContainer {
 
 		if (getPApplet().brightness(selectionColor) > 40) {
 			// darken color for HoverColor and PressedColor whencolor is bright enough
-			selectionHoverColor = Color.create(r - 20, g - 20, b - 20);
+			selectionHoverColor = GuisetColor.create(r - 20, g - 20, b - 20);
 		} else {
 			// lighten color for HoverColor and PressedColor when color too dark
-			selectionHoverColor = Color.create(r + 20, g + 20, b + 20);
+			selectionHoverColor = GuisetColor.create(r + 20, g + 20, b + 20);
 		}
 		update();
 	}
