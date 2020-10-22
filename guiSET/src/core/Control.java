@@ -446,25 +446,22 @@ public abstract class Control implements PConstants {
 
 	abstract class UnbufferedRenderer extends Renderer {
 
-		protected void clip(PGraphics parentGraphics) {
-			// Old: only works with a nesting level of 2. 
-			// constrain drawing to this elements area and its parents area
-//			int x0 = Math.max(0, offsetX), y0 = Math.max(0, offsetY);
-//			int x1 = Math.min(offsetX + getWidth(), parent.getWidth()), y1 = Math.min(offsetY + getHeight(), parent.getHeight());
-//			parentGraphics.clip(x0, y0, x1 - x0, y1 - y0);
-			long t0 = System.nanoTime();
-			currentClip = currentClip.intersect(offsetX, offsetY, offsetX + getWidth(), offsetY + getHeight());
-			clip(parentGraphics, currentClip);
-			currentClip.subtract(offsetX, offsetY);
-		}
+//		protected void clip(PGraphics parentGraphics) {
+//			// Old: only works with a nesting level of 2. 
+//			// constrain drawing to this elements area and its parents area
+////			int x0 = Math.max(0, offsetX), y0 = Math.max(0, offsetY);
+////			int x1 = Math.min(offsetX + getWidth(), parent.getWidth()), y1 = Math.min(offsetY + getHeight(), parent.getHeight());
+////			parentGraphics.clip(x0, y0, x1 - x0, y1 - y0);
+//			
+//			
+//			
+//		}
 
-
-		protected void clip(PGraphics pg, Rect r) {
-			pg.clip(r.x0, r.y0, r.x1 - r.x0, r.y1 - r.y0);
-		}
 
 		protected void prepareGraphics(PGraphics parentGraphics) {
-			clip(parentGraphics);
+			intersectClip(offsetX, offsetY, offsetX + getWidth(), offsetY + getHeight());
+			applyClip(parentGraphics);
+			subtractFromClip(offsetX, offsetY);
 			parentGraphics.pushMatrix();
 			parentGraphics.translate(offsetX, offsetY);
 			pg = parentGraphics;
@@ -472,39 +469,27 @@ public abstract class Control implements PConstants {
 
 	}
 
-	static class Rect {
-		int x0, y0, x1, y1;
 
-		Rect(int x0, int y0, int x1, int y1) {
-			this.x0 = x0;
-			this.y0 = y0;
-			this.x1 = x1;
-			this.y1 = y1;
-		}
 
-		protected Rect intersect(Rect r) {
-			return new Rect(Math.max(x0, r.x0), Math.max(y0, r.y0), Math.min(x1, r.x1), Math.min(y1, r.y1));
-		}
+	static int clipX0, clipY0, clipX1, clipY1; // Takes about half the time to use primitives instead of a rect class (measured on windows)
 
-		protected Rect intersect(int x0, int y0, int x1, int y1) {
-			return new Rect(Math.max(x0, this.x0), Math.max(y0, this.y0), Math.min(x1, this.x1), Math.min(y1, this.y1));
-		}
-
-		void print() {
-			PApplet.println(x0, y0, x1, y1);
-		}
-
-		void subtract(int x, int y) {
-			x0 -= x;
-			x1 -= x;
-			y0 -= y;
-			y1 -= y;
-		}
-
+	static void intersectClip(int x0, int y0, int x1, int y1) {
+		clipX0 = Math.max(clipX0, x0);
+		clipY0 = Math.max(clipY0, y0);
+		clipX1 = Math.min(clipX1, x1);
+		clipY1 = Math.min(clipY1, y1);
 	}
 
-	static Rect currentClip = new Rect(0, 0, 0, 0);
+	static void subtractFromClip(int x, int y) {
+		clipX0 -= x;
+		clipX1 -= x;
+		clipY0 -= y;
+		clipY1 -= y;
+	}
 
+	static void applyClip(PGraphics pg) {
+		pg.clip(clipX0, clipY0, clipX1 - clipX0, clipY1 - clipY0);
+	}
 
 
 	/*
@@ -606,7 +591,7 @@ public abstract class Control implements PConstants {
 			offsetX = x;
 			offsetY = y;
 
-			Rect thisClip = currentClip; // child items change the clip and we need to be able to reset it.
+			int dx0 = clipX0, dy0 = clipY0, dx1 = clipX1, dy1 = clipY1; // child items change the clip and we need to be able to reset it.
 			prepareGraphics(parentGraphics);
 			PFont f = parentGraphics.textFont;
 
@@ -616,9 +601,12 @@ public abstract class Control implements PConstants {
 				parentGraphics.textFont(f); // might need to reset font if textRenderer is an extended one
 
 			parentGraphics.popMatrix();
-			currentClip = thisClip;
-			clip(parentGraphics, currentClip); // AFTER resetting translation
-			// parentGraphics.noClip();
+
+			clipX0 = dx0;
+			clipX1 = dx1;
+			clipY0 = dy0;
+			clipY1 = dy1;
+			applyClip(parentGraphics); // AFTER resetting translation
 		}
 	}
 
@@ -701,7 +689,8 @@ public abstract class Control implements PConstants {
 				pg = null; // gc may delete the temporary graphics now
 
 			} else {
-				Rect thisClip = currentClip;
+				// Should be exactly like BasicUnbufferedRenderer.renderAll() (except setting offsetX/Y)
+				int dx0 = clipX0, dy0 = clipY0, dx1 = clipX1, dy1 = clipY1;
 				prepareGraphics(parentGraphics);
 				PFont f = parentGraphics.textFont;
 				render(); // no preRender()/pg.endDraw() needed
@@ -709,10 +698,14 @@ public abstract class Control implements PConstants {
 
 				if (f != null)
 					parentGraphics.textFont(f); // might need to reset font if textRenderer is an extended one
+
 				parentGraphics.popMatrix();
-				currentClip = thisClip;
-				clip(parentGraphics, currentClip); // AFTER resetting translation
-				// parentGraphics.noClip();
+
+				clipX0 = dx0;
+				clipX1 = dx1;
+				clipY0 = dy0;
+				clipY1 = dy1;
+				applyClip(parentGraphics); // AFTER resetting translation
 			}
 		}
 

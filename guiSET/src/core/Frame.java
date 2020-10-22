@@ -491,7 +491,7 @@ public class Frame extends Container {
 		if (visible) {
 			render();
 		}
-		
+
 		/*
 		 * handle animations (after render, because only then redraw can work when sketch is not looping
 		 */
@@ -507,7 +507,10 @@ public class Frame extends Container {
 	@Override
 	protected void render() {
 		if (dirty) {
-			Control.currentClip = new Rect(0,0,getWidth(), getHeight());
+			clipX0 = 0;
+			clipY0 = 0;
+			clipX1 = getWidth();
+			clipY1 = getHeight();
 			dirty = false;
 
 			preRender(); 		// for frame
