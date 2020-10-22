@@ -62,16 +62,16 @@ public class Textbox extends HScrollContainer {
 
 
 	public Textbox() {
-		this(100, 12);
+		this(100, GuisetDefaultValues.fontSize);
 	}
 
 	public Textbox(String hint) {
-		this(100, 12);
+		this(100, GuisetDefaultValues.fontSize);
 		setHint(hint);
 	}
 
 	public Textbox(String hint, int width) {
-		this(width, 12);
+		this(width, GuisetDefaultValues.fontSize);
 		setHint(hint);
 	}
 
@@ -81,7 +81,7 @@ public class Textbox extends HScrollContainer {
 	}
 
 	public Textbox(int width) {
-		this(width, 12);
+		this(width, GuisetDefaultValues.fontSize);
 	}
 
 	public Textbox(int width, int fontSize) {
@@ -137,8 +137,8 @@ public class Textbox extends HScrollContainer {
 		 */
 		if (focused && selectionStart < selectionEnd) {
 			if (selectionStart <= getText().length() && selectionEnd <= getText().length()) {
-				int selectionX = (int) textWidth(getText().substring(0, selectionStart));
-				int selectionWidth = (int) textWidth(getText().substring(selectionStart, selectionEnd));
+				float selectionX = textWidth(getText().substring(0, selectionStart));
+				float selectionWidth = textWidth(getText().substring(selectionStart, selectionEnd));
 				pg.fill(selectionColor);
 				pg.noStroke();
 				pg.rect(getPaddingLeft() - getScrollPosition() + selectionX + getFontSize() / 40f, getPaddingTop(), selectionWidth + getFontSize() / 40f,

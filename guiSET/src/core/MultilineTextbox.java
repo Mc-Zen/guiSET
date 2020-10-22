@@ -152,9 +152,9 @@ public class MultilineTextbox extends VScrollContainer {
 					int start = Math.max(selectionStart, breakPositions.get(i));
 					int end = Math.min(selectionEnd, breakPositions.get(i + 1));
 
-					int selectionX = (int) (textWidth(lines.get(i).substring(0, start - breakPositions.get(i))) + getFontSize() / 40f);
+					float selectionX = textWidth(lines.get(i).substring(0, start - breakPositions.get(i))) + getFontSize() / 40f;
 
-					int selectionWidth = (int) textWidth(lines.get(i).substring(start - breakPositions.get(i), end - breakPositions.get(i)));
+					float selectionWidth = textWidth(lines.get(i).substring(start - breakPositions.get(i), end - breakPositions.get(i)));
 					pg.rect(lineStart(lines.get(i)) + selectionX, i * lineHeight + paddingTop - scrollPosition, selectionWidth, getFontSize() + textDescent());
 				}
 			}

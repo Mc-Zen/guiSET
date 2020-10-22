@@ -239,8 +239,8 @@ public abstract class Control implements PConstants {
 		public static final int MenuItemHeight = 23;    // default height for menu items and menu bars - looks good in my opinion
 		public static final int MenuItemPaddingLeft = 27;
 		public static final int MenuItemPaddingRight = 10;
-		
-		
+
+
 		public static final int SCROLL_HANDLE_STRENGTH_STD = 12;
 		public static final int SCROLL_HANDLE_STRENGTH_SLIM = 3;
 
@@ -417,19 +417,11 @@ public abstract class Control implements PConstants {
 		// only to be called by renderer
 		protected void drawBorder() {
 			if (borderWidth > 0) {
-				//borderWidth = 4;
+
 				pg.noFill();
 				pg.strokeWeight(borderWidth);
 				pg.stroke(borderColor);
-				/*pg.strokeWeight(5);
-				pg.point(0,0);
-				pg.point(5,0);
-				pg.point(getWidth(), getHeight());
-				pg.line(0, 20, getWidth(), 20);
-				pg.line(0, 3, 4, 3);
-				pg.rect(0, 9, 4, 6);
-				pg.rect(0, 5, getWidth(), 10);
-				int a = Math.round(borderWidth / 2f);*/
+
 				// A 3x3 rect is drawn by PGraphics like this:
 				// * * *
 				// * * *
@@ -439,9 +431,9 @@ public abstract class Control implements PConstants {
 				// + * * +
 				// + * * +
 				// + + + +
-				// Therefore, 1 px needs to be subtracted from border width/height
+				// Therefore, 1 px needs to be subtracted from border width/height when borderWidth==1
 				float a = (borderWidth - 1) / 2f;
-				/// print(a);
+
 				if (borderRadius > 0)
 					pg.rect(a, a, width - borderWidth, height - borderWidth, borderRadius); // this is slower
 				else
@@ -454,11 +446,21 @@ public abstract class Control implements PConstants {
 
 	abstract class UnbufferedRenderer extends Renderer {
 
-		// constrain drawing to this elements area and its parents area
 		protected void clip(PGraphics parentGraphics) {
-			int x0 = Math.max(0, offsetX), y0 = Math.max(0, offsetY);
-			int x1 = Math.min(offsetX + getWidth(), parent.getWidth()), y1 = Math.min(offsetY + getHeight(), parent.getHeight());
-			parentGraphics.clip(x0, y0, x1 - x0, y1 - y0);
+			// Old: only works with a nesting level of 2. 
+			// constrain drawing to this elements area and its parents area
+//			int x0 = Math.max(0, offsetX), y0 = Math.max(0, offsetY);
+//			int x1 = Math.min(offsetX + getWidth(), parent.getWidth()), y1 = Math.min(offsetY + getHeight(), parent.getHeight());
+//			parentGraphics.clip(x0, y0, x1 - x0, y1 - y0);
+			long t0 = System.nanoTime();
+			currentClip = currentClip.intersect(offsetX, offsetY, offsetX + getWidth(), offsetY + getHeight());
+			clip(parentGraphics, currentClip);
+			currentClip.subtract(offsetX, offsetY);
+		}
+
+
+		protected void clip(PGraphics pg, Rect r) {
+			pg.clip(r.x0, r.y0, r.x1 - r.x0, r.y1 - r.y0);
 		}
 
 		protected void prepareGraphics(PGraphics parentGraphics) {
@@ -469,6 +471,41 @@ public abstract class Control implements PConstants {
 		}
 
 	}
+
+	static class Rect {
+		int x0, y0, x1, y1;
+
+		Rect(int x0, int y0, int x1, int y1) {
+			this.x0 = x0;
+			this.y0 = y0;
+			this.x1 = x1;
+			this.y1 = y1;
+		}
+
+		protected Rect intersect(Rect r) {
+			return new Rect(Math.max(x0, r.x0), Math.max(y0, r.y0), Math.min(x1, r.x1), Math.min(y1, r.y1));
+		}
+
+		protected Rect intersect(int x0, int y0, int x1, int y1) {
+			return new Rect(Math.max(x0, this.x0), Math.max(y0, this.y0), Math.min(x1, this.x1), Math.min(y1, this.y1));
+		}
+
+		void print() {
+			PApplet.println(x0, y0, x1, y1);
+		}
+
+		void subtract(int x, int y) {
+			x0 -= x;
+			x1 -= x;
+			y0 -= y;
+			y1 -= y;
+		}
+
+	}
+
+	static Rect currentClip = new Rect(0, 0, 0, 0);
+
+
 
 	/*
 	 * All renderers:
@@ -560,8 +597,6 @@ public abstract class Control implements PConstants {
 
 
 
-
-
 	// This renderer doesn't use a buffer PGraphics -> save RAM
 	// Instead draw on parent graphics.
 	// Issues: Items can overflow parent and their own bounds
@@ -571,7 +606,7 @@ public abstract class Control implements PConstants {
 			offsetX = x;
 			offsetY = y;
 
-
+			Rect thisClip = currentClip; // child items change the clip and we need to be able to reset it.
 			prepareGraphics(parentGraphics);
 			PFont f = parentGraphics.textFont;
 
@@ -581,7 +616,9 @@ public abstract class Control implements PConstants {
 				parentGraphics.textFont(f); // might need to reset font if textRenderer is an extended one
 
 			parentGraphics.popMatrix();
-			parentGraphics.noClip();
+			currentClip = thisClip;
+			clip(parentGraphics, currentClip); // AFTER resetting translation
+			// parentGraphics.noClip();
 		}
 	}
 
@@ -664,6 +701,7 @@ public abstract class Control implements PConstants {
 				pg = null; // gc may delete the temporary graphics now
 
 			} else {
+				Rect thisClip = currentClip;
 				prepareGraphics(parentGraphics);
 				PFont f = parentGraphics.textFont;
 				render(); // no preRender()/pg.endDraw() needed
@@ -672,7 +710,9 @@ public abstract class Control implements PConstants {
 				if (f != null)
 					parentGraphics.textFont(f); // might need to reset font if textRenderer is an extended one
 				parentGraphics.popMatrix();
-				parentGraphics.noClip();
+				currentClip = thisClip;
+				clip(parentGraphics, currentClip); // AFTER resetting translation
+				// parentGraphics.noClip();
 			}
 		}
 

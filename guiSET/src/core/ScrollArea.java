@@ -41,7 +41,6 @@ public class ScrollArea extends Container {
 	@Override
 	protected void render() {
 		drawDefaultBackground();
-
 		fullScrollWidth = 0;
 		fullScrollHeight = 0;
 
@@ -56,7 +55,6 @@ public class ScrollArea extends Container {
 
 		scrollPositionX = PApplet.constrain(scrollPositionX, 0, PApplet.max(0, fullScrollWidth - getWidth()));
 		scrollPositionY = PApplet.constrain(scrollPositionY, 0, PApplet.max(0, fullScrollHeight - getHeight()));
-
 
 
 		for (Control c : items) {

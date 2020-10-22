@@ -507,6 +507,7 @@ public class Frame extends Container {
 	@Override
 	protected void render() {
 		if (dirty) {
+			Control.currentClip = new Rect(0,0,getWidth(), getHeight());
 			dirty = false;
 
 			preRender(); 		// for frame
