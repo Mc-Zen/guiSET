@@ -75,21 +75,21 @@ public class Checkbox extends TextBased {
 
 	public Checkbox(String text, String toggleEventMethodName) {
 		this(text, false);
-		addToggleListener(toggleEventMethodName);
+		setToggleListener(toggleEventMethodName);
 	}
 	public Checkbox(String text, Predicate toggleCallback) {
 		this(text, false);
-		addToggleListener(toggleCallback);
+		setToggleListener(toggleCallback);
 	}
 
 	public Checkbox(String text, String toggleEventMethodName, boolean checked) {
 		this(text, checked);
-		addToggleListener(toggleEventMethodName);
+		setToggleListener(toggleEventMethodName);
 	}
 
 	public Checkbox(String text, Predicate toggleCallback, boolean checked) {
 		this(text, checked);
-		addToggleListener(toggleCallback);
+		setToggleListener(toggleCallback);
 	}
 
 
@@ -255,41 +255,41 @@ public class Checkbox extends TextBased {
 	protected EventListener toggleListener;
 
 	/**
-	 * Add a listener for when the checkbox has been checked/unchecked. Only triggered when the user
+	 * Set a listener for when the checkbox has been checked/unchecked. Only triggered when the user
 	 * presses the checkbox and not if set programatically.
 	 * 
 	 * @param methodName method name
 	 * @param target     object
 	 */
-	public void addToggleListener(String methodName, Object target) {
+	public void setToggleListener(String methodName, Object target) {
 		toggleListener = createEventListener(methodName, target, Checkbox.class);
 	}
 
-	public void addToggleListener(String methodName) {
-		addToggleListener(methodName, getPApplet());
+	public void setToggleListener(String methodName) {
+		setToggleListener(methodName, getPApplet());
 	}
 
 	/**
-	 * Add a listener lambda for when the checkbox has been checked/unchecked. Only triggered when
+	 * Set a listener lambda for when the checkbox has been checked/unchecked. Only triggered when
 	 * the user presses the Checkbox and not if set programatically.
 	 * 
 	 * Event arguments: the {@link Checkbox} whose state has changed
 	 * 
 	 * @param lambda lambda expression with {@link Checkbox} parameter
 	 */
-	public void addToggleListener(Predicate1<Checkbox> lambda) {
+	public void setToggleListener(Predicate1<Checkbox> lambda) {
 		toggleListener = new LambdaEventListener1<Checkbox>(lambda);
 	}
 
 	/**
-	 * Add a listener lambda for when the checkbox has been checked/unchecked. Only triggered when
+	 * Set a listener lambda for when the checkbox has been checked/unchecked. Only triggered when
 	 * the user presses the Checkbox and not if set programatically.
 	 * 
 	 * Event arguments: none
 	 * 
 	 * @param lambda lambda expression
 	 */
-	public void addToggleListener(Predicate lambda) {
+	public void setToggleListener(Predicate lambda) {
 		toggleListener = new LambdaEventListener(lambda);
 	}
 

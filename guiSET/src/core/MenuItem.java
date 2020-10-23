@@ -217,7 +217,7 @@ public class MenuItem extends TextBased {
 	 */
 	public MenuItem(String text, String selectCallback) {
 		this(text);
-		addSelectListener(selectCallback);
+		setSelectListener(selectCallback);
 	}
 
 	/**
@@ -229,7 +229,7 @@ public class MenuItem extends TextBased {
 	 */
 	public MenuItem(String text, Predicate selectCallback) {
 		this(text);
-		addSelectListener(selectCallback);
+		setSelectListener(selectCallback);
 	}
 
 	/**
@@ -274,14 +274,14 @@ public class MenuItem extends TextBased {
 		this(text, methodName);
 		setShortcut(shortcut);
 		getFrame().registerShortcut(shortcut, methodName, getPApplet(), strong);
-		addSelectListener(methodName);
+		setSelectListener(methodName);
 	}
 
 	// Used by MenuParser
 	protected void registerShortcutAndMethod(String methodName, Shortcut shortcut) {
 		setShortcut(shortcut);
 		getFrame().registerShortcut(shortcut, methodName);
-		addSelectListener(methodName);
+		setSelectListener(methodName);
 	}
 
 
@@ -811,40 +811,40 @@ public class MenuItem extends TextBased {
 	protected EventListener childSelectListener;
 
 	/**
-	 * Add a listener for the item selected event (called when this item has been selected).
+	 * Set a listener for the item selected event (called when this item has been selected).
 	 * 
 	 * Event arguments: this {@link #MenuItem()}
 	 * 
 	 * @param methodName method name
 	 * @param target     target
 	 */
-	public void addSelectListener(String methodName, Object target) {
+	public void setSelectListener(String methodName, Object target) {
 		selectListener = createEventListener(methodName, target, MenuItem.class);
 	}
 
-	public void addSelectListener(String methodName) {
-		addSelectListener(methodName, getPApplet());
+	public void setSelectListener(String methodName) {
+		setSelectListener(methodName, getPApplet());
 	}
 
 	/**
-	 * Add a listener lambda for when this item is selected.
+	 * Set a listener lambda for when this item is selected.
 	 * 
 	 * Event arguments: this {@link #MenuItem()}
 	 * 
 	 * @param lambda lambda expression with {@link #MenuItem()} parameter
 	 */
-	public void addSelectListener(Predicate1<MenuItem> lambda) {
+	public void setSelectListener(Predicate1<MenuItem> lambda) {
 		selectListener = new LambdaEventListener1<MenuItem>(lambda);
 	}
 
 	/**
-	 * Add a listener lambda for when this item is selected.
+	 * Set a listener lambda for when this item is selected.
 	 * 
 	 * Event arguments: none
 	 * 
 	 * @param lambda lambda expression
 	 */
-	public void addSelectListener(Predicate lambda) {
+	public void setSelectListener(Predicate lambda) {
 		selectListener = new LambdaEventListener(lambda);
 	}
 
@@ -855,40 +855,40 @@ public class MenuItem extends TextBased {
 
 
 	/**
-	 * Add a listener for when a child of this header has been selected.
+	 * Set a listener for when a child of this header has been selected.
 	 * 
 	 * Event arguments: the selected child {@link #MenuItem()}
 	 * 
 	 * @param methodName method name
 	 * @param target     target
 	 */
-	public void addChildSelectListener(String methodName, Object target) {
+	public void setChildSelectListener(String methodName, Object target) {
 		childSelectListener = createEventListener(methodName, target, MenuItem.class);
 	}
 
-	public void addChildSelectListener(String methodName) {
-		addChildSelectListener(methodName, getPApplet());
+	public void setChildSelectListener(String methodName) {
+		setChildSelectListener(methodName, getPApplet());
 	}
 
 	/**
-	 * Add a listener for when a child of this header has been selected.
+	 * Set a listener for when a child of this header has been selected.
 	 * 
 	 * Event arguments: the selected child {@link #MenuItem()}
 	 * 
 	 * @param lambda lambda expression with {@link #MenuItem()} parameter
 	 */
-	public void addChildSelectListener(Predicate1<MenuItem> lambda) {
+	public void setChildSelectListener(Predicate1<MenuItem> lambda) {
 		childSelectListener = new LambdaEventListener1<MenuItem>(lambda);
 	}
 
 	/**
-	 * Add a listener for when a child of this header has been selected.
+	 * Set a listener for when a child of this header has been selected.
 	 * 
 	 * Event arguments: none
 	 * 
 	 * @param lambda lambda expression
 	 */
-	public void addChildSelectListener(Predicate lambda) {
+	public void setChildSelectListener(Predicate lambda) {
 		childSelectListener = new LambdaEventListener(lambda);
 	}
 

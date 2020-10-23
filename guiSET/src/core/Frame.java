@@ -1007,26 +1007,26 @@ public class Frame extends Container {
 	protected EventListener externalDropListener;
 
 	/**
-	 * Add a key listener which fires on key press, type and release events.
+	 * Set a key listener which fires on key press, type and release events.
 	 * 
 	 * Event arguments: {@link KeyEvent}
 	 * 
 	 * @param methodName method name
 	 * @param target     object
 	 */
-	public void addKeyListener(String methodName, Object target) {
+	public void setKeyListener(String methodName, Object target) {
 		openKeyListener = createEventListener(methodName, target, KeyEvent.class);
 	}
 
-	public void addKeyListener(String methodName) {
-		addKeyListener(methodName, getPApplet());
+	public void setKeyListener(String methodName) {
+		setKeyListener(methodName, getPApplet());
 	}
 
-	public void addKeyListener(Predicate lambda) {
+	public void setKeyListener(Predicate lambda) {
 		openKeyListener = new LambdaEventListener(lambda);
 	}
 
-	public void addKeyListener(Predicate1<KeyEvent> lambda) {
+	public void setKeyListener(Predicate1<KeyEvent> lambda) {
 		openKeyListener = new LambdaEventListener1<KeyEvent>(lambda);
 	}
 
@@ -1035,22 +1035,22 @@ public class Frame extends Container {
 	}
 
 	/**
-	 * Called when gui is initialized and draw() runs for the first time.
+	 * Called when GUI is initialized and draw() runs for the first time.
 	 * 
 	 * Event arguments: none
 	 * 
 	 * @param methodName method name
 	 * @param target     object
 	 */
-	public void addGuiInitializedListener(String methodName, Object target) {
+	public void setGuiInitializedListener(String methodName, Object target) {
 		guiInitializedListener = createEventListener(methodName, target);
 	}
 
-	public void addGuiInitializedListener(String methodName) {
-		addGuiInitializedListener(methodName, getPApplet());
+	public void setGuiInitializedListener(String methodName) {
+		setGuiInitializedListener(methodName, getPApplet());
 	}
 
-	public void addGuiInitializedListener(Predicate lambda) {
+	public void setGuiInitializedListener(Predicate lambda) {
 		guiInitializedListener = new LambdaEventListener(lambda);
 	}
 
@@ -1066,19 +1066,19 @@ public class Frame extends Container {
 	 * @param methodName method name
 	 * @param target     object
 	 */
-	public void addWindowResizeListener(String methodName, Object target) {
+	public void setWindowResizeListener(String methodName, Object target) {
 		windowResizeListener = createEventListener(methodName, target, MouseEvent.class);
 	}
 
-	public void addWindowResizeListener(String methodName) {
-		addWindowResizeListener(methodName, getPApplet());
+	public void setWindowResizeListener(String methodName) {
+		setWindowResizeListener(methodName, getPApplet());
 	}
 
-	public void addWindowResizeListener(Predicate lambda) {
+	public void setWindowResizeListener(Predicate lambda) {
 		windowResizeListener = new LambdaEventListener(lambda);
 	}
 
-	public void addWindowResizeListener(Predicate1<MouseEvent> lambda) {
+	public void setWindowResizeListener(Predicate1<MouseEvent> lambda) {
 		windowResizeListener = new LambdaEventListener1<MouseEvent>(lambda);
 	}
 
@@ -1094,19 +1094,19 @@ public class Frame extends Container {
 	 * @param methodName method name
 	 * @param target     object
 	 */
-	public void addEnterWindowListener(String methodName, Object target) {
+	public void setEnterWindowListener(String methodName, Object target) {
 		enterWindowListener = createEventListener(methodName, target, MouseEvent.class);
 	}
 
-	public void addEnterWindowListener(String methodName) {
-		addEnterWindowListener(methodName, getPApplet());
+	public void setEnterWindowListener(String methodName) {
+		setEnterWindowListener(methodName, getPApplet());
 	}
 
-	public void addEnterWindowListener(Predicate lambda) {
+	public void setEnterWindowListener(Predicate lambda) {
 		enterWindowListener = new LambdaEventListener(lambda);
 	}
 
-	public void addEnterWindowListener(Predicate1<MouseEvent> lambda) {
+	public void setEnterWindowListener(Predicate1<MouseEvent> lambda) {
 		enterWindowListener = new LambdaEventListener1<MouseEvent>(lambda);
 	}
 
@@ -1122,19 +1122,19 @@ public class Frame extends Container {
 	 * @param methodName method name
 	 * @param target     object
 	 */
-	public void addExitWindowListener(String methodName, Object target) {
+	public void setExitWindowListener(String methodName, Object target) {
 		exitWindowListener = createEventListener(methodName, target, MouseEvent.class);
 	}
 
-	public void addExitWindowListener(String methodName) {
-		addExitWindowListener(methodName, getPApplet());
+	public void setExitWindowListener(String methodName) {
+		setExitWindowListener(methodName, getPApplet());
 	}
 
-	public void addExitWindowListener(Predicate lambda) {
+	public void setExitWindowListener(Predicate lambda) {
 		exitWindowListener = new LambdaEventListener(lambda);
 	}
 
-	public void addExitWindowListener(Predicate1<MouseEvent> lambda) {
+	public void setExitWindowListener(Predicate1<MouseEvent> lambda) {
 		exitWindowListener = new LambdaEventListener1<MouseEvent>(lambda);
 	}
 
@@ -1153,19 +1153,19 @@ public class Frame extends Container {
 	 * @param methodName method name
 	 * @param target     object
 	 */
-	public void addDropElementListener(String methodName, Object target) {
+	public void setDropElementListener(String methodName, Object target) {
 		dropElementListener = createEventListener(methodName, target, Control.class, Control.class);
 	}
 
-	public void addDropElementListener(String methodName) {
-		addDropElementListener(methodName, getPApplet());
+	public void setDropElementListener(String methodName) {
+		setDropElementListener(methodName, getPApplet());
 	}
 
-	public void addDropElementListener(Predicate lambda) {
+	public void setDropElementListener(Predicate lambda) {
 		dropElementListener = new LambdaEventListener(lambda);
 	}
 
-	public void addDropElementListener(Predicate2<Control, Control> lambda) {
+	public void setDropElementListener(Predicate2<Control, Control> lambda) {
 		dropElementListener = new LambdaEventListener2<Control, Control>(lambda);
 	}
 
@@ -1181,15 +1181,15 @@ public class Frame extends Container {
 	 * @param methodName method name
 	 * @param target     object
 	 */
-	public void addWindowFocusGainedListener(String methodName, Object target) {
+	public void setWindowFocusGainedListener(String methodName, Object target) {
 		windowFocusGainedListener = createEventListener(methodName, target);
 	}
 
-	public void addWindowFocusGainedListener(String methodName) {
-		addWindowFocusGainedListener(methodName, getPApplet());
+	public void setWindowFocusGainedListener(String methodName) {
+		setWindowFocusGainedListener(methodName, getPApplet());
 	}
 
-	public void addWindowFocusGainedListener(Predicate lambda) {
+	public void setWindowFocusGainedListener(Predicate lambda) {
 		windowFocusGainedListener = new LambdaEventListener(lambda);
 	}
 
@@ -1205,15 +1205,15 @@ public class Frame extends Container {
 	 * @param methodName method name
 	 * @param target     object
 	 */
-	public void addWindowFocusLostListener(String methodName, Object target) {
+	public void setWindowFocusLostListener(String methodName, Object target) {
 		windowFocusLostListener = createEventListener(methodName, target);
 	}
 
-	public void addWindowFocusLostListener(String methodName) {
-		addWindowFocusLostListener(methodName, getPApplet());
+	public void setWindowFocusLostListener(String methodName) {
+		setWindowFocusLostListener(methodName, getPApplet());
 	}
 
-	public void addWindowFocusLostListener(Predicate lambda) {
+	public void setWindowFocusLostListener(Predicate lambda) {
 		windowFocusLostListener = new LambdaEventListener(lambda);
 	}
 
@@ -1234,14 +1234,14 @@ public class Frame extends Container {
 	 * @param methodName method name
 	 * @param target     object
 	 */
-	public void addExternalDropListener(String methodName, Object target) {
+	public void setExternalDropListener(String methodName, Object target) {
 		if (awtFrame == null)
 			System.err.println("In P2D/P3D mode external drop is not yet supported.");
 		externalDropListener = createEventListener(methodName, target, int.class, Object.class, Control.class);
 	}
 
-	public void addExternalDropListener(String methodName) {
-		addExternalDropListener(methodName, getPApplet());
+	public void setExternalDropListener(String methodName) {
+		setExternalDropListener(methodName, getPApplet());
 	}
 
 	public void removeExternalDropListener() {

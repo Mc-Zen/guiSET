@@ -65,7 +65,7 @@ public class Button extends TextBased {
 	 */
 	public Button(String text, String clickCallback) {
 		this(text);
-		addClickListener(clickCallback);
+		setClickListener(clickCallback);
 	}
 
 	/**
@@ -76,7 +76,7 @@ public class Button extends TextBased {
 	 */
 	public Button(String text, Predicate clickCallback) {
 		this(text);
-		addClickListener(clickCallback);
+		setClickListener(clickCallback);
 	}
 
 	/**
@@ -121,7 +121,7 @@ public class Button extends TextBased {
 	 */
 	public Button(PImage image, String clickCallback) {
 		this(image, image.width, image.height);
-		addClickListener(clickCallback);
+		setClickListener(clickCallback);
 	}
 
 	/**
@@ -133,7 +133,7 @@ public class Button extends TextBased {
 	 */
 	public Button(PImage image, Predicate clickCallback) {
 		this(image, image.width, image.height);
-		addClickListener(clickCallback);
+		setClickListener(clickCallback);
 	}
 
 	/**
@@ -146,7 +146,7 @@ public class Button extends TextBased {
 	 */
 	public Button(PImage image, float scale, String clickCallback) {
 		this(image, scale);
-		addClickListener(clickCallback);
+		setClickListener(clickCallback);
 	}
 
 	/**
@@ -159,7 +159,7 @@ public class Button extends TextBased {
 	 */
 	public Button(PImage image, float scale, Predicate clickCallback) {
 		this(image, scale);
-		addClickListener(clickCallback);
+		setClickListener(clickCallback);
 	}
 
 
@@ -227,38 +227,38 @@ public class Button extends TextBased {
 	protected EventListener clickListener;
 
 	/**
-	 * Add a listener for when the button has been clicked.
+	 * Set a listener for when the button has been clicked.
 	 * 
 	 * @param methodName method name
 	 * @param target     object
 	 */
-	public void addClickListener(String methodName, Object target) {
+	public void setClickListener(String methodName, Object target) {
 		clickListener = createEventListener(methodName, target, MouseEvent.class);
 	}
 
-	public void addClickListener(String methodName) {
-		addClickListener(methodName, getPApplet());
+	public void setClickListener(String methodName) {
+		setClickListener(methodName, getPApplet());
 	}
 
 	/**
-	 * Add a listener lambda for when the button has been clicked.
+	 * Set a listener lambda for when the button has been clicked.
 	 * 
 	 * Event arguments: the {@link Button} whose state has changed
 	 * 
 	 * @param lambda lambda expression with {@link MouseEvent} parameter
 	 */
-	public void addClickListener(Predicate1<MouseEvent> lambda) {
+	public void setClickListener(Predicate1<MouseEvent> lambda) {
 		clickListener = new LambdaEventListener1<MouseEvent>(lambda);
 	}
 
 	/**
-	 * Add a listener lambda for when the button has been clicked.
+	 * Set a listener lambda for when the button has been clicked.
 	 * 
 	 * Event arguments: none
 	 * 
 	 * @param lambda lambda expression
 	 */
-	public void addClickListener(Predicate lambda) {
+	public void setClickListener(Predicate lambda) {
 		clickListener = new LambdaEventListener(lambda);
 	}
 

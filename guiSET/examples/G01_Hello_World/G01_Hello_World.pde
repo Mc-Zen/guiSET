@@ -28,7 +28,7 @@ void setup(){
    
     // This is called a "listener". When myButton is clicked we want the 
     //   myButton_clicked() method (see below) to be called. 
-    myButton.addClickListener("myButton_clicked");
+    myButton.setClickListener("myButton_clicked");
 
     myTextbox.setPosition(20, 70);            // set the position of the textbox on the sketch in pixel
     myTextbox.setWidth(myButton.getWidth());  // make width match with button 

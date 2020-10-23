@@ -31,12 +31,12 @@ public class Switch extends Checkbox {
 
 	public Switch(String text, String toggleEventMethodName) {
 		this(text, false);
-		addToggleListener(toggleEventMethodName);
+		setToggleListener(toggleEventMethodName);
 	}
 
 	public Switch(String text, String toggleEventMethodName, boolean checked) {
 		this(text, checked);
-		addToggleListener(toggleEventMethodName);
+		setToggleListener(toggleEventMethodName);
 	}
 
 	public Switch(String text, boolean checked) {

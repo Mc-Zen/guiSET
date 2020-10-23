@@ -148,7 +148,7 @@ public class MenuParser {
 				current.item.registerShortcutAndMethod(methodName, shortcut);
 			} else {
 				//PApplet.println(methodName);
-				current.item.addSelectListener(methodName);
+				current.item.setSelectListener(methodName);
 			}
 		} else {
 			current.item.setShortcut(shortcut);

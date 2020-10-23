@@ -241,7 +241,7 @@ public void setup() {
 
 
   Label contextMenuLabel = new Label("Right-click here to open a context menu");
-  contextMenuLabel.addMouseListener("press", "openContextMenu");
+  contextMenuLabel.setMouseListener("press", "openContextMenu");
   contextMenu.add("Option 1", "Option 2", "Entry 3", "Entry 4");
   contextMenuLabel.setPosition(600, 400);
   f.add(contextMenuLabel);

@@ -823,7 +823,7 @@ public abstract class Control {
 	/**
 	 * Force a re-render of this Component. This shouldn't be needed, but just in case.
 	 */
-	public void forceRender() {
+	public void forceRepaint() {
 		update();
 	}
 
@@ -3075,9 +3075,9 @@ public abstract class Control {
 	 * 
 	 *
 	 * The programmer can add certain listeners to his objects. Mouse listeners are available for all
-	 * classes. They can be assigned and given a callback method with the addMouseListener() method,
+	 * classes. They can be assigned and given a callback method with the setMouseListener() method,
 	 * specifying the type with a string ("press", "release"...). If no target is specified with the
-	 * overloaded addMouseListener() method, papplet will be assumed. Of each type, exactly one listener
+	 * overloaded setMouseListener() method, papplet will be assumed. Of each type, exactly one listener
 	 * can be assigned to each object. A listener is null if it is not set/active.
 	 * 
 	 * Moreover classes like Frame and Textbox feature key listeners or an itemchanged-listener
@@ -3102,12 +3102,12 @@ public abstract class Control {
 	 
 		 protected EventListener myListener;
 		 
-		 public void addMyListener(String methodName, Object target) {
+		 public void setMyListener(String methodName, Object target) {
 		     myListener = createEventListener(methodName, target, null);
 		 }
 		 
-		 public void addMyListener(String methodName) {
-		     addMyListener(methodName, getPApplet());
+		 public void setMyListener(String methodName) {
+		     setMyListener(methodName, getPApplet());
 		 }
 		 
 		 public void removeMyListener(){
@@ -3289,10 +3289,10 @@ public abstract class Control {
 
 
 	/**
-	 * Adds a mouse listener. The type can be "press", "release", "enter", "exit, "move", "drag" and
+	 * Set a mouse listener. The type can be "press", "release", "enter", "exit, "move", "drag" and
 	 * "wheel". Each Component allows one listener per type. The given method can be implemented without
 	 * arguments or with {@link MouseEvent} as parameter. If it is defined in another class than in the
-	 * main PApplet scope use the overloaded method {@link #addMouseListener(String, String, Object)}
+	 * main PApplet scope use the overloaded method {@link #setMouseListener(String, String, Object)}
 	 * that allows passing a target object.
 	 * 
 	 * @param type       String for event type
@@ -3300,14 +3300,14 @@ public abstract class Control {
 	 * @return false if type is invalid, method is not accessible or a listener has already been
 	 *         registered for this type. Returns true if successful.
 	 */
-	public boolean addMouseListener(String type, String methodName) {
-		return addMouseListener(type, methodName, getPApplet());
+	public boolean setMouseListener(String type, String methodName) {
+		return setMouseListener(type, methodName, getPApplet());
 	}
 
 	/**
 	 * Allows to pass a target object where the given method is declared.
 	 * 
-	 * @see #addMouseListener(String, String)
+	 * @see #setMouseListener(String, String)
 	 * 
 	 * @param type       String for event type
 	 * @param methodName name of callback method
@@ -3316,7 +3316,7 @@ public abstract class Control {
 	 *         registered for this type. Returns true if successful.
 	 * 
 	 */
-	public boolean addMouseListener(String type, String methodName, Object target) {
+	public boolean setMouseListener(String type, String methodName, Object target) {
 		switch (type) {
 		case "press":
 			pressListener = createEventListener(methodName, target, MouseEvent.class);
@@ -3344,15 +3344,15 @@ public abstract class Control {
 	}
 
 	/**
-	 * Add a mouse listener in form of a lambda expression. For possible types see
-	 * {@link #addMouseListener(String, String)}.
+	 * Set a mouse listener in form of a lambda expression. For possible types see
+	 * {@link #setMouseListener(String, String)}.
 	 * 
 	 * Event parameters: none
 	 * 
-	 * @param type see {@link #addMouseListener(String, String)}
+	 * @param type see {@link #setMouseListener(String, String)}
 	 * @param lambda    lambda expression
 	 */
-	public void addMouseListener(String type, Predicate lambda) {
+	public void setMouseListener(String type, Predicate lambda) {
 		switch (type) {
 		case "press":
 			pressListener = new LambdaEventListener(lambda);
@@ -3379,15 +3379,15 @@ public abstract class Control {
 	}
 
 	/**
-	 * Add a mouse listener in form of a lambda expression with a {@link MouseEvent} as argument. For
-	 * possible types see {@link #addMouseListener(String, String)}.
+	 * Set a mouse listener in form of a lambda expression with a {@link MouseEvent} as argument. For
+	 * possible types see {@link #setMouseListener(String, String)}.
 	 * 
 	 * Event parameters: {@link MouseEvent}
 	 * 
-	 * @param type see {@link #addMouseListener(String, String)}
+	 * @param type see {@link #setMouseListener(String, String)}
 	 * @param lambda    lambda expression with a {@link MouseEvent} as argument.
 	 */
-	public void addMouseListener(String type, Predicate1<MouseEvent> lambda) {
+	public void setMouseListener(String type, Predicate1<MouseEvent> lambda) {
 		switch (type) {
 		case "press":
 			pressListener = new LambdaEventListener1<MouseEvent>(lambda);
@@ -3447,41 +3447,41 @@ public abstract class Control {
 
 
 	/**
-	 * Add a resize listener that fires each time the element is resized by anchor resizing.
+	 * Set a resize listener that fires each time the element is resized by anchor resizing.
 	 * 
 	 * Event arguments: the {@link Control} that is resized
 	 * 
 	 * @param methodName name of callback method
 	 * @param target     Object where the callback method is declared.
 	 */
-	public void addResizeListener(String methodName, Object target) {
+	public void setResizeListener(String methodName, Object target) {
 		resizeListener = createEventListener(methodName, target, Control.class);
 	}
 
-	public void addResizeListener(String methodName) {
-		addResizeListener(methodName, getPApplet());
+	public void setResizeListener(String methodName) {
+		setResizeListener(methodName, getPApplet());
 	}
 
 	/**
-	 * Add a lambda focus listener with a {@link Control} as parameter that fires each time the element
+	 * Set a lambda focus listener with a {@link Control} as parameter that fires each time the element
 	 * is resized by anchor resizing.
 	 * 
 	 * Event arguments: the {@link Control} that is resized
 	 * 
 	 * @param lambda lambda expression with {@link Control} parameter
 	 */
-	public void addResizeListener(Predicate1<Control> lambda) {
+	public void setResizeListener(Predicate1<Control> lambda) {
 		resizeListener = new LambdaEventListener1<Control>(lambda);
 	}
 
 	/**
-	 * Add a lambda focus listener that fires each time the element is resized by anchor resizing.
+	 * Set a lambda focus listener that fires each time the element is resized by anchor resizing.
 	 * 
 	 * Event arguments: none
 	 * 
 	 * @param lambda lambda expression
 	 */
-	public void addResizeListener(Predicate lambda) {
+	public void setResizeListener(Predicate lambda) {
 		resizeListener = new LambdaEventListener(lambda);
 	}
 
@@ -3491,7 +3491,7 @@ public abstract class Control {
 
 
 	/**
-	 * Add a focus listener that fires when the element gets focus (through mouse click or
+	 * Set a focus listener that fires when the element gets focus (through mouse click or
 	 * programmatically).
 	 * 
 	 * Event arguments: The {@link Control} that got focus
@@ -3499,35 +3499,35 @@ public abstract class Control {
 	 * @param methodName name of callback method
 	 * @param target     Object where the callback method is declared.
 	 */
-	public void addFocusListener(String methodName, Object target) {
+	public void setFocusListener(String methodName, Object target) {
 		focusListener = createEventListener(methodName, target, Control.class);
 	}
 
-	public void addFocusListener(String methodName) {
-		addFocusListener(methodName, getPApplet());
+	public void setFocusListener(String methodName) {
+		setFocusListener(methodName, getPApplet());
 	}
 
 	/**
-	 * Add a lambda focus listener with a {@link Control} as parameter that fires when the element gets
+	 * Set a lambda focus listener with a {@link Control} as parameter that fires when the element gets
 	 * focus (through mouse click, programmatically).
 	 * 
 	 * Event arguments: The {@link Control} that got focus
 	 * 
 	 * @param lambda lambda expression with {@link Control} parameter
 	 */
-	public void addFocusListener(Predicate1<Control> lambda) {
+	public void setFocusListener(Predicate1<Control> lambda) {
 		focusListener = new LambdaEventListener1<Control>(lambda);
 	}
 
 	/**
-	 * Add a lambda focus listener that fires when the element gets focus (through mouse click,
+	 * Set a lambda focus listener that fires when the element gets focus (through mouse click,
 	 * programmatically).
 	 * 
 	 * Event arguments: none
 	 * 
 	 * @param lambda lambda expression
 	 */
-	public void addFocusListener(Predicate lambda) {
+	public void setFocusListener(Predicate lambda) {
 		focusListener = new LambdaEventListener(lambda);
 	}
 

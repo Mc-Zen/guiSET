@@ -529,7 +529,7 @@ public class Textbox extends HScrollContainer {
 	protected EventListener submitListener;
 
 	/**
-	 * Add a key listener to the textbox. The event is triggered each time any key is pressed when the
+	 * Set a key listener to the textbox. The event is triggered each time any key is pressed when the
 	 * textbox has focus.
 	 * 
 	 * Event arguments: {@link KeyEvent}
@@ -537,35 +537,35 @@ public class Textbox extends HScrollContainer {
 	 * @param methodName name of callback method
 	 * @param target     object that declares callback method.
 	 */
-	public void addKeyPressListener(String methodName, Object target) {
+	public void setKeyPressListener(String methodName, Object target) {
 		keyPressListener = createEventListener(methodName, target, KeyEvent.class);
 	}
 
-	public void addKeyPressListener(String methodName) {
-		addKeyPressListener(methodName, getPApplet());
+	public void setKeyPressListener(String methodName) {
+		setKeyPressListener(methodName, getPApplet());
 	}
 
 	/**
-	 * Add a lambda key listener to the textbox. The event is triggered each time any key is pressed
+	 * Set a lambda key listener to the textbox. The event is triggered each time any key is pressed
 	 * when the textbox has focus.
 	 * 
 	 * Event arguments: none
 	 * 
 	 * @param lambda lambda expression
 	 */
-	public void addKeyPressListener(Predicate lambda) {
+	public void setKeyPressListener(Predicate lambda) {
 		keyPressListener = new LambdaEventListener(lambda);
 	}
 
 	/**
-	 * Add a lambda key listener to the textbox. The event is triggered each time any key is pressed
+	 * Set a lambda key listener to the textbox. The event is triggered each time any key is pressed
 	 * when the textbox has focus.
 	 * 
 	 * Event arguments: {@link KeyEvent}
 	 * 
 	 * @param lambda lambda expression with {@link KeyEvent} as parameter
 	 */
-	public void addKeyPressListener(Predicate1<KeyEvent> lambda) {
+	public void setKeyPressListener(Predicate1<KeyEvent> lambda) {
 		keyPressListener = new LambdaEventListener1<KeyEvent>(lambda);
 	}
 
@@ -576,28 +576,28 @@ public class Textbox extends HScrollContainer {
 
 
 	/**
-	 * Add a listener that fires when the text has actually changed (not just the cursor or selection).
+	 * Set a listener that fires when the text has actually changed (not just the cursor or selection).
 	 * 
 	 * @param methodName name of callback method
 	 * @param target     object that declares callback method.
 	 */
-	public void addTextChangeListener(String methodName, Object target) {
+	public void setTextChangeListener(String methodName, Object target) {
 		textChangeListener = createEventListener(methodName, target);
 	}
 
-	public void addTextChangeListener(String methodName) {
-		addTextChangeListener(methodName, getPApplet());
+	public void setTextChangeListener(String methodName) {
+		setTextChangeListener(methodName, getPApplet());
 	}
 
 	/**
-	 * Add a lambda listener that fires when the text has actually changed (not just the cursor or
+	 * Set a lambda listener that fires when the text has actually changed (not just the cursor or
 	 * selection).
 	 * 
 	 * Event arguments: none
 	 * 
 	 * @param lambda lambda expression
 	 */
-	public void addTextChangeListener(Predicate lambda) {
+	public void setTextChangeListener(Predicate lambda) {
 		textChangeListener = new LambdaEventListener(lambda);
 	}
 
@@ -613,12 +613,12 @@ public class Textbox extends HScrollContainer {
 	 * @param methodName name of callback method
 	 * @param target     object that declares callback method.
 	 */
-	public void addSubmitListener(String methodName, Object target) {
+	public void setSubmitListener(String methodName, Object target) {
 		submitListener = createEventListener(methodName, target);
 	}
 
-	public void addSubmitListener(String methodName) {
-		addSubmitListener(methodName, getPApplet());
+	public void setSubmitListener(String methodName) {
+		setSubmitListener(methodName, getPApplet());
 	}
 
 	/**
@@ -629,7 +629,7 @@ public class Textbox extends HScrollContainer {
 	 * 
 	 * @param lambda lambda expression
 	 */
-	public void addSubmitListener(Predicate lambda) {
+	public void setSubmitListener(Predicate lambda) {
 		submitListener = new LambdaEventListener(lambda);
 	}
 

@@ -316,7 +316,7 @@ public class ListView extends VScrollContainer {
 	 * Remove item at position in item list.
 	 * 
 	 * @param index position
-	 * @returns the removed item
+	 * @return the removed item
 	 */
 	@Override
 	public Control remove(int index) {
@@ -505,7 +505,7 @@ public class ListView extends VScrollContainer {
 	protected EventListener selectListener;
 
 	/**
-	 * Add a listener for when an item is selected.
+	 * Set a listener for when an item is selected.
 	 * 
 	 * Event arguments: the {@link Control} whose state has changed
 	 * 
@@ -513,34 +513,34 @@ public class ListView extends VScrollContainer {
 	 * @param target     target
 	 */
 
-	public void addItemSelectListener(String methodName, Object target) {
+	public void setItemSelectListener(String methodName, Object target) {
 		selectListener = createEventListener(methodName, target, Control.class);
 	}
 
-	public void addItemSelectListener(String methodName) {
-		addItemSelectListener(methodName, getPApplet());
+	public void setItemSelectListener(String methodName) {
+		setItemSelectListener(methodName, getPApplet());
 	}
 
 	/**
-	 * Add a listener lambda for when an item is selected. The event passes the item that has been
+	 * Set a listener lambda for when an item is selected. The event passes the item that has been
 	 * selected.
 	 * 
 	 * Event arguments: the {@link Control} whose state has changed
 	 * 
 	 * @param lambda lambda expression with {@link Control} parameter
 	 */
-	public void addItemSelectListener(Predicate1<Control> lambda) {
+	public void setItemSelectListener(Predicate1<Control> lambda) {
 		selectListener = new LambdaEventListener1<Control>(lambda);
 	}
 
 	/**
-	 * Add a listener lambda for when an item is selected.
+	 * Set a listener lambda for when an item is selected.
 	 * 
 	 * Event arguments: none
 	 * 
 	 * @param lambda lambda expression
 	 */
-	public void addItemSelectListener(Predicate lambda) {
+	public void setItemSelectListener(Predicate lambda) {
 		selectListener = new LambdaEventListener(lambda);
 	}
 

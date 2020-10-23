@@ -41,8 +41,8 @@ void setup() {
 
   textArea.setSize(mainArea.getAvailableWidth(), mainArea.getAvailableHeight() - statusbar.getHeight());
   textArea.addAutoAnchors(LEFT, RIGHT, TOP, BOTTOM);
-  textArea.addTextChangeListener("textArea_textchanged");
-  textArea.addMouseListener("wheel", "textArea_wheel");
+  textArea.setTextChangeListener("textArea_textchanged");
+  textArea.setMouseListener("wheel", "textArea_wheel");
   textArea.setSlimScrollHandle(false);        // use standard scroll handle
   textArea.setFontSize(12);
   textArea.setScrollSpeed(50);

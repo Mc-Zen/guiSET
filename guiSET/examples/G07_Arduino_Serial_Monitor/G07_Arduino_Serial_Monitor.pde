@@ -54,7 +54,7 @@ void setup() {
   inputTextbox = new Textbox();
   inputTextbox.setWidth(wrapperWidth);
   inputTextbox.setHint("Send message");  // text to display in grey when textbox is empty
-  inputTextbox.addSubmitListener("sendMessage"); // trigger the sendMessage() method when pressed enter if textbox is focused
+  inputTextbox.setSubmitListener("sendMessage"); // trigger the sendMessage() method when pressed enter if textbox is focused
   inputTextbox.setBackgroundColor(color(80));
   inputTextbox.setForegroundColor(color(240));
   inputTextbox.setCursorColor(color(240));
@@ -63,7 +63,7 @@ void setup() {
   outputTextbox.setSize(wrapperWidth, mainWrapper.getAvailableHeight()-inputTextbox.getHeight() - 30);
   outputTextbox.setFontSize(12);
   outputTextbox.disableInput();  // make this textbox "view-only" -> no writing or pasting allowed
-  outputTextbox.addMouseListener("wheel", "scrollOutput"); // notify when user scrolls this textbox (see below why we need this)
+  outputTextbox.setMouseListener("wheel", "scrollOutput"); // notify when user scrolls this textbox (see below why we need this)
   outputTextbox.setBackgroundColor(color(#434242));
   outputTextbox.setForegroundColor(color(240));
   outputControls = new HFlowContainer(wrapperWidth, 30);
@@ -72,11 +72,11 @@ void setup() {
   // button for clearing the output
   Button clearConsoleButton = new Button("Clear output");
   clearConsoleButton.setMargin(0, 10); // left and right distance to surroundings 10px
-  clearConsoleButton.addClickListener("clearConsole");
+  clearConsoleButton.setClickListener("clearConsole");
 
   // checkbox for enabling autoscroll to bottom
   autoscrollCheckbox = new Checkbox("Auto scroll", true);
-  autoscrollCheckbox.addToggleListener("setAutoScroll");
+  autoscrollCheckbox.setToggleListener("setAutoScroll");
   autoscrollCheckbox.setPaddingTop(4); // padding top to 4px
   autoscrollCheckbox.setForegroundColor(color(255));
 
@@ -111,7 +111,7 @@ void setup() {
   HFlowContainer portControls = new HFlowContainer(sideareaWidth, b1.getHeight()); // put this two in a horizontal flow container
 
   portList = new ListView(sideareaWidth, sidearea.getHeight()-currentPortLabel.getHeight()-l2.getHeight()-portControls.getHeight());
-  portList.addItemSelectListener("portSelected"); // everytime the user selects an item, call portSelected()
+  portList.setItemSelectListener("portSelected"); // everytime the user selects an item, call portSelected()
   portList.setPadding(5);
   portList.setBorderWidth(1);
   portList.setBackgroundColor(portListBackgroundColor);
@@ -147,7 +147,7 @@ void getAvailablePorts() {
   for (String port : ports) {
     portList.add(port);
     if (port.equals(portName)) {
-      portList.select(portList.get(portList.getNumItems()-1));
+      portList.select(portList.getItem(portList.getNumItems()-1));
     }
   }
 }
