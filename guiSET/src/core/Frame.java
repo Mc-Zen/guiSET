@@ -111,6 +111,14 @@ public class Frame extends Container {
 
 
 
+	/**
+	 * guiSET can draw the GUI either <i>before</i> ({@link DrawTime#PRE}, default) the Processing
+	 * sketchs draw() method or <i>after</i> ({@link DrawTime#POST}). Currently, the decision needs to
+	 * be made once at the creation time of {@link Frame}.
+	 * 
+	 * @see Frame#Frame(PApplet, DrawTime)
+	 *
+	 */
 	public enum DrawTime {
 		PRE, POST
 	}
@@ -790,7 +798,7 @@ public class Frame extends Container {
 		if (focusedElement == control)
 			return;
 
-		if (control.focusable && !focusedElement.stickyFocus) {
+		if (control.isFocusable() && !focusedElement.hasStickyFocus()) {
 			focusedElement.focused = false;
 			focusedElement.blurred();
 			focusedElement.update();
@@ -912,7 +920,7 @@ public class Frame extends Container {
 	}
 
 	/**
-	 * Set the minimum size of the application window
+	 * Set the minimum size of the application window.
 	 * 
 	 * @param minWidth  minimum width
 	 * @param minHeight minimum height
@@ -926,7 +934,7 @@ public class Frame extends Container {
 	}
 
 	/**
-	 * Set the maximum size of the application window+
+	 * Set the maximum size of the application window.
 	 * 
 	 * @param maxWidth  maximum width
 	 * @param maxHeight maximum height
@@ -1014,12 +1022,12 @@ public class Frame extends Container {
 		addKeyListener(methodName, getPApplet());
 	}
 
-	public void addKeyListener(Predicate p) {
-		openKeyListener = new LambdaEventListener(p);
+	public void addKeyListener(Predicate lambda) {
+		openKeyListener = new LambdaEventListener(lambda);
 	}
 
-	public void addKeyListener(Predicate1<KeyEvent> p) {
-		openKeyListener = new LambdaEventListener1<KeyEvent>(p);
+	public void addKeyListener(Predicate1<KeyEvent> lambda) {
+		openKeyListener = new LambdaEventListener1<KeyEvent>(lambda);
 	}
 
 	public void removeKeyListener() {
@@ -1042,8 +1050,8 @@ public class Frame extends Container {
 		addGuiInitializedListener(methodName, getPApplet());
 	}
 
-	public void addGuiInitializedListener(Predicate p) {
-		guiInitializedListener = new LambdaEventListener(p);
+	public void addGuiInitializedListener(Predicate lambda) {
+		guiInitializedListener = new LambdaEventListener(lambda);
 	}
 
 	public void removeGuiInitializedListener() {
@@ -1066,12 +1074,12 @@ public class Frame extends Container {
 		addWindowResizeListener(methodName, getPApplet());
 	}
 
-	public void addWindowResizeListener(Predicate p) {
-		windowResizeListener = new LambdaEventListener(p);
+	public void addWindowResizeListener(Predicate lambda) {
+		windowResizeListener = new LambdaEventListener(lambda);
 	}
 
-	public void addWindowResizeListener(Predicate1<MouseEvent> p) {
-		windowResizeListener = new LambdaEventListener1<MouseEvent>(p);
+	public void addWindowResizeListener(Predicate1<MouseEvent> lambda) {
+		windowResizeListener = new LambdaEventListener1<MouseEvent>(lambda);
 	}
 
 	public void removeWindowResizeListener() {
@@ -1094,12 +1102,12 @@ public class Frame extends Container {
 		addEnterWindowListener(methodName, getPApplet());
 	}
 
-	public void addEnterWindowListener(Predicate p) {
-		enterWindowListener = new LambdaEventListener(p);
+	public void addEnterWindowListener(Predicate lambda) {
+		enterWindowListener = new LambdaEventListener(lambda);
 	}
 
-	public void addEnterWindowListener(Predicate1<MouseEvent> p) {
-		enterWindowListener = new LambdaEventListener1<MouseEvent>(p);
+	public void addEnterWindowListener(Predicate1<MouseEvent> lambda) {
+		enterWindowListener = new LambdaEventListener1<MouseEvent>(lambda);
 	}
 
 	public void removeEnterWindowListener() {
@@ -1122,12 +1130,12 @@ public class Frame extends Container {
 		addExitWindowListener(methodName, getPApplet());
 	}
 
-	public void addExitWindowListener(Predicate p) {
-		exitWindowListener = new LambdaEventListener(p);
+	public void addExitWindowListener(Predicate lambda) {
+		exitWindowListener = new LambdaEventListener(lambda);
 	}
 
-	public void addExitWindowListener(Predicate1<MouseEvent> p) {
-		exitWindowListener = new LambdaEventListener1<MouseEvent>(p);
+	public void addExitWindowListener(Predicate1<MouseEvent> lambda) {
+		exitWindowListener = new LambdaEventListener1<MouseEvent>(lambda);
 	}
 
 	public void removeExitWindowListener() {
@@ -1153,12 +1161,12 @@ public class Frame extends Container {
 		addDropElementListener(methodName, getPApplet());
 	}
 
-	public void addDropElementListener(Predicate p) {
-		dropElementListener = new LambdaEventListener(p);
+	public void addDropElementListener(Predicate lambda) {
+		dropElementListener = new LambdaEventListener(lambda);
 	}
 
-	public void addDropElementListener(Predicate2<Control, Control> p) {
-		dropElementListener = new LambdaEventListener2<Control, Control>(p);
+	public void addDropElementListener(Predicate2<Control, Control> lambda) {
+		dropElementListener = new LambdaEventListener2<Control, Control>(lambda);
 	}
 
 	public void removeDropElementListener() {
@@ -1181,8 +1189,8 @@ public class Frame extends Container {
 		addWindowFocusGainedListener(methodName, getPApplet());
 	}
 
-	public void addWindowFocusGainedListener(Predicate p) {
-		windowFocusGainedListener = new LambdaEventListener(p);
+	public void addWindowFocusGainedListener(Predicate lambda) {
+		windowFocusGainedListener = new LambdaEventListener(lambda);
 	}
 
 	public void removeWindowFocusGainedListener() {
@@ -1205,8 +1213,8 @@ public class Frame extends Container {
 		addWindowFocusLostListener(methodName, getPApplet());
 	}
 
-	public void addWindowFocusLostListener(Predicate p) {
-		windowFocusLostListener = new LambdaEventListener(p);
+	public void addWindowFocusLostListener(Predicate lambda) {
+		windowFocusLostListener = new LambdaEventListener(lambda);
 	}
 
 	public void removeWindowFocusLostListener() {
@@ -1366,12 +1374,12 @@ public class Frame extends Container {
 
 
 	@Override
-	public int getOffsetXWindow() {
+	public int getOffsetXToWindow() {
 		return offsetX;
 	}
 
 	@Override
-	public int getOffsetYWindow() {
+	public int getOffsetYToWindow() {
 		return offsetY;
 	}
 

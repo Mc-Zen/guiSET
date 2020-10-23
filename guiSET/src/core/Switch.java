@@ -5,7 +5,7 @@ import processing.event.MouseEvent;
 
 
 /**
- * Switch class derived from Checkbox that looks more like an android switch and has a toggeling
+ * Switch class derived from Checkbox that looks more like an android switch and has a toggel
  * animation.
  * 
  * @author Mc-Zen
@@ -159,8 +159,8 @@ public class Switch extends Checkbox {
 	@Override
 	protected void press(MouseEvent e) {
 		if (!isReactToEntireComponent()) {
-			int x_ = e.getX() - getOffsetXWindow();
-			int y_ = e.getY() - getOffsetYWindow();
+			int x_ = e.getX() - getOffsetXToWindow();
+			int y_ = e.getY() - getOffsetYToWindow();
 			if (!(x_ < getCheckboxSize() * 1.75f && y_ > getHeight() / 2 - getCheckboxSize() / 2 && y_ < getHeight() / 2 + getCheckboxSize() / 2))
 				return;
 		}

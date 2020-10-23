@@ -316,10 +316,10 @@ public class Slider extends Control {
 	 * 
 	 * Event arguments: the {@link Slider} whose state has changed
 	 * 
-	 * @param p lambda expression with {@link Slider} parameter
+	 * @param lambda lambda expression with {@link Slider} parameter
 	 */
-	public void addValueChangeListener(Predicate1<Slider> p) {
-		valueChangeListener = new LambdaEventListener1<Slider>(p);
+	public void addValueChangeListener(Predicate1<Slider> lambda) {
+		valueChangeListener = new LambdaEventListener1<Slider>(lambda);
 	}
 
 	/**
@@ -328,10 +328,10 @@ public class Slider extends Control {
 	 * 
 	 * Event arguments: none
 	 * 
-	 * @param p lambda expression
+	 * @param lambda lambda expression
 	 */
-	public void addValueChangeListener(Predicate p) {
-		valueChangeListener = new LambdaEventListener(p);
+	public void addValueChangeListener(Predicate lambda) {
+		valueChangeListener = new LambdaEventListener(lambda);
 	}
 
 	public void removeValueChangeListener() {
@@ -360,12 +360,12 @@ public class Slider extends Control {
 
 	@Override
 	protected void drag(MouseEvent e) {
-		setBallPosition(orientation == Orientation.HORIZONTAL ? e.getX() - getOffsetXWindow() : e.getY() - getOffsetYWindow());
+		setBallPosition(orientation == Orientation.HORIZONTAL ? e.getX() - getOffsetXToWindow() : e.getY() - getOffsetYToWindow());
 	}
 
 	@Override
 	protected void press(MouseEvent e) {
-		setBallPosition(orientation == Orientation.HORIZONTAL ? e.getX() - getOffsetXWindow() : e.getY() - getOffsetYWindow());
+		setBallPosition(orientation == Orientation.HORIZONTAL ? e.getX() - getOffsetXToWindow() : e.getY() - getOffsetYToWindow());
 	}
 
 	@Override

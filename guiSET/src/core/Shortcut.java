@@ -4,10 +4,10 @@ import processing.core.*;
 
 /**
  * Class for storing keyboard shortcuts. Can store value for modifier keys
- * (Control, Shift Meta and Alt) and and an additional normal key.
+ * (CONTROL, SHIFT, META and ALT) and and an additional normal key.
  * 
- * Shortcuts can be created like Shortcut('A', true, true, false) for
- * Ctrl-Shift-A or like Shortcut(A, CONTROL, SHIFT);
+ * Shortcuts can be created like this {@code new Shortcut('A', true, true, false);} for
+ * Ctrl-Shift-A or like {@code new Shortcut(A, CONTROL, SHIFT);};
  * 
  * @author Mc-Zen
  *
@@ -154,27 +154,27 @@ public class Shortcut {
 
 
 	/**
-	 * Turn shortcut into a string in a format like: "Ctrl+Shift+Alt+K" or
-	 * "Shift+Alt+3".
+	 * Turn shortcut into a string in a format like: "Ctrl+Shift+Alt+K",
+	 * "Shift+Alt+3", "Ctrl+Delete" or "Space"
 	 */
 	public String toString() {
 		char c = Character.toUpperCase((char) this.keyCode);
 		String s;
 		switch (c) {
 		case PApplet.DELETE:
-			s = "DELETE";
+			s = "Delete";
 			break;
 		case PApplet.BACKSPACE:
-			s = "BACKSPACE";
+			s = "Backspace";
 			break;
 		case ' ':
-			s = "SPACE";
+			s = "Space";
 			break;
 		case PApplet.ENTER:
-			s = "ENTER";
+			s = "Enter";
 			break;
 		case PApplet.RETURN:
-			s = "RETURN";
+			s = "Return";
 			break;
 		case PApplet.UP:
 			s = "Arrow Up";
@@ -189,7 +189,10 @@ public class Shortcut {
 			s = "Arrow Right";
 			break;
 		case 35:
-			s = "END";
+			s = "End";
+			break;
+		case 36: // Home
+			s = "Home";
 			break;
 		default:
 			s = String.valueOf(c);

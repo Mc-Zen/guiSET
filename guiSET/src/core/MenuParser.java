@@ -5,10 +5,10 @@ import java.util.ArrayList;
 import processing.core.PApplet;
 
 /**
- * Parse a string as menu. This can be a lot easier than creating a menu by
- * hand. Items are wrapped by "&#60;&#62;" and start with their text, followed by an
- * optional ":" after which the callback method comes. Finally a shortcut can be
- * specified by starting with "-".
+ * Parse a string as menu. This can be a lot easier than creating a menu by hand. Items are wrapped
+ * by "&#60;&#62;" and start with their text, followed by an optional ":" after which the callback
+ * method comes. Finally a shortcut can be specified by starting with "-". The MenuParser is still a
+ * bit experimental, but seems to work so far. TODO: add examples. 
  * 
  * @author E-Bow
  *
@@ -147,7 +147,7 @@ public class MenuParser {
 			if (shortcut != null) {
 				current.item.registerShortcutAndMethod(methodName, shortcut);
 			} else {
-				PApplet.println(methodName);
+				//PApplet.println(methodName);
 				current.item.addSelectListener(methodName);
 			}
 		} else {

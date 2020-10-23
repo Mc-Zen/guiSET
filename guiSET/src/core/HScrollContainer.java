@@ -291,7 +291,7 @@ public class HScrollContainer extends HFlowContainer {
 	@Override
 	protected void drag(MouseEvent e) {
 		if (isDraggingScrollHandle()) {
-			int newScrollHandle_Pos = e.getX() - getOffsetXWindow() - startHandleDragPos;
+			int newScrollHandle_Pos = e.getX() - getOffsetXToWindow() - startHandleDragPos;
 			float newScrollPosition = newScrollHandle_Pos * (float) (fullScrollWidth - getWidth()) / (scrollbar_width() - scrollhandle_width());
 			setScrollPosition((int) newScrollPosition);
 		}

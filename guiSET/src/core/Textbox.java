@@ -91,9 +91,9 @@ public class Textbox extends HScrollContainer {
 		setPadding(5);
 		setFontSize(fontSize);
 		setSlimScrollHandle(true);
-		setTextAlign(LEFT);
+		setTextAlign(Constants.LEFT);
 		setLineHeightPercent(120);
-		setCursor(TEXT);
+		setCursor(PApplet.TEXT);
 	}
 
 
@@ -551,10 +551,10 @@ public class Textbox extends HScrollContainer {
 	 * 
 	 * Event arguments: none
 	 * 
-	 * @param p lambda expression
+	 * @param lambda lambda expression
 	 */
-	public void addKeyPressListener(Predicate p) {
-		keyPressListener = new LambdaEventListener(p);
+	public void addKeyPressListener(Predicate lambda) {
+		keyPressListener = new LambdaEventListener(lambda);
 	}
 
 	/**
@@ -563,10 +563,10 @@ public class Textbox extends HScrollContainer {
 	 * 
 	 * Event arguments: {@link KeyEvent}
 	 * 
-	 * @param p lambda expression with {@link KeyEvent} as parameter
+	 * @param lambda lambda expression with {@link KeyEvent} as parameter
 	 */
-	public void addKeyPressListener(Predicate1<KeyEvent> p) {
-		keyPressListener = new LambdaEventListener1<KeyEvent>(p);
+	public void addKeyPressListener(Predicate1<KeyEvent> lambda) {
+		keyPressListener = new LambdaEventListener1<KeyEvent>(lambda);
 	}
 
 	public void removeKeyPressListener() {
@@ -595,10 +595,10 @@ public class Textbox extends HScrollContainer {
 	 * 
 	 * Event arguments: none
 	 * 
-	 * @param p lambda expression
+	 * @param lambda lambda expression
 	 */
-	public void addTextChangeListener(Predicate p) {
-		textChangeListener = new LambdaEventListener(p);
+	public void addTextChangeListener(Predicate lambda) {
+		textChangeListener = new LambdaEventListener(lambda);
 	}
 
 	public void removeTextChangeListener() {
@@ -627,10 +627,10 @@ public class Textbox extends HScrollContainer {
 	 * 
 	 * Event arguments: none
 	 * 
-	 * @param p lambda expression
+	 * @param lambda lambda expression
 	 */
-	public void addSubmitListener(Predicate p) {
-		submitListener = new LambdaEventListener(p);
+	public void addSubmitListener(Predicate lambda) {
+		submitListener = new LambdaEventListener(lambda);
 	}
 
 	public void removeSubmitListener() {
@@ -667,7 +667,7 @@ public class Textbox extends HScrollContainer {
 
 	protected void setCursorByClick(int mX) {
 		// relative to textbox origin and ind respect to fullScrollWidth
-		int clickedPos = mX - getOffsetXWindow() + scrollPosition - paddingLeft;
+		int clickedPos = mX - getOffsetXToWindow() + scrollPosition - paddingLeft;
 		float wide = 0;
 		for (int i = 0; i < text.length(); i++) {
 			float letterWidth = textWidth(text.substring(i, i + 1));
@@ -698,7 +698,7 @@ public class Textbox extends HScrollContainer {
 				selectionEnd = selectionInitial;
 			}
 
-			int x0 = getOffsetXWindow();
+			int x0 = getOffsetXToWindow();
 
 			// scroll a bit when at left or right edge
 			if (e.getX() - x0 < 10) {

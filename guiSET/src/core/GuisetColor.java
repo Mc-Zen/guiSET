@@ -4,7 +4,7 @@ package guiSET.core;
 /**
  * Mostly a copy of processings color stuff. Some time ago we needed this to
  * process colors internally but we could also use PApplets static color methods
- * now. Convenience keeps this thing around.
+ * now. Convenience keeps this thing around and also some basic colors are defined here. 
  * 
  * @author Mc-Zen
  *
@@ -34,25 +34,25 @@ public class GuisetColor {
 		}
 	}
 
-	public static final int create(int v1, int v2, int v3, int alpha) {
+	public static final int create(int r, int g, int b, int alpha) {
 		if (alpha > 255)
 			alpha = 255;
 		else if (alpha < 0)
 			alpha = 0;
-		if (v1 > 255)
-			v1 = 255;
-		else if (v1 < 0)
-			v1 = 0;
-		if (v2 > 255)
-			v2 = 255;
-		else if (v2 < 0)
-			v2 = 0;
-		if (v3 > 255)
-			v3 = 255;
-		else if (v3 < 0)
-			v3 = 0;
+		if (r > 255)
+			r = 255;
+		else if (r < 0)
+			r = 0;
+		if (g > 255)
+			g = 255;
+		else if (g < 0)
+			g = 0;
+		if (b > 255)
+			b = 255;
+		else if (b < 0)
+			b = 0;
 
-		return (alpha << 24) | (v1 << 16) | (v2 << 8) | v3;
+		return (alpha << 24) | (r << 16) | (g << 8) | b;
 	}
 
 	public static final int create(int gray) {
@@ -63,20 +63,20 @@ public class GuisetColor {
 		return ((int) fgray);
 	}
 
-	public static final int create(float fgray, float falpha) {
-		return create((int) fgray, (int) falpha);
+	public static final int create(float gray, float alpha) {
+		return create((int) gray, (int) alpha);
 	}
 
-	public static final int create(int v1, int v2, int v3) {
-		return create(v1, v2, v3, 255);
+	public static final int create(int r, int g, int b) {
+		return create(r, g, b, 255);
 	}
 
-	public static final int create(float v1, float v2, float v3) {
-		return create((int) v1, (int) v2, (int) v3, 255);
+	public static final int create(float r, float g, float b) {
+		return create((int) r, (int) g, (int) b, 255);
 	}
 
-	public static final int create(float v1, float v2, float v3, float alpha) {
-		return create((int) v1, (int) v2, (int) v3, (int) alpha);
+	public static final int create(float r, float g, float b, float alpha) {
+		return create((int) r, (int) g, (int) b, (int) alpha);
 	}
 }
 

@@ -67,7 +67,7 @@ public class Checkbox extends TextBased {
 		setCheckedBackgroundColor(GuisetDefaultValues.checkboxCheckedColor); 
 		setCheckmarkColor(GuisetDefaultValues.checkboxCheckmarkColor); 
 		setText(text);
-		setTextAlign(LEFT);
+		setTextAlign(Constants.LEFT);
 		setPaddingLeft(checkboxSize + checkboxSize / 4);
 		setPaddingRight(2);
 		this.checked = checked; // no setChecked()
@@ -77,10 +77,19 @@ public class Checkbox extends TextBased {
 		this(text, false);
 		addToggleListener(toggleEventMethodName);
 	}
+	public Checkbox(String text, Predicate toggleCallback) {
+		this(text, false);
+		addToggleListener(toggleCallback);
+	}
 
 	public Checkbox(String text, String toggleEventMethodName, boolean checked) {
 		this(text, checked);
 		addToggleListener(toggleEventMethodName);
+	}
+
+	public Checkbox(String text, Predicate toggleCallback, boolean checked) {
+		this(text, checked);
+		addToggleListener(toggleCallback);
 	}
 
 
@@ -247,7 +256,7 @@ public class Checkbox extends TextBased {
 
 	/**
 	 * Add a listener for when the checkbox has been checked/unchecked. Only triggered when the user
-	 * presses the Checkbox and not if set programatically.
+	 * presses the checkbox and not if set programatically.
 	 * 
 	 * @param methodName method name
 	 * @param target     object
@@ -266,10 +275,10 @@ public class Checkbox extends TextBased {
 	 * 
 	 * Event arguments: the {@link Checkbox} whose state has changed
 	 * 
-	 * @param p lambda expression with {@link Checkbox} parameter
+	 * @param lambda lambda expression with {@link Checkbox} parameter
 	 */
-	public void addToggleListener(Predicate1<Checkbox> p) {
-		toggleListener = new LambdaEventListener1<Checkbox>(p);
+	public void addToggleListener(Predicate1<Checkbox> lambda) {
+		toggleListener = new LambdaEventListener1<Checkbox>(lambda);
 	}
 
 	/**
@@ -278,10 +287,10 @@ public class Checkbox extends TextBased {
 	 * 
 	 * Event arguments: none
 	 * 
-	 * @param p lambda expression
+	 * @param lambda lambda expression
 	 */
-	public void addToggleListener(Predicate p) {
-		toggleListener = new LambdaEventListener(p);
+	public void addToggleListener(Predicate lambda) {
+		toggleListener = new LambdaEventListener(lambda);
 	}
 
 	public void removeToggleListener() {
@@ -294,8 +303,8 @@ public class Checkbox extends TextBased {
 	@Override
 	protected void press(MouseEvent e) {
 		if (!reactToEntireField) {
-			int x_ = e.getX() - getOffsetXWindow();
-			int y_ = e.getY() - getOffsetYWindow();
+			int x_ = e.getX() - getOffsetXToWindow();
+			int y_ = e.getY() - getOffsetYToWindow();
 			if (!(x_ < checkboxSize && y_ > getPaddingTop() && y_ < checkboxSize + getPaddingTop()))
 				return;
 		}

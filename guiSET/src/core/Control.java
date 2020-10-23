@@ -43,11 +43,11 @@ import java.lang.reflect.InvocationTargetException;
  * (Abstract) Base class for all other visual components.
  * 
  * It provides all basic style attributes and methods. It also comes with the essential event
- * handling and some rendering methods.
+ * handling and some useful default rendering methods.
  * 
  */
 
-public abstract class Control implements PConstants {
+public abstract class Control {
 
 	/**
 	 * Name for the element can be specified manually, useful for distinguishing.
@@ -137,7 +137,11 @@ public abstract class Control implements PConstants {
 	/*
 	 * IMAGE MODES:
 	 */
-
+	/**
+	 * Fill modes for background images. The element can either be filled with given image (and if
+	 * necessary, the image is distorted) or the iamge is not distorted and resized to fill the entire
+	 * element or be entirely visible inside the element.
+	 */
 	public enum ImageMode {
 		FILL_DISTORT, FIT_FILL_ALL, FIT_INSIDE
 	}
@@ -202,6 +206,17 @@ public abstract class Control implements PConstants {
 	}
 
 
+	/**
+	 * guiSET provides two rendering methods and for each element, the method can be chosen. Unbuffered
+	 * rendering means, that the element draws onto the parents buffer.
+	 * 
+	 * Buffered rendering will make the element draw its looks onto an own pixel buffer (a PGraphics
+	 * object). This <i>can</i> be more CPU-efficient for containers that have lots of items but a
+	 * rather small size. When the gui changes, but the content of the container does not change
+	 * frequently, the container and its items need not be drawn until they change. However, this comes
+	 * at a price of memory (RAM). For items small in size this is not much though.
+	 *
+	 */
 	public enum RenderingMethod {
 		BUFFERED_RENDERING, UNBUFFERED_RENDERING
 	}
@@ -243,6 +258,17 @@ public abstract class Control implements PConstants {
 
 		public static final int SCROLL_HANDLE_STRENGTH_STD = 12;
 		public static final int SCROLL_HANDLE_STRENGTH_SLIM = 3;
+
+		public static final float PI = (float) Math.PI;
+		
+		public static final int LEFT = PApplet.LEFT;
+		public static final int RIGHT = PApplet.RIGHT;
+		public static final int TOP = PApplet.TOP;
+		public static final int BOTTOM = PApplet.BOTTOM;
+		public static final int CENTER = PApplet.CENTER;
+		public static final int BASELINE = PApplet.BASELINE;
+		public static final int UP = PApplet.UP;
+		public static final int DOWN = PApplet.DOWN;
 
 	}
 
@@ -338,7 +364,9 @@ public abstract class Control implements PConstants {
 		blur();
 	}
 
-
+	protected boolean hasStickyFocus() {
+		return stickyFocus;
+	}
 
 
 
@@ -510,8 +538,48 @@ public abstract class Control implements PConstants {
 	 * 	- shadow
 	 */
 
+	class ShadowInformation {
+		int size;
+		int offsetX;
+		int offsetY;
+		int color;
+		float opacity;
+
+		ShadowInformation(int size, int offsetX, int offsetY, int color, float opacity) {
+			this.size = size;
+			this.offsetX = offsetX;
+			this.offsetY = offsetY;
+			this.color = color;
+			this.opacity = opacity;
+		}
+	}
+
+	protected void drawBoxShadow(PGraphics pg, ShadowInformation shadowInformation) {
+		int r = (shadowInformation.color >> 16) & 0xFF;
+		int g = (shadowInformation.color >> 8) & 0xFF;
+		int b = shadowInformation.color & 0xFF;
+		int size = shadowInformation.size;
+		int halfsize = size / 2;
+		int x = Control.this.offsetX + shadowInformation.offsetX - halfsize;
+		int y = Control.this.offsetY + shadowInformation.offsetY - halfsize;
+
+		pg.translate(x, y);
+		pg.fill(GuisetColor.create(r, g, b, shadowInformation.opacity * 255));
+		pg.noStroke();
+		pg.rect(0, 0, width - size, height - size);
+
+		pg.noFill();
+		pg.strokeWeight(1);
+		for (int i = 1; i < size; i++) {
+			int alpha = Math.max(0, (int) (shadowInformation.opacity * (255 - i * (255 / size))));
+			pg.stroke(GuisetColor.create(r, g, b, alpha));
+			pg.rect(-i, -i, width + 2 * i - 1 - size, height + 2 * i - 1 - size);
+		}
+		pg.translate(-x, -y);
+	}
+
 	interface ExtendedRenderer {
-		void setShadow(int size, int offsetX, int offsetY, int color, float transparency);
+		void setShadow(int size, int offsetX, int offsetY, int color, float opacity);
 
 		void removeShadow();
 	}
@@ -570,8 +638,8 @@ public abstract class Control implements PConstants {
 			}
 		}
 
-		public void setShadow(int size, int offsetX, int offsetY, int color, float transparency) {
-			shadowInformation = new ShadowInformation(size, offsetX, offsetY, color, transparency);
+		public void setShadow(int size, int offsetX, int offsetY, int color, float opacity) {
+			shadowInformation = new ShadowInformation(size, offsetX, offsetY, color, opacity);
 		}
 
 		public void removeShadow() {
@@ -614,46 +682,6 @@ public abstract class Control implements PConstants {
 
 
 
-
-	class ShadowInformation {
-		int size;
-		int offsetX;
-		int offsetY;
-		int color;
-		float transparency;
-
-		ShadowInformation(int size, int offsetX, int offsetY, int color, float transparency) {
-			this.size = size;
-			this.offsetX = offsetX;
-			this.offsetY = offsetY;
-			this.color = color;
-			this.transparency = transparency;
-		}
-	}
-
-	protected void drawBoxShadow(PGraphics pg, ShadowInformation shadowInformation) {
-		int r = (shadowInformation.color >> 16) & 0xFF;
-		int g = (shadowInformation.color >> 8) & 0xFF;
-		int b = shadowInformation.color & 0xFF;
-		int size = shadowInformation.size;
-		int halfsize = size / 2;
-		int x = Control.this.offsetX + shadowInformation.offsetX - halfsize;
-		int y = Control.this.offsetY + shadowInformation.offsetY - halfsize;
-
-		pg.translate(x, y);
-		pg.fill(GuisetColor.create(r, g, b, shadowInformation.transparency * 255));
-		pg.noStroke();
-		pg.rect(0, 0, width - size, height - size);
-
-		pg.noFill();
-		pg.strokeWeight(1);
-		for (int i = 1; i < size; i++) {
-			int alpha = Math.max(0, (int) (shadowInformation.transparency * (255 - i * (255 / size))));
-			pg.stroke(GuisetColor.create(r, g, b, alpha));
-			pg.rect(-i, -i, width + 2 * i - 1 - size, height + 2 * i - 1 - size);
-		}
-		pg.translate(-x, -y);
-	}
 
 
 	// As ParentGraphicsRenderer but implementing opactiy and in future box-shadows.
@@ -710,8 +738,8 @@ public abstract class Control implements PConstants {
 		}
 
 		@Override
-		public void setShadow(int size, int offsetX, int offsetY, int color, float transparency) {
-			shadowInformation = new ShadowInformation(size, offsetX, offsetY, color, transparency);
+		public void setShadow(int size, int offsetX, int offsetY, int color, float opacity) {
+			shadowInformation = new ShadowInformation(size, offsetX, offsetY, color, opacity);
 		}
 
 		@Override
@@ -749,9 +777,18 @@ public abstract class Control implements PConstants {
 		}
 	}
 
-	public void setBoxShadow(int size, int offsetX, int offsetY, int color, float transparency) {
+	/**
+	 * Add rectangular box shadow to element.
+	 * 
+	 * @param size    shadow size
+	 * @param offsetX x offset
+	 * @param offsetY y offset
+	 * @param color   shadow color
+	 * @param opacity shadow opacity (0 is transparent, 1 is opaque)
+	 */
+	public void setBoxShadow(int size, int offsetX, int offsetY, int color, float opacity) {
 		enableExtendedRenderer();
-		((ExtendedRenderer) renderer).setShadow(size, offsetX, offsetY, color, transparency);
+		((ExtendedRenderer) renderer).setShadow(size, offsetX, offsetY, color, opacity);
 	}
 
 	public void removeBoxShadow() {
@@ -1426,7 +1463,7 @@ public abstract class Control implements PConstants {
 		}
 
 		switch (anchor) {
-		case PApplet.TOP:
+		case Constants.TOP:
 			setAnchorImpl(TOP_ANCHOR, value);
 
 			// set y now, because resize only changes y if BOTTOM is set. (elements are
@@ -1435,15 +1472,15 @@ public abstract class Control implements PConstants {
 			this.y = value;
 			parentResized();
 			break;
-		case PApplet.RIGHT:
+		case Constants.RIGHT:
 			setAnchorImpl(RIGHT_ANCHOR, value);
 			parentResized();
 			break;
-		case PApplet.BOTTOM:
+		case Constants.BOTTOM:
 			setAnchorImpl(BOTTOM_ANCHOR, value);
 			parentResized();
 			break;
-		case PApplet.LEFT:
+		case Constants.LEFT:
 			setAnchorImpl(LEFT_ANCHOR, value);
 
 			// set x now, because resize only changes x if RIGHT is set. This way everything is alright
@@ -1485,16 +1522,16 @@ public abstract class Control implements PConstants {
 	 */
 	public void setPixelAnchor(int anchor, int value) {
 		switch (anchor) {
-		case PApplet.TOP:
+		case Constants.TOP:
 			setAnchorModeImpl(TOP_ANCHOR, PIXEL_MODE);
 			break;
-		case PApplet.RIGHT:
+		case Constants.RIGHT:
 			setAnchorModeImpl(RIGHT_ANCHOR, PIXEL_MODE);
 			break;
-		case PApplet.BOTTOM:
+		case Constants.BOTTOM:
 			setAnchorModeImpl(BOTTOM_ANCHOR, PIXEL_MODE);
 			break;
-		case PApplet.LEFT:
+		case Constants.LEFT:
 			setAnchorModeImpl(LEFT_ANCHOR, PIXEL_MODE);
 			break;
 		}
@@ -1523,16 +1560,16 @@ public abstract class Control implements PConstants {
 	 */
 	public void setPercentageAnchor(int anchor, int value) {
 		switch (anchor) {
-		case PApplet.TOP:
+		case Constants.TOP:
 			setAnchorModeImpl(TOP_ANCHOR, PERCENTAGE_MODE);
 			break;
-		case PApplet.RIGHT:
+		case Constants.RIGHT:
 			setAnchorModeImpl(RIGHT_ANCHOR, PERCENTAGE_MODE);
 			break;
-		case PApplet.BOTTOM:
+		case Constants.BOTTOM:
 			setAnchorModeImpl(BOTTOM_ANCHOR, PERCENTAGE_MODE);
 			break;
-		case PApplet.LEFT:
+		case Constants.LEFT:
 			setAnchorModeImpl(LEFT_ANCHOR, PERCENTAGE_MODE);
 			break;
 		}
@@ -1564,13 +1601,13 @@ public abstract class Control implements PConstants {
 	 */
 	public boolean getAnchorMode(int anchor) {
 		switch (anchor) {
-		case PApplet.TOP:
+		case Constants.TOP:
 			return getAnchorModeImpl(TOP_ANCHOR);
-		case PApplet.RIGHT:
+		case Constants.RIGHT:
 			return getAnchorModeImpl(RIGHT_ANCHOR);
-		case PApplet.BOTTOM:
+		case Constants.BOTTOM:
 			return getAnchorModeImpl(BOTTOM_ANCHOR);
-		case PApplet.LEFT:
+		case Constants.LEFT:
 			return getAnchorModeImpl(LEFT_ANCHOR);
 		default:
 			return false;
@@ -1578,20 +1615,20 @@ public abstract class Control implements PConstants {
 	}
 
 	/**
-	 * Get the value of an anchor. Returns {@link #ANCHOR_INACTIVE} if the anchor is inactive.
+	 * Get the value of an anchor, returns {@link #ANCHOR_INACTIVE} if the anchor is inactive.
 	 * 
 	 * @param anchor anchor direction
 	 * @return anchor value in pixel or percent, depending on corresponding nchor mode
 	 */
 	public int getAnchorValue(int anchor) {
 		switch (anchor) {
-		case PApplet.TOP:
+		case Constants.TOP:
 			return anchors[TOP_ANCHOR];
-		case PApplet.RIGHT:
+		case Constants.RIGHT:
 			return anchors[RIGHT_ANCHOR];
-		case PApplet.BOTTOM:
+		case Constants.BOTTOM:
 			return anchors[BOTTOM_ANCHOR];
-		case PApplet.LEFT:
+		case Constants.LEFT:
 			return anchors[LEFT_ANCHOR];
 		default:
 			return ANCHOR_INACTIVE;
@@ -1626,19 +1663,19 @@ public abstract class Control implements PConstants {
 
 		for (int a : anchor) {
 			switch (a) {
-			case PApplet.TOP:
+			case Constants.TOP:
 				setAnchorImpl(TOP_ANCHOR, getY());
 				setAnchorModeImpl(TOP_ANCHOR, PIXEL_MODE);
 				break;
-			case PApplet.RIGHT:
+			case Constants.RIGHT:
 				setAnchorImpl(RIGHT_ANCHOR, parent.getWidth() - getWidth() - getX());
 				setAnchorModeImpl(RIGHT_ANCHOR, PIXEL_MODE);
 				break;
-			case PApplet.BOTTOM:
+			case Constants.BOTTOM:
 				setAnchorImpl(BOTTOM_ANCHOR, parent.getHeight() - getHeight() - getY());
 				setAnchorModeImpl(BOTTOM_ANCHOR, PIXEL_MODE);
 				break;
-			case PApplet.LEFT:
+			case Constants.LEFT:
 				setAnchorImpl(LEFT_ANCHOR, getX());
 				setAnchorModeImpl(LEFT_ANCHOR, PIXEL_MODE);
 				break;
@@ -1654,22 +1691,22 @@ public abstract class Control implements PConstants {
 
 
 	/**
-	 * Remove a set anchor. Removing the last anchor will set all anchor
+	 * Remove a set anchor. Removing the last anchor will set all anchor.
 	 * 
 	 * @param anchor accepts TOP, RIGHT, LEFT or BOTTOM
 	 */
 	public void removeAnchor(int anchor) {
 		switch (anchor) {
-		case PApplet.TOP:
+		case Constants.TOP:
 			deactivateAnchor(TOP_ANCHOR);
 			break;
-		case PApplet.RIGHT:
+		case Constants.RIGHT:
 			deactivateAnchor(RIGHT_ANCHOR);
 			break;
-		case PApplet.BOTTOM:
+		case Constants.BOTTOM:
 			deactivateAnchor(BOTTOM_ANCHOR);
 			break;
-		case PApplet.LEFT:
+		case Constants.LEFT:
 			deactivateAnchor(LEFT_ANCHOR);
 			break;
 		}
@@ -1684,7 +1721,7 @@ public abstract class Control implements PConstants {
 	 * @param percent percent 100 for 100%
 	 */
 	public void fillParentWidth(int percent) {
-		setAnchors(LEFT, (100 - percent) / 2, RIGHT, (100 - percent) / 2);
+		setAnchors(Constants.LEFT, (100 - percent) / 2, Constants.RIGHT, (100 - percent) / 2);
 	}
 
 	/**
@@ -1700,7 +1737,7 @@ public abstract class Control implements PConstants {
 	 * @param percent percent 100 for 100%
 	 */
 	public void fillParentHeight(int percent) {
-		setAnchors(TOP, (100 - percent) / 2, BOTTOM, (100 - percent) / 2);
+		setAnchors(Constants.TOP, (100 - percent) / 2, Constants.BOTTOM, (100 - percent) / 2);
 	}
 
 	/**
@@ -1711,14 +1748,14 @@ public abstract class Control implements PConstants {
 	}
 
 	/**
-	 * Fill parent width and height
+	 * Fill parent width and height.
 	 */
 	public void fillParent() {
 		fillParent(100);
 	}
 
 	/**
-	 * Fill x percent of parents width and height
+	 * Fill x percent of parents width and height.
 	 * 
 	 * @param percent percent
 	 */
@@ -2130,10 +2167,20 @@ public abstract class Control implements PConstants {
 			update();
 	}
 
+	/**
+	 * Convenience version that casts to int!
+	 * 
+	 * @param width width in pixel
+	 */
 	public void setWidth(float width) {
 		setWidth((int) width);
 	}
 
+	/**
+	 * Convenience version that casts to int!
+	 * 
+	 * @param height in pixel
+	 */
 	public void setHeight(float height) {
 		setHeight((int) height);
 	}
@@ -2274,7 +2321,7 @@ public abstract class Control implements PConstants {
 	}
 
 	/**
-	 * Set the foreground color (not really used anymore, except in slider).
+	 * Set the foreground color (not really used anymore, except in slider and knob).
 	 * 
 	 * @param clr integer rgb color
 	 */
@@ -2392,7 +2439,8 @@ public abstract class Control implements PConstants {
 	}
 
 	/**
-	 * Set the image filling mode. @see {@link #FILL}, @see {@link #FIT} @see {@link #FIT_INSIDE}.
+	 * Set the background image filling mode. @see {@link #FILL}, @see {@link #FIT} @see
+	 * {@link #FIT_INSIDE}.
 	 * 
 	 * @param imageMode. Use Control.FILL, Control.FIT or Control.FIT_INSIDE
 	 */
@@ -2403,7 +2451,7 @@ public abstract class Control implements PConstants {
 
 	/**
 	 * Set background to a vertical gradient between the two given colors. This removes the background
-	 * image if set.
+	 * image if set. At the moment, only vertical gradients are possible.
 	 * 
 	 * @param topColor    top gradient color
 	 * @param bottomColor bottom gradient color
@@ -2457,7 +2505,7 @@ public abstract class Control implements PConstants {
 
 
 	/**
-	 * Set opacity (opposite of transparency).
+	 * Set opacity (opposite of transparency), casts to float.
 	 * 
 	 * @param opacity opacity from 0 (transparent) to 1 (opaque).
 	 */
@@ -2466,7 +2514,9 @@ public abstract class Control implements PConstants {
 	}
 
 	/**
-	 * Set opacity (opposite of transparency).
+	 * Set opacity (opposite of transparency). Transparent elements are still clickable (like in html),
+	 * even if the opacity is 0. Call {@code setVisibility(false)} or {@code setEnabled(false)} to
+	 * prevent the element from receiving mouse events.
 	 * 
 	 * @param opacity opacity from 0 (transparent) to 1 (opaque).
 	 */
@@ -2992,6 +3042,16 @@ public abstract class Control implements PConstants {
 	 * Create a transition animation for a property of this Component. The {@link Frame} will deal with
 	 * changing this property in appropriate steps to create the effect.
 	 * 
+	 * I.e. write:
+	 * 
+	 * {@code myObject.animate("x", 50, 500);}
+	 * 
+	 * to change the x-coordinate of myObject to 50 within half a second. Or
+	 * 
+	 * {@code myObject.animate("opacity", 0, 100);}
+	 * 
+	 * to create a fade-out transition.
+	 * 
 	 * @param attribute    name of attribute to animate
 	 * @param aimedValue   final value for the attribute
 	 * @param milliseconds time for animation in milliseconds
@@ -3105,17 +3165,28 @@ public abstract class Control implements PConstants {
 		}
 	}
 
-	// Functional interface for a lambda with no parameters
+	/**
+	 * Functional interface for a lambda expression with no parameters.
+	 */
 	public interface Predicate {
 		void run();
 	}
 
-	// Functional interface for a lambda with 1 parameter
+	/**
+	 * Functional interface for a lambda expression with one parameter.
+	 *
+	 * @param <T> lambda parameter type
+	 */
 	public interface Predicate1<T> {
 		void run(T args);
 	}
 
-	// Functional interface for a lambda with 2 parameters
+	/**
+	 * Functional interface for a lambda expression with two parameters.
+	 *
+	 * @param <T> first parameter type
+	 * @param <U> second parameter type
+	 */
 	public interface Predicate2<T, U> {
 		void run(T arg1, U arg2);
 	}
@@ -3279,30 +3350,30 @@ public abstract class Control implements PConstants {
 	 * Event parameters: none
 	 * 
 	 * @param type see {@link #addMouseListener(String, String)}
-	 * @param p    lambda expression
+	 * @param lambda    lambda expression
 	 */
-	public void addMouseListener(String type, Predicate p) {
+	public void addMouseListener(String type, Predicate lambda) {
 		switch (type) {
 		case "press":
-			pressListener = new LambdaEventListener(p);
+			pressListener = new LambdaEventListener(lambda);
 			return;
 		case "release":
-			releaseListener = new LambdaEventListener(p);
+			releaseListener = new LambdaEventListener(lambda);
 			return;
 		case "enter":
-			enterListener = new LambdaEventListener(p);
+			enterListener = new LambdaEventListener(lambda);
 			return;
 		case "exit":
-			exitListener = new LambdaEventListener(p);
+			exitListener = new LambdaEventListener(lambda);
 			return;
 		case "move":
-			moveListener = new LambdaEventListener(p);
+			moveListener = new LambdaEventListener(lambda);
 			return;
 		case "drag":
-			dragListener = new LambdaEventListener(p);
+			dragListener = new LambdaEventListener(lambda);
 			return;
 		case "wheel":
-			wheelListener = new LambdaEventListener(p);
+			wheelListener = new LambdaEventListener(lambda);
 			return;
 		}
 	}
@@ -3314,30 +3385,30 @@ public abstract class Control implements PConstants {
 	 * Event parameters: {@link MouseEvent}
 	 * 
 	 * @param type see {@link #addMouseListener(String, String)}
-	 * @param p    lambda expression with a {@link MouseEvent} as argument.
+	 * @param lambda    lambda expression with a {@link MouseEvent} as argument.
 	 */
-	public void addMouseListener(String type, Predicate1<MouseEvent> p) {
+	public void addMouseListener(String type, Predicate1<MouseEvent> lambda) {
 		switch (type) {
 		case "press":
-			pressListener = new LambdaEventListener1<MouseEvent>(p);
+			pressListener = new LambdaEventListener1<MouseEvent>(lambda);
 			return;
 		case "release":
-			releaseListener = new LambdaEventListener1<MouseEvent>(p);
+			releaseListener = new LambdaEventListener1<MouseEvent>(lambda);
 			return;
 		case "enter":
-			enterListener = new LambdaEventListener1<MouseEvent>(p);
+			enterListener = new LambdaEventListener1<MouseEvent>(lambda);
 			return;
 		case "exit":
-			exitListener = new LambdaEventListener1<MouseEvent>(p);
+			exitListener = new LambdaEventListener1<MouseEvent>(lambda);
 			return;
 		case "move":
-			moveListener = new LambdaEventListener1<MouseEvent>(p);
+			moveListener = new LambdaEventListener1<MouseEvent>(lambda);
 			return;
 		case "drag":
-			dragListener = new LambdaEventListener1<MouseEvent>(p);
+			dragListener = new LambdaEventListener1<MouseEvent>(lambda);
 			return;
 		case "wheel":
-			wheelListener = new LambdaEventListener1<MouseEvent>(p);
+			wheelListener = new LambdaEventListener1<MouseEvent>(lambda);
 			return;
 		}
 	}
@@ -3378,7 +3449,7 @@ public abstract class Control implements PConstants {
 	/**
 	 * Add a resize listener that fires each time the element is resized by anchor resizing.
 	 * 
-	 * Event arguments: the {@link #Control()} that is resized
+	 * Event arguments: the {@link Control} that is resized
 	 * 
 	 * @param methodName name of callback method
 	 * @param target     Object where the callback method is declared.
@@ -3392,15 +3463,15 @@ public abstract class Control implements PConstants {
 	}
 
 	/**
-	 * Add a lambda focus listener with a {@link #Control()} as parameter that fires each time the
-	 * element is resized by anchor resizing.
+	 * Add a lambda focus listener with a {@link Control} as parameter that fires each time the element
+	 * is resized by anchor resizing.
 	 * 
-	 * Event arguments: the {@link #Control()} that is resized
+	 * Event arguments: the {@link Control} that is resized
 	 * 
-	 * @param p lambda expression with {@link #Control()} parameter
+	 * @param lambda lambda expression with {@link Control} parameter
 	 */
-	public void addResizeListener(Predicate1<Control> p) {
-		resizeListener = new LambdaEventListener1<Control>(p);
+	public void addResizeListener(Predicate1<Control> lambda) {
+		resizeListener = new LambdaEventListener1<Control>(lambda);
 	}
 
 	/**
@@ -3408,10 +3479,10 @@ public abstract class Control implements PConstants {
 	 * 
 	 * Event arguments: none
 	 * 
-	 * @param p lambda expression
+	 * @param lambda lambda expression
 	 */
-	public void addResizeListener(Predicate p) {
-		resizeListener = new LambdaEventListener(p);
+	public void addResizeListener(Predicate lambda) {
+		resizeListener = new LambdaEventListener(lambda);
 	}
 
 	public void removeResizeListener() {
@@ -3423,7 +3494,7 @@ public abstract class Control implements PConstants {
 	 * Add a focus listener that fires when the element gets focus (through mouse click or
 	 * programmatically).
 	 * 
-	 * Event arguments: The {@link #Control()} that got focus
+	 * Event arguments: The {@link Control} that got focus
 	 * 
 	 * @param methodName name of callback method
 	 * @param target     Object where the callback method is declared.
@@ -3437,15 +3508,15 @@ public abstract class Control implements PConstants {
 	}
 
 	/**
-	 * Add a lambda focus listener with a {@link #Control()} as parameter that fires when the element
-	 * gets focus (through mouse click, programmatically).
+	 * Add a lambda focus listener with a {@link Control} as parameter that fires when the element gets
+	 * focus (through mouse click, programmatically).
 	 * 
-	 * Event arguments: The {@link #Control()} that got focus
+	 * Event arguments: The {@link Control} that got focus
 	 * 
-	 * @param p lambda expression with {@link #Control()} parameter
+	 * @param lambda lambda expression with {@link Control} parameter
 	 */
-	public void addFocusListener(Predicate1<Control> p) {
-		focusListener = new LambdaEventListener1<Control>(p);
+	public void addFocusListener(Predicate1<Control> lambda) {
+		focusListener = new LambdaEventListener1<Control>(lambda);
 	}
 
 	/**
@@ -3454,10 +3525,10 @@ public abstract class Control implements PConstants {
 	 * 
 	 * Event arguments: none
 	 * 
-	 * @param p lambda expression
+	 * @param lambda lambda expression
 	 */
-	public void addFocusListener(Predicate p) {
-		focusListener = new LambdaEventListener(p);
+	public void addFocusListener(Predicate lambda) {
+		focusListener = new LambdaEventListener(lambda);
 	}
 
 	public void removeFocusListener() {
@@ -3513,11 +3584,11 @@ public abstract class Control implements PConstants {
 	// Origin coordinates relative to parent. Set by parent in containerRenderItem(Control, int, int)
 	protected int offsetX = 0, offsetY = 0;
 
-	public int getOffsetX() {
+	protected int getOffsetX() {
 		return offsetX;
 	}
 
-	public int getOffsetY() {
+	protected int getOffsetY() {
 		return offsetY;
 	}
 
@@ -3575,8 +3646,14 @@ public abstract class Control implements PConstants {
 		propagationStopped = false;
 	}
 
-	// Check if given coordinates (need to be relative to parent) are within this
-	// elements bounds
+	/**
+	 * Check if given coordinates (need to be relative to parent) are within this element (without
+	 * constraining to parents bounds).
+	 * 
+	 * @param x x coordinate relative to parent origin
+	 * @param y y coordinate relative to parent origin
+	 * @return are coordintes within
+	 */
 	public boolean relativeCoordsAreWithin(int x, int y) {
 		return x > offsetX && y > offsetY && x < offsetX + width && y < offsetY + height;
 	}
@@ -3586,8 +3663,8 @@ public abstract class Control implements PConstants {
 	 * 
 	 * @return relative x
 	 */
-	public int getOffsetXParent() {
-		return offsetX;
+	public int getOffsetXToParent() {
+		return getOffsetX();
 	}
 
 	/**
@@ -3595,8 +3672,8 @@ public abstract class Control implements PConstants {
 	 * 
 	 * @return relative y
 	 */
-	public int getOffsetYParent() {
-		return offsetY;
+	public int getOffsetYToParent() {
+		return getOffsetY();
 	}
 
 	/**
@@ -3604,8 +3681,8 @@ public abstract class Control implements PConstants {
 	 * 
 	 * @return absolute x
 	 */
-	public int getOffsetXWindow() {
-		return offsetX + parent.getOffsetXWindow();
+	public int getOffsetXToWindow() {
+		return offsetX + parent.getOffsetXToWindow();
 	}
 
 	/**
@@ -3613,8 +3690,8 @@ public abstract class Control implements PConstants {
 	 * 
 	 * @return absolute y
 	 */
-	public int getOffsetYWindow() {
-		return offsetY + parent.getOffsetYWindow();
+	public int getOffsetYToWindow() {
+		return offsetY + parent.getOffsetYToWindow();
 	}
 
 
@@ -3785,7 +3862,7 @@ public abstract class Control implements PConstants {
 	 * 
 	 * @return version
 	 */
-	public String getVersion() {
+	static public String getVersionString() {
 		return "Version 0.0.12";
 	}
 

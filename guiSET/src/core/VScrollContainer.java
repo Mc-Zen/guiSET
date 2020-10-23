@@ -309,7 +309,7 @@ public class VScrollContainer extends VFlowContainer {
 	@Override
 	protected void drag(MouseEvent e) {
 		if (isDraggingScrollHandle()) {
-			int newScrollHandle_Pos = e.getY() - getOffsetYWindow() - startHandleDragPos;
+			int newScrollHandle_Pos = e.getY() - getOffsetYToWindow() - startHandleDragPos;
 			int newScrollPosition = newScrollHandle_Pos * (fullScrollHeight - getHeight()) / (scrollbar_height() - scrollhandle_height());
 			setScrollPosition(newScrollPosition);
 		}

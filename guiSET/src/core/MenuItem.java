@@ -10,7 +10,6 @@ import java.util.TimerTask;
 
 
 
-
 /**
  * The MenuItems aren't displayed and rendered at the position of the hierachy
  * they are added to. Instead they create (if they have children/subitems at
@@ -45,7 +44,7 @@ class MenuSurface extends Container {
 			staticMS = this;
 			getFrame().add(this);
 			setVisible(false);
-			setAnchors(LEFT, 0, RIGHT, 0, TOP, 0, BOTTOM, 0); // Fill entire Frame
+			setAnchors(Constants.LEFT, 0, Constants.RIGHT, 0, Constants.TOP, 0, Constants.BOTTOM, 0); // Fill entire Frame
 			setZ(Constants.MenuSurfaceZIndex);
 			setBackgroundColor(GuisetColor.TRANSPARENT);
 		}
@@ -325,11 +324,11 @@ public class MenuItem extends TextBased {
 			 */
 			if (shortcut != null) {
 				String textBKP = text;
-				textRenderer.setTextAlign(RIGHT); // temporary RIGHT (no need to reset), no setter!! dont wanna call update always
+				textRenderer.setTextAlign(Constants.RIGHT); // temporary RIGHT (no need to reset), no setter!! dont wanna call update always
 				text = shortcut.toString() + " ";
 				drawDefaultText();
 				text = textBKP;
-				textRenderer.setTextAlign(LEFT); // temporary RIGHT (no need to reset)
+				textRenderer.setTextAlign(Constants.LEFT); // temporary RIGHT (no need to reset)
 			}
 
 			/*
@@ -389,14 +388,14 @@ public class MenuItem extends TextBased {
 	}
 
 	private void setStyleOfNestedMenuItem() {
-		setTextAlign(LEFT);
+		setTextAlign(Constants.LEFT);
 		setHoverColor(GuisetDefaultValues.menuItemHoverColor);
 		setPaddingLeft(Constants.MenuItemPaddingLeft);
 		setPaddingRight(Constants.MenuItemPaddingRight);
 	}
 
 	private void setStyleOfMenuHeader() {
-		setTextAlign(CENTER);
+		setTextAlign(Constants.CENTER);
 		setHoverColor(GuisetDefaultValues.menuHeaderHoverColor);
 	}
 
@@ -491,8 +490,8 @@ public class MenuItem extends TextBased {
 				// reset timer (when closing the strip the timer is always ceased)
 				hoverTimer = new Timer();
 			} else {
-				dropDown.x = getOffsetXWindow() + getWidth() - 10;
-				dropDown.y = getOffsetYWindow() - MenuSurface.staticMS.offsetY;
+				dropDown.x = getOffsetXToWindow() + getWidth() - 10;
+				dropDown.y = getOffsetYToWindow() - MenuSurface.staticMS.offsetY;
 			}
 
 
@@ -832,10 +831,10 @@ public class MenuItem extends TextBased {
 	 * 
 	 * Event arguments: this {@link #MenuItem()}
 	 * 
-	 * @param p lambda expression with {@link #MenuItem()} parameter
+	 * @param lambda lambda expression with {@link #MenuItem()} parameter
 	 */
-	public void addSelectListener(Predicate1<MenuItem> p) {
-		selectListener = new LambdaEventListener1<MenuItem>(p);
+	public void addSelectListener(Predicate1<MenuItem> lambda) {
+		selectListener = new LambdaEventListener1<MenuItem>(lambda);
 	}
 
 	/**
@@ -843,10 +842,10 @@ public class MenuItem extends TextBased {
 	 * 
 	 * Event arguments: none
 	 * 
-	 * @param p lambda expression
+	 * @param lambda lambda expression
 	 */
-	public void addSelectListener(Predicate p) {
-		selectListener = new LambdaEventListener(p);
+	public void addSelectListener(Predicate lambda) {
+		selectListener = new LambdaEventListener(lambda);
 	}
 
 	public void removeSelectListener() {
@@ -876,10 +875,10 @@ public class MenuItem extends TextBased {
 	 * 
 	 * Event arguments: the selected child {@link #MenuItem()}
 	 * 
-	 * @param p lambda expression with {@link #MenuItem()} parameter
+	 * @param lambda lambda expression with {@link #MenuItem()} parameter
 	 */
-	public void addChildSelectListener(Predicate1<MenuItem> p) {
-		childSelectListener = new LambdaEventListener1<MenuItem>(p);
+	public void addChildSelectListener(Predicate1<MenuItem> lambda) {
+		childSelectListener = new LambdaEventListener1<MenuItem>(lambda);
 	}
 
 	/**
@@ -887,10 +886,10 @@ public class MenuItem extends TextBased {
 	 * 
 	 * Event arguments: none
 	 * 
-	 * @param p lambda expression
+	 * @param lambda lambda expression
 	 */
-	public void addChildSelectListener(Predicate p) {
-		childSelectListener = new LambdaEventListener(p);
+	public void addChildSelectListener(Predicate lambda) {
+		childSelectListener = new LambdaEventListener(lambda);
 	}
 
 	public void removeChildSelectListener() {

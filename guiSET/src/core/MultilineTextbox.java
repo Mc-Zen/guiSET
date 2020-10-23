@@ -31,7 +31,8 @@ import java.awt.datatransfer.DataFlavor;
 
 /**
  * The MultilineTextbox allows entering and pasting multi-line text. If the width of a line exceeds
- * the MultilineTextboxs width a line-break is performed.
+ * the MultilineTextboxs width, line-breaks are performed. Features copy/paste/cut, select and
+ * special events.
  * 
  * @author Mc-Zen
  *
@@ -87,9 +88,9 @@ public class MultilineTextbox extends VScrollContainer {
 		setBackgroundColor(230);
 		setPadding(3);
 		setFontSize(fontSize);
-		setTextAlign(LEFT);
+		setTextAlign(Constants.LEFT);
 		setLineHeightPercent(120);
-		setCursor(TEXT);
+		setCursor(PApplet.TEXT);
 		setSlimScrollHandle(true);
 	}
 
@@ -879,10 +880,10 @@ public class MultilineTextbox extends VScrollContainer {
 	 * 
 	 * Event arguments: none
 	 * 
-	 * @param p lambda expression
+	 * @param lambda lambda expression
 	 */
-	public void addKeyPressListener(Predicate p) {
-		keyPressListener = new LambdaEventListener(p);
+	public void addKeyPressListener(Predicate lambda) {
+		keyPressListener = new LambdaEventListener(lambda);
 	}
 
 	/**
@@ -891,10 +892,10 @@ public class MultilineTextbox extends VScrollContainer {
 	 * 
 	 * Event arguments: {@link KeyEvent}
 	 * 
-	 * @param p lambda expression with {@link KeyEvent} as parameter
+	 * @param lambda lambda expression with {@link KeyEvent} as parameter
 	 */
-	public void addKeyPressListener(Predicate1<KeyEvent> p) {
-		keyPressListener = new LambdaEventListener1<KeyEvent>(p);
+	public void addKeyPressListener(Predicate1<KeyEvent> lambda) {
+		keyPressListener = new LambdaEventListener1<KeyEvent>(lambda);
 	}
 
 	public void removeKeyPressListener() {
@@ -921,10 +922,10 @@ public class MultilineTextbox extends VScrollContainer {
 	 * 
 	 * Event arguments: none
 	 * 
-	 * @param p lambda expression
+	 * @param lambda lambda expression
 	 */
-	public void addTextChangeListener(Predicate p) {
-		textChangeListener = new LambdaEventListener(p);
+	public void addTextChangeListener(Predicate lambda) {
+		textChangeListener = new LambdaEventListener(lambda);
 	}
 
 	public void removeTextChangeListener() {
@@ -946,14 +947,14 @@ public class MultilineTextbox extends VScrollContainer {
 		if (e.getCount() < 2) {
 			// set cursor by clicking
 			if (clickSetsCursor) {
-				setCursorByClick(e.getX() - getOffsetXWindow(), e.getY() - getOffsetYWindow());
+				setCursorByClick(e.getX() - getOffsetXToWindow(), e.getY() - getOffsetYToWindow());
 
 				selectionInitial = cursorPosition;
 				selectionStart = cursorPosition;
 				selectionEnd = cursorPosition;
 			}
 		} else { // double click
-			setCursorByClick(e.getX() - getOffsetXWindow(), e.getY() - getOffsetYWindow());
+			setCursorByClick(e.getX() - getOffsetXToWindow(), e.getY() - getOffsetYToWindow());
 
 			selectionStart = findPreviousStop();
 			selectionEnd = findNextStop();
@@ -967,7 +968,7 @@ public class MultilineTextbox extends VScrollContainer {
 		if (startHandleDragPos > -1) // only select text if not dragging scrollbar
 			return;
 
-		setCursorByClick(e.getX() - getOffsetXWindow(), e.getY() - getOffsetYWindow());
+		setCursorByClick(e.getX() - getOffsetXToWindow(), e.getY() - getOffsetYToWindow());
 		if (cursorPosition > selectionInitial) {
 			selectionStart = selectionInitial;
 			selectionEnd = cursorPosition;

@@ -245,10 +245,10 @@ public class Button extends TextBased {
 	 * 
 	 * Event arguments: the {@link Button} whose state has changed
 	 * 
-	 * @param p lambda expression with {@link MouseEvent} parameter
+	 * @param lambda lambda expression with {@link MouseEvent} parameter
 	 */
-	public void addClickListener(Predicate1<MouseEvent> p) {
-		clickListener = new LambdaEventListener1<MouseEvent>(p);
+	public void addClickListener(Predicate1<MouseEvent> lambda) {
+		clickListener = new LambdaEventListener1<MouseEvent>(lambda);
 	}
 
 	/**
@@ -256,10 +256,10 @@ public class Button extends TextBased {
 	 * 
 	 * Event arguments: none
 	 * 
-	 * @param p lambda expression
+	 * @param lambda lambda expression
 	 */
-	public void addClickListener(Predicate p) {
-		clickListener = new LambdaEventListener(p);
+	public void addClickListener(Predicate lambda) {
+		clickListener = new LambdaEventListener(lambda);
 	}
 
 	public void removeClickListener() {
