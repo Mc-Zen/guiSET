@@ -29,7 +29,7 @@
                 <li><a href="animations.html">Animations</a></li>
                 <li><a href="help,-something-doesn't-work.html">Common errors</a></li>
                 <li><a href="creating-own-components.html">Creating own components</a></li>
-                <li><a href="draw-modes.html">Draw modes</a></li>
+                <li><a href="refresh-modes.html">Refresh modes</a></li>
                 <li><a href="dynamic-resizing-and-anchors.html">Dynamic resizing and anchors</a></li>
                 <li><a href="global-keyboard-shortcuts.html">Global keyboard shortcuts</a></li>
                 <li><a href="installing-guiset.html">Installing guiSET</a></li>
@@ -81,7 +81,7 @@
         </p>
 
         <pre class="prettyprint">
-public class ColorButton extends Control {
+class ColorButton extends Control {
     ColorButton(int backgroundColor, int foregroundColor) { 
         setBackgroundColor(backgroundColor);
         setForegroundColor(foregroundColor);
@@ -148,7 +148,7 @@ void render() {
         </p>
 
         <pre class="prettyprint">
-public class ColorButton extends Control {
+class ColorButton extends Control {
     ColorButton(int backgroundColor, int foregroundColor) { 
         setStatusBackgroundColorsAutomatically(backgroundColor);
         setForegroundColor(getForegroundColor());
@@ -198,7 +198,7 @@ public class ColorButton extends Control {
             the Processing website). We do:
         </p>
         <pre class="prettyprint">
-public class FancyLabel extends Label {
+class FancyLabel extends Label {
     FancyLabel(String text) {
         // this.text = text; // bad -> use setter (!):
         setText(text);
@@ -209,7 +209,7 @@ public class FancyLabel extends Label {
         drawDefaultBackground();
     
         pg.pushMatrix();               // saves the current position of the coordinate system
-        pg.translate(this.width, 0);   // move by width to the left so rotation is right
+        pg.translate(getWidth(), 0);   // move by width to the left so rotation is right
         pg.rotate(radians(90));        // rotate by 90 degrees (around left top corner)
     
         drawDefaultText();             // guiSET default text drawing method (sets foregroundColor, textSize etc.)
@@ -228,12 +228,12 @@ public class FancyLabel extends Label {
 
         <pre class="prettyprint">
 @Override
-void autoWidth() {
-    return (int)textHeight(text) + paddingLeft + paddingRight;
+int autoWidth() {
+    return (int)textHeight(getText()) + getPaddingLeft() + getPaddingRight();
 }
 @Override
-void autoHeight(){}
-    return (int)textWidth(text) + paddingTop + paddingBottom;
+int autoHeight(){
+    return (int)textWidth(getText()) + getPaddingTop() + getPaddingBottom();
 }</pre>
 
 
@@ -259,7 +259,7 @@ void autoHeight(){}
             The full code:
         </p>
         <pre class="prettyprint">
-public class FancyLabel extends Label {
+class FancyLabel extends Label {
     FancyLabel(String text) {
         setText(text); // will call autosize 
     }
@@ -272,8 +272,8 @@ public class FancyLabel extends Label {
         pg.translate(getWidth(), 0);   // move by width to the left so rotation is right
         pg.rotate(radians(90));        // rotate by 90 degrees (around left top corner)
     
-        int tempWidth = width;
-        int tempHeight = height;
+        int tempWidth = getWidth();
+        int tempHeight = getHeight();
         setHeightNoUpdate(tempWidth);  // Set height to width without updating
         setWidthNoUpdate(tempHeight);  // Set width to height without updating
     
@@ -286,12 +286,12 @@ public class FancyLabel extends Label {
  
     // autosize is also called by setPadding(), setFontSize() and various others 
     @Override
-    void autoWidth() {
-        return (int)textHeight(text) + paddingLeft + paddingRight;
+    int autoWidth() {
+        return (int)textHeight(getText()) + getPaddingLeft() + getPaddingRight();
     }
     @Override
-    void autoHeight()
-        return (int)textWidth(text) + paddingTop + paddingBottom;
+    int autoHeight(){
+        return (int)textWidth(getText()) + getPaddingTop() + getPaddingBottom();
     }
 }
 </pre>
@@ -314,10 +314,10 @@ public class FancyLabel extends Label {
             them up vertically one below the other.
         </p>
         <p>
-            We start off by creating constructors and overriding <code>void render()</code>. In our constructor we need
-            to
-            write <code>containerMakesAutoLayout = true;</code> because as just mentioned we apply some sort of a new
-            layout and ignore the items <code>x</code> and <code>y</code> (This is important!). In <code>render()</code>
+            We start off by creating constructors and overriding <code>void render()</code>. We override the method
+            <code>needsSortingByZ()</code> because as just mentioned we apply some sort of a new
+            layout and ignore the items <code>x</code> and <code>y</code> (This is important!). Items shall not be
+            sorted because they will not overlap anyway and that could change the order. In <code>render()</code>
             we start off by calling <code>drawDefaultBackground()</code> which is always a good idea.
         </p>
 
@@ -329,7 +329,11 @@ class VFlowContainer extends Container {
 
     public VFlowContainer(int width, int height) {
         super(width, height);
-        containerMakesAutoLayout = true;
+    }
+
+    @Override
+    protected boolean needsSortingByZ(){
+        return false;
     }
 
     @Override
@@ -340,23 +344,20 @@ class VFlowContainer extends Container {
 
         <p>
             Now the interesting part: to place one item below the other we keep track of the "used" space and initialize
-            it
-            with the containers <code>paddingTop</code>. Then iteratively we go through all items, render them and add
-            the
-            height of the item (and the margins) to <code>usedSpace</code>:
+            it with the containers <code>paddingTop</code>. Then iteratively we go through all items, render them and
+            add the height of the item (and the margins) to <code>usedSpace</code>:
         </p>
 
         <pre class="prettyprint">
-@Override
 protected void render() {
     drawDefaultBackground();
 
-    int usedSpace = paddingTop;
+    int usedSpace = getPaddingTop();
 
     for (Control c : items) {
-        if (c.visible) {
-            renderItem(c, c.marginLeft + paddingLeft, usedSpace + c.marginTop);
-            usedSpace += (c.getHeight() + c.marginTop + c.marginBottom);
+        if (c.isVisible()) {
+            renderItem(c, c.getMarginLeft() + getPaddingLeft(), usedSpace + c.getMarginTop());
+            usedSpace += (c.getHeight() + c.getMarginTop() + c.getMarginBottom());
         }
     }
     drawDefaultDisabled();
@@ -402,8 +403,8 @@ protected void render() {
         </p>
         <p>
             Also, if your container ignores the <code>x</code> and <code>y</code> coordinates of its items and places
-            them in some different way (like the flow- and scroll containers do), be sure to write
-            <code>containerMakesAutoLayout = true;</code> in each constructor.
+            them in some different way (like the flow- and scroll containers do), be sure to override
+            <code>needsSortingByZ()</code> and return false.
         </p>
         <p>
             You also might want to override the <code>fitContent()</code> method which resizes the container to fit its
@@ -411,7 +412,8 @@ protected void render() {
         </p>
         <p>
             When overriding or creating new methods for adding items, use the already provided
-            <code>add(Control...c)</code> method.
+            <code>add(Control...c)</code> method. Do not directly add to the
+            <code>ArrayList&lt;Control&gt; items</code>!
         </p>
 
         <h3 id="using-mouse-event">Using mouse events</h3>
@@ -457,11 +459,10 @@ protected void press(MouseEvent e) {
             Maybe you also to call the super method here too (especially when subclassing a textbox).
         </p>
         <p>
-            What really might be useful is the <code>overridesFrameShortcuts</code> property. The standard value for
-            this
-            is false (except for textboxes). If this property is true, then shortcuts registered at <code>Frame</code>
-            will not be handled if an instance of your component is focused at the moment. I.e. it would be irrating
-            when typing text into a textbox and every time you hit 'E', a shortcut that is by chance
+            What really might be useful occasionally is the <code>overridesFrameShortcuts()</code> method. The standard
+            return value for this is false (except for textboxes). If it returns true, then shortcuts registered
+            at <code>Frame</code> will not be handled if an instance of your component is focused at the moment. I.e. it
+            would be irrating when typing text into a textbox and every time you hit 'E', a shortcut that is by chance
             <kbd>Shift</kbd>+<kbd>E</kbd> is executed.
         </p>
 
@@ -471,6 +472,7 @@ protected void press(MouseEvent e) {
             <code>render()</code>, <code>initialize()</code>, <code>int autoWidth()</code>,
             <code>int autoHeight()</code>,
             <code>fitContent()</code>, <code>int getAvailableWidth()</code>, <code>int getAvailableHeight()</code>,
+            <code>overridesFrameShortcuts()</code>, <code>needsSortingByZ()</code>
             internal event methods.
         </p>
 
