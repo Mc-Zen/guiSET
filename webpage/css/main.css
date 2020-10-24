@@ -87,25 +87,21 @@ nav li {
 }
 
 .link-box a {
-    background: #6696b8; 
     background: #c4d8e7;
     padding: 0.5em;
-    color: rgb(255, 255, 255);
-    color: #0a5c96;
     color: #062a44;
     text-decoration: none;
     transition: background-color .3s; 
-    margin-left: 8px;
+    margin-left: 8px;    
+    box-shadow: 0px 2px 3px 0px rgba(0,0,0,0.5);
 }
 
 
 .link-box a:hover {
-    /*color: rgb(204, 204, 204);*/
-    background: #76a4c5; 
     background: #b1c5d4;
 }
 .link-box a:visited {
-    color: #062a44;
+    color: #05243a;
 }
 
 
