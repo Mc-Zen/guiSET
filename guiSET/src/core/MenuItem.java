@@ -77,10 +77,6 @@ class MenuSurface extends Container {
 		staticMS.setVisible(false);
 	}
 
-	protected static void closeAllMenus() {
-		MenuItem.closeOpenHeaders();
-		closeMenuSurface();
-	}
 
 
 	// Definitely called after all MenuItems got the event.
@@ -88,7 +84,7 @@ class MenuSurface extends Container {
 	// been pressed.
 	@Override
 	protected void press(MouseEvent e) {
-		closeAllMenus();
+		MenuItem.closeAllMenus();
 
 		// now that the menu has closed, allow pressing immediately with the same
 		// click on other elements (even dragging works this way).
@@ -564,6 +560,12 @@ public class MenuItem extends TextBased {
 		}
 	}
 
+	protected static void closeAllMenus() {
+		closeOpenHeaders();
+		MenuSurface.closeMenuSurface();
+	}
+
+
 	/**
 	 * Set the displayed shortcut (shortcut has no real effect unless set manually at Frame).
 	 * 
@@ -1017,7 +1019,70 @@ public class MenuItem extends TextBased {
 		stopPropagation();
 	}
 
+	/**
+	 * Parse a string as menu. This can be a lot easier than creating a menu by hand. Items are wrapped
+	 * by {@code "<>"} and start with their text, followed by an optional {@code ":"} after which the
+	 * callback method comes. Finally a shortcut can be specified by starting with {@code "-"}. The
+	 * MenuParser is still a bit experimental, but seems to work so far.
+	 * 
+	 * Examples:
+	 * 
+	 * <br>
+	 * <br>
+	 * {@code "<File <New><Open><Recent <File 1><File 2><File3>><Save><Save As>> <Edit<Undo><Redo>>"}
+	 * <br>
+	 * <br>
+	 * 
+	 * With shortcuts (different possibilities: separated by + or -; case does not matter; Ctrl is as
+	 * valid as control or CONTROL etc.; SHIFT or shft etc.; order does not matter): <br>
+	 * <br>
+	 * 
+	 * {@code "<File <New -Ctrl+N><Open -Ctrl+O><Recent <File 1><File 2><File3>><Save -Ctrl-S><Save As -Ctrl-Shift-S>> <Edit<Undo -Control-Z><Redo -CONTROL+Y>>"}
+	 * <br>
+	 * <br>
+	 * 
+	 * With callback method, executed when item is clicked or shortcut executed: <br>
+	 * <br>
+	 * {@code "<File <New:newFile -Ctrl+N><Open:openFile -Ctrl+O><Recent <File 1><File 2><File3>><Save -Ctrl-S><Save As -Ctrl-Shift-S>> <Edit<Undo:undo -Control-Z><Redo:redo -CONTROL+Y>>"}
+	 * <br>
+	 * <br>
+	 * 
+	 * (given that the methods {@code newFile()} {@code openFile()} etc. have been declared)
+	 * 
+	 * Shortcuts can also be given without giving a callback method and the other way round.
+	 * 
+	 * The instruction sequences for starting the callback/shortcut details can be set by calling
+	 * {@link #parseMenu(String, MenuBar, String, String)} or
+	 * {@link #parseMenu(String, ContextMenu, String, String)}.
+	 * 
+	 * 
+	 * @param menuString string container menu coding information
+	 * @param menubar    the menu bar that the menus should be added to
+	 */
+	public static void parseMenu(String menuString, MenuBar menubar) {
+		new MenuParser(menuString, menubar);
+	}
 
+
+	public static void parseMenu(String menuString, MenuBar menubar, String shortcutIntroduceSequence, String callbackIntroduceSequence) {
+		new MenuParser(menuString, menubar, shortcutIntroduceSequence, callbackIntroduceSequence);
+	}
+
+
+	/**
+	 * Same as {@link #parseMenu(String, MenuBar)} but for context menus.
+	 * 
+	 * @see MenuItem#parseMenu(String, MenuBar)
+	 * @param menuString  string container menu coding information
+	 * @param contextMenu the context menu that the menus should be added to
+	 */
+	public static void parseMenu(String menuString, ContextMenu contextMenu) {
+		new MenuParser(menuString, contextMenu);
+	}
+
+	public static void parseMenu(String menuString, ContextMenu contextMenu, String shortcutIntroduceSequence, String callbackIntroduceSequence) {
+		new MenuParser(menuString, contextMenu, shortcutIntroduceSequence, callbackIntroduceSequence);
+	}
 }
 
 
@@ -1133,4 +1198,302 @@ class MenuStrip extends Container {
 		hide();
 
 	}
+
+
 }
+
+
+
+/**
+ * Parse a string as menu. This can be a lot easier than creating a menu by hand. Items are wrapped
+ * by {@code "<>"} and start with their text, followed by an optional {@code ":"} after which the
+ * callback method comes. Finally a shortcut can be specified by starting with {@code "-"}. The
+ * MenuParser is still a bit experimental, but seems to work so far.
+ * 
+ * Examples:
+ * 
+ * <br>
+ * <br>
+ * {@code "<File <New><Open><Recent <File 1><File 2><File3>><Save><Save As>> <Edit<Undo><Redo>>"}
+ * <br>
+ * <br>
+ * 
+ * With shortcuts (different possibilities: separated by + or -; case does not matter; Ctrl is as
+ * valid as control or CONTROL etc.; SHIFT or shft etc.; order does not matter): <br>
+ * <br>
+ * 
+ * {@code "<File <New -Ctrl+N><Open -Ctrl+O><Recent <File 1><File 2><File3>><Save -Ctrl-S><Save As -Ctrl-Shift-S>> <Edit<Undo -Control-Z><Redo -CONTROL+Y>>"}
+ * <br>
+ * <br>
+ * 
+ * With callback method, executed when item is clicked or shortcut executed: <br>
+ * <br>
+ * {@code "<File <New:newFile -Ctrl+N><Open:openFile -Ctrl+O><Recent <File 1><File 2><File3>><Save -Ctrl-S><Save As -Ctrl-Shift-S>> <Edit<Undo:undo -Control-Z><Redo:redo -CONTROL+Y>>"}
+ * <br>
+ * <br>
+ * 
+ * (given that the methods {@code newFile()} {@code openFile()} etc. have been declared)
+ * 
+ * Shortcuts can also be given without giving a callback method and the other way round.
+ * 
+ * The instruction sequence for starting the callback/shortcut details can be changed by changing
+ * {@link #callbackIntroduceSequence} and {@link #shortcutIntroduceSequence}.
+ * 
+ * 
+ * @author E-Bow
+ *
+ */
+
+class MenuParser {
+
+	private Node root;
+
+
+	public MenuParser(String s, MenuBar menubar, String shortcutIntroduceSequence, String callbackIntroduceSequence) {
+		this(s, shortcutIntroduceSequence, callbackIntroduceSequence);
+
+		for (Node n : root.children) {
+			n.finish();
+			menubar.add(n.item);
+		}
+
+	}
+
+	public MenuParser(String s, MenuBar menubar) {
+		this(s);
+
+		for (Node n : root.children) {
+			n.finish();
+			menubar.add(n.item);
+		}
+
+	}
+
+	public MenuParser(String s, ContextMenu contextMenu, String shortcutIntroduceSequence, String callbackIntroduceSequence) {
+		this(s, shortcutIntroduceSequence, callbackIntroduceSequence);
+
+		for (Node n : root.children) {
+			n.finish();
+			contextMenu.add(n.item);
+		}
+	}
+
+	public MenuParser(String s, ContextMenu contextMenu) {
+		this(s);
+
+		for (Node n : root.children) {
+			n.finish();
+			contextMenu.add(n.item);
+		}
+	}
+
+	private MenuParser(String s, String shortcutIntroduceSequence, String callbackIntroduceSequence) {
+		this.shortcutIntroduceSequence = shortcutIntroduceSequence;
+		this.callbackIntroduceSequence = callbackIntroduceSequence;
+		root = new Node();
+		current = root;
+
+		try {
+			parse(s);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+
+	private MenuParser(String s) {
+		root = new Node();
+		current = root;
+
+		try {
+			parse(s);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
+	}
+
+
+
+	private class Node {
+		Node() {
+			item = new MenuItem();
+		}
+
+		ArrayList<Node> children = new ArrayList<Node>(0);
+		Node parent;
+
+		void add(Node n) {
+			children.add(n);
+			n.parent = this;
+		}
+
+		MenuItem item;
+
+		// add real items of child nodes to item of this node
+		void finish() {
+			for (Node n : children) {
+				n.finish();
+				item.add(n.item);
+			}
+		}
+
+	}
+
+	private void parse(String s) throws Exception {
+		for (int i = 0; i < s.length(); i++) {
+			char c = s.charAt(i);
+			switch (c) {
+			case '<':
+				beginItem();
+				break;
+			case '>':
+				endItem();
+				break;
+			default:
+				content += c;
+			}
+		}
+	}
+
+	private Node current;
+	private String content = ""; // content always contains the part INSIDE the <> pair - aka the content of an item (<> excluded)
+
+	private boolean beganItem = false;
+
+	// begin a new item (and might need to finish an opened one)
+	private void beginItem() {
+		finishItem();
+
+		Node newNode = new Node();
+		printDebug("begin item");
+		current.add(newNode);
+		current = newNode;
+		beganItem = true;
+		debugPrintLevel++;
+	}
+
+
+	// finish an item if one has been started by filling in the info from the
+	// content string
+	private void finishItem() {
+		if (beganItem)
+			fillInItem();
+	}
+
+
+	private void endItem() throws Exception {
+		finishItem();
+		debugPrintLevel--;
+
+		printDebug("end item", current.children);
+
+		current = current.parent;
+		if (current == null)
+			throw new Exception("parse error");
+		beganItem = false;
+	}
+
+	/**
+	 * Sequence that tells the parser the shortcut comes next. Default is {@code "-"}. It can be
+	 * changed, if the hyphen is used inside the name.
+	 */
+	public String shortcutIntroduceSequence = "-";
+	public String callbackIntroduceSequence = ":";
+
+
+
+	// take the current content string and parse text, callback method name and
+	// shortcut
+	void fillInItem() {
+		if (content.isEmpty())
+			return;
+
+		String methodName = null;
+		Shortcut shortcut = null;
+
+		int shortcutIndex = content.indexOf(shortcutIntroduceSequence);
+		int methodIndex = content.indexOf(callbackIntroduceSequence);
+
+		if (shortcutIndex > -1) {
+			String shortcutText = content.substring(shortcutIndex + 1).trim();
+			shortcut = parseShortcut(shortcutText);
+			content = content.substring(0, shortcutIndex);
+		}
+		if (methodIndex > -1) {
+			methodName = content.substring(methodIndex + 1).trim();
+			content = content.substring(0, methodIndex);
+		}
+
+		if (methodName != null) {
+			if (shortcut != null) {
+				current.item.registerShortcutAndMethod(methodName, shortcut);
+			} else {
+				// PApplet.println(methodName);
+				current.item.setSelectListener(methodName);
+			}
+		} else {
+			current.item.setShortcut(shortcut);
+		}
+
+		current.item.setText(content.trim());
+		content = "";
+		printDebug("Fill in", current.item.text, current.item.getShortcut() != null ? current.item.getShortcut().toString() : "");
+	}
+
+	// parse a shortcut
+	private Shortcut parseShortcut(String str) {
+		String[] pieces = str.split("[-+]");
+		boolean ctrl = false, alt = false, shift = false;
+		char key = 0;
+
+		for (String piece : pieces) {
+			if (piece.length() == 0)
+				continue;
+			switch (piece.toLowerCase()) {
+			case "control":
+			case "ctrl":
+			case "steuerung":
+			case "strg":
+				ctrl = true;
+				break;
+			case "shift":
+			case "shft":
+			case "umschalt":
+				shift = true;
+				break;
+			case "alt":
+				alt = true;
+				break;
+			default:
+				key = piece.charAt(0);
+			}
+		}
+		if (key != 0) {
+			Shortcut s = new Shortcut(key, ctrl, shift, alt);
+			return s;
+		}
+		return null;
+	}
+
+
+
+	private int debugPrintLevel;
+	private boolean debug = false;
+
+
+	private void printDebug(Object... items) {
+		if (debug) {
+			Control.print(whitespace(), items);
+		}
+	}
+
+	// according to level, return level*2 whitespaces (for debugging)
+	private String whitespace() {
+		String s = "";
+		for (int i = 0; i < debugPrintLevel; i++) {
+			s += "  ";
+		}
+		return s;
+	}
+}
+

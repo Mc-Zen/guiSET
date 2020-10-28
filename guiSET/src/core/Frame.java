@@ -215,7 +215,7 @@ public class Frame extends Container {
 				@Override
 				public void windowLostFocus(java.awt.event.WindowEvent e) {
 					handleEvent(windowFocusLostListener);
-					MenuSurface.closeAllMenus();
+					MenuItem.closeAllMenus();
 				}
 
 				@Override
@@ -244,7 +244,7 @@ public class Frame extends Container {
 				@Override
 				public void windowLostFocus(com.jogamp.newt.event.WindowEvent e) {
 					handleEvent(windowFocusLostListener);
-					MenuSurface.closeAllMenus();
+					MenuItem.closeAllMenus();
 				}
 
 				@Override

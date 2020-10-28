@@ -2999,15 +2999,14 @@ public abstract class Control {
 	 * <br>
 	 * <br>
 	 * 
-	 * <pre>{@code
-	Control.doForAll(new Control.Setter<Control>() {
-	  &#64;literal Override 
-	  public void run(Control c) {
-	    c.setBackgroundColor(color(0)); 
-	  }
-	}, myButton, myLabel, myTextbox);
-	}</pre>
-	 * 
+	 * <pre>
+	 * Control.doForAll(new{@code Control.Setter<Control>()} {
+	 *    {@literal @}Override
+	 *     public void run(Control c) {
+	 *         c.setBackgroundColor(color(0)); 
+	 *     }
+	 * }, myButton, myLabel, myTextbox);
+	 * </pre>
 	 * 
 	 * 
 	 * <br>
@@ -3015,14 +3014,14 @@ public abstract class Control {
 	 * or:
 	 * 
 	 * <br>
-	 * <pre>{@code
-	Control.doForAll( new Control.Setter<Control>() {
-	  &#64;literal Override 
-	  public void run(Control c) {
-	    c.fitContent();
-	  }
-	}, myContainer, myHScrollContainer, myScrollArea, myFlowContainer);
-	}</pre>
+	 * <pre>
+	 * Control.doForAll(new{@code Control.Setter<Container>()} {
+	 *    {@literal @}Override
+	 *     public void run(Container c) {
+	 *         c.fitContent(); 
+	 *     }
+	 * }, myContainer, myHScrollContainer, myScrollArea, myFlowContainer);
+	 * </pre>
 	 * 
 	 * @param          <T> type of object
 	 * @param setter   a setter (need to override the run() method and specify template type)
