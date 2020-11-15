@@ -9,8 +9,9 @@ import java.util.Comparator;
 
 /**
  * The list view allows to display easily a lot of items in a vertical list. When adding a String a
- * new ListItem will be created and added. You can add items that inherit from {@link Control} other
- * than ListItems but they cannot receive the itemSelected() event.
+ * new ListItem will be created and added. You can also add items that inherit from {@link Control}
+ * other than ListItems or derived but these will only raise the itemSelected event if they call
+ * ListViews (protected) itemPressed(Control) method.
  * 
  * @author E-Bow
  *
@@ -34,7 +35,7 @@ public class ListView extends VScrollContainer {
 	// on every change of availableWidth (paddings or width), resize items to fill the ListView
 	protected boolean makeItemsFillAvailableWidth = true;
 
-	
+
 	// currrently selected (or last selected) item
 	protected Control selectedItem;
 
@@ -149,10 +150,10 @@ public class ListView extends VScrollContainer {
 					((ListItem) selectedItem).selected = true; // dont use setter here
 					selectedItem.update();
 
-					handleEvent(selectListener, selectedItem);
 				}
 			} catch (ClassCastException e) {
 			}
+			handleEvent(selectListener, selectedItem);
 
 		} else {
 			selectedItem = null;
@@ -315,11 +316,12 @@ public class ListView extends VScrollContainer {
 	 * Remove item at position in item list.
 	 * 
 	 * @param index position
+	 * @return the removed item
 	 */
 	@Override
-	public void remove(int index) {
+	public Control remove(int index) {
 		deselect(index);
-		super.remove(index);
+		return super.remove(index);
 	}
 
 	/**
@@ -461,6 +463,11 @@ public class ListView extends VScrollContainer {
 		return selectionHoverColor;
 	}
 
+	/**
+	 * Get most recently selected item.
+	 * 
+	 * @return selected item
+	 */
 	public Control getSelectedItem() {
 		return selectedItem;
 	}
@@ -469,6 +476,11 @@ public class ListView extends VScrollContainer {
 		return items.indexOf(selectedItem);
 	}
 
+	/**
+	 * Get all selected items (if multiselect enabled).
+	 * 
+	 * @return selected items
+	 */
 	public ArrayList<Control> getSelectedItems() {
 		return selectedItems;
 	}
@@ -493,7 +505,7 @@ public class ListView extends VScrollContainer {
 	protected EventListener selectListener;
 
 	/**
-	 * Add a listener for when an item is selected.
+	 * Set a listener for when an item is selected.
 	 * 
 	 * Event arguments: the {@link Control} whose state has changed
 	 * 
@@ -501,35 +513,35 @@ public class ListView extends VScrollContainer {
 	 * @param target     target
 	 */
 
-	public void addItemSelectListener(String methodName, Object target) {
+	public void setItemSelectListener(String methodName, Object target) {
 		selectListener = createEventListener(methodName, target, Control.class);
 	}
 
-	public void addItemSelectListener(String methodName) {
-		addItemSelectListener(methodName, getPApplet());
+	public void setItemSelectListener(String methodName) {
+		setItemSelectListener(methodName, getPApplet());
 	}
 
 	/**
-	 * Add a listener lambda for when an item is selected. The event passes the item that has been
+	 * Set a listener lambda for when an item is selected. The event passes the item that has been
 	 * selected.
 	 * 
 	 * Event arguments: the {@link Control} whose state has changed
 	 * 
-	 * @param p lambda expression with {@link Control} parameter
+	 * @param lambda lambda expression with {@link Control} parameter
 	 */
-	public void addItemSelectListener(Predicate1<Control> p) {
-		selectListener = new LambdaEventListener1<Control>(p);
+	public void setItemSelectListener(Predicate1<Control> lambda) {
+		selectListener = new LambdaEventListener1<Control>(lambda);
 	}
 
 	/**
-	 * Add a listener lambda for when an item is selected.
+	 * Set a listener lambda for when an item is selected.
 	 * 
 	 * Event arguments: none
 	 * 
-	 * @param p lambda expression
+	 * @param lambda lambda expression
 	 */
-	public void addItemSelectListener(Predicate p) {
-		selectListener = new LambdaEventListener(p);
+	public void setItemSelectListener(Predicate lambda) {
+		selectListener = new LambdaEventListener(lambda);
 	}
 
 	public void removeItemSelectListener() {
@@ -542,14 +554,14 @@ public class ListView extends VScrollContainer {
 	protected void keyPress(KeyEvent e) {
 		super.keyPress(e);
 		switch (e.getKeyCode()) {
-		case DOWN:
+		case Constants.DOWN:
 			int selectionIndex = getSelectionIndex();
 			if (selectionIndex < items.size() - 1) {
 				itemPressed(items.get(selectionIndex + 1));
 				scrollToItem(selectionIndex + 1);
 			}
 			break;
-		case UP:
+		case Constants.UP:
 			selectionIndex = getSelectionIndex();
 			if (selectionIndex > 0) {
 				itemPressed(items.get(selectionIndex - 1));

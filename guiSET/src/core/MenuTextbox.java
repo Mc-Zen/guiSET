@@ -2,7 +2,8 @@ package guiSET.core;
 
 
 /**
- * A MenuItem that allows entering text.
+ * A MenuItem that allows entering text. It is rather a demonstration of how to create special menu
+ * items.
  * 
  * @author E-Bow
  *

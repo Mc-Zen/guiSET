@@ -18,7 +18,7 @@ public class MenuSeparator extends MenuItem {
 	@Override
 	protected void render() {
 		drawDefaultBackground();
-		pg.fill(foregroundColor);
+		pg.fill(getForegroundColor());
 
 		pg.strokeWeight(1);
 		pg.stroke(220);

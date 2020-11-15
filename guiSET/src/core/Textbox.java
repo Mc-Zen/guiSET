@@ -62,16 +62,16 @@ public class Textbox extends HScrollContainer {
 
 
 	public Textbox() {
-		this(100, 12);
+		this(100, GuisetDefaultValues.fontSize);
 	}
 
 	public Textbox(String hint) {
-		this(100, 12);
+		this(100, GuisetDefaultValues.fontSize);
 		setHint(hint);
 	}
 
 	public Textbox(String hint, int width) {
-		this(width, 12);
+		this(width, GuisetDefaultValues.fontSize);
 		setHint(hint);
 	}
 
@@ -81,7 +81,7 @@ public class Textbox extends HScrollContainer {
 	}
 
 	public Textbox(int width) {
-		this(width, 12);
+		this(width, GuisetDefaultValues.fontSize);
 	}
 
 	public Textbox(int width, int fontSize) {
@@ -91,9 +91,9 @@ public class Textbox extends HScrollContainer {
 		setPadding(5);
 		setFontSize(fontSize);
 		setSlimScrollHandle(true);
-		setTextAlign(LEFT);
+		setTextAlign(Constants.LEFT);
 		setLineHeightPercent(120);
-		setCursor(TEXT);
+		setCursor(PApplet.TEXT);
 	}
 
 
@@ -137,8 +137,8 @@ public class Textbox extends HScrollContainer {
 		 */
 		if (focused && selectionStart < selectionEnd) {
 			if (selectionStart <= getText().length() && selectionEnd <= getText().length()) {
-				int selectionX = (int) textWidth(getText().substring(0, selectionStart));
-				int selectionWidth = (int) textWidth(getText().substring(selectionStart, selectionEnd));
+				float selectionX = textWidth(getText().substring(0, selectionStart));
+				float selectionWidth = textWidth(getText().substring(selectionStart, selectionEnd));
 				pg.fill(selectionColor);
 				pg.noStroke();
 				pg.rect(getPaddingLeft() - getScrollPosition() + selectionX + getFontSize() / 40f, getPaddingTop(), selectionWidth + getFontSize() / 40f,
@@ -379,6 +379,19 @@ public class Textbox extends HScrollContainer {
 	}
 
 	/**
+	 * Set selection. If end is less than start, they will we swapped.
+	 * 
+	 * @param start selection start position
+	 * @param end   selection end position
+	 */
+	public void setSelection(int start, int end) {
+		int s = Math.min(start, end);
+		int e = Math.max(start, end);
+		setSelectionStart(s);
+		setSelectionEnd(e);
+	}
+
+	/**
 	 * Set highlight color of selection.
 	 * 
 	 * @param selectionColor rgb integer color
@@ -466,7 +479,7 @@ public class Textbox extends HScrollContainer {
 
 	@Override
 	protected int autoHeight() {
-		return (int) getFontSize() + paddingTop + paddingBottom;
+		return (int) getFontSize() + getPaddingTop() + getPaddingBottom();
 	}
 
 
@@ -529,7 +542,7 @@ public class Textbox extends HScrollContainer {
 	protected EventListener submitListener;
 
 	/**
-	 * Add a key listener to the textbox. The event is triggered each time any key is pressed when the
+	 * Set a key listener to the textbox. The event is triggered each time any key is pressed when the
 	 * textbox has focus.
 	 * 
 	 * Event arguments: {@link KeyEvent}
@@ -537,36 +550,36 @@ public class Textbox extends HScrollContainer {
 	 * @param methodName name of callback method
 	 * @param target     object that declares callback method.
 	 */
-	public void addKeyPressListener(String methodName, Object target) {
+	public void setKeyPressListener(String methodName, Object target) {
 		keyPressListener = createEventListener(methodName, target, KeyEvent.class);
 	}
 
-	public void addKeyPressListener(String methodName) {
-		addKeyPressListener(methodName, getPApplet());
+	public void setKeyPressListener(String methodName) {
+		setKeyPressListener(methodName, getPApplet());
 	}
 
 	/**
-	 * Add a lambda key listener to the textbox. The event is triggered each time any key is pressed
+	 * Set a lambda key listener to the textbox. The event is triggered each time any key is pressed
 	 * when the textbox has focus.
 	 * 
 	 * Event arguments: none
 	 * 
-	 * @param p lambda expression
+	 * @param lambda lambda expression
 	 */
-	public void addKeyPressListener(Predicate p) {
-		keyPressListener = new LambdaEventListener(p);
+	public void setKeyPressListener(Predicate lambda) {
+		keyPressListener = new LambdaEventListener(lambda);
 	}
 
 	/**
-	 * Add a lambda key listener to the textbox. The event is triggered each time any key is pressed
+	 * Set a lambda key listener to the textbox. The event is triggered each time any key is pressed
 	 * when the textbox has focus.
 	 * 
 	 * Event arguments: {@link KeyEvent}
 	 * 
-	 * @param p lambda expression with {@link KeyEvent} as parameter
+	 * @param lambda lambda expression with {@link KeyEvent} as parameter
 	 */
-	public void addKeyPressListener(Predicate1<KeyEvent> p) {
-		keyPressListener = new LambdaEventListener1<KeyEvent>(p);
+	public void setKeyPressListener(Predicate1<KeyEvent> lambda) {
+		keyPressListener = new LambdaEventListener1<KeyEvent>(lambda);
 	}
 
 	public void removeKeyPressListener() {
@@ -576,29 +589,29 @@ public class Textbox extends HScrollContainer {
 
 
 	/**
-	 * Add a listener that fires when the text has actually changed (not just the cursor or selection).
+	 * Set a listener that fires when the text has actually changed (not just the cursor or selection).
 	 * 
 	 * @param methodName name of callback method
 	 * @param target     object that declares callback method.
 	 */
-	public void addTextChangeListener(String methodName, Object target) {
+	public void setTextChangeListener(String methodName, Object target) {
 		textChangeListener = createEventListener(methodName, target);
 	}
 
-	public void addTextChangeListener(String methodName) {
-		addTextChangeListener(methodName, getPApplet());
+	public void setTextChangeListener(String methodName) {
+		setTextChangeListener(methodName, getPApplet());
 	}
 
 	/**
-	 * Add a lambda listener that fires when the text has actually changed (not just the cursor or
+	 * Set a lambda listener that fires when the text has actually changed (not just the cursor or
 	 * selection).
 	 * 
 	 * Event arguments: none
 	 * 
-	 * @param p lambda expression
+	 * @param lambda lambda expression
 	 */
-	public void addTextChangeListener(Predicate p) {
-		textChangeListener = new LambdaEventListener(p);
+	public void setTextChangeListener(Predicate lambda) {
+		textChangeListener = new LambdaEventListener(lambda);
 	}
 
 	public void removeTextChangeListener() {
@@ -613,12 +626,12 @@ public class Textbox extends HScrollContainer {
 	 * @param methodName name of callback method
 	 * @param target     object that declares callback method.
 	 */
-	public void addSubmitListener(String methodName, Object target) {
+	public void setSubmitListener(String methodName, Object target) {
 		submitListener = createEventListener(methodName, target);
 	}
 
-	public void addSubmitListener(String methodName) {
-		addSubmitListener(methodName, getPApplet());
+	public void setSubmitListener(String methodName) {
+		setSubmitListener(methodName, getPApplet());
 	}
 
 	/**
@@ -627,10 +640,10 @@ public class Textbox extends HScrollContainer {
 	 * 
 	 * Event arguments: none
 	 * 
-	 * @param p lambda expression
+	 * @param lambda lambda expression
 	 */
-	public void addSubmitListener(Predicate p) {
-		submitListener = new LambdaEventListener(p);
+	public void setSubmitListener(Predicate lambda) {
+		submitListener = new LambdaEventListener(lambda);
 	}
 
 	public void removeSubmitListener() {
@@ -649,12 +662,23 @@ public class Textbox extends HScrollContainer {
 	@Override
 	protected void press(MouseEvent e) {
 		if (e.getCount() < 2) {
-			setCursorByClick(e.getX());
+//			setCursorByClick(e.getX());
+//
+//			selectionInitial = cursorPosition;
+//			selectionStart = cursorPosition;
+//			selectionEnd = cursorPosition;
+			
+			if (e.isShiftDown()) {
+				int selStart = cursorPosition > selectionStart ? selectionStart : selectionEnd;
+				setCursorByClick(e.getX());
+				setSelection(selStart, cursorPosition);
+			} else {
+				setCursorByClick(e.getX());
 
-			selectionInitial = cursorPosition;
-			selectionStart = cursorPosition;
-			selectionEnd = cursorPosition;
-
+				selectionInitial = cursorPosition;
+				// selectionStart = cursorPosition;
+				// selectionEnd = cursorPosition;
+			}
 			// should not be necessary as every control gets focus upon pressing it
 			// this.focus();
 		} else { // double click
@@ -667,7 +691,7 @@ public class Textbox extends HScrollContainer {
 
 	protected void setCursorByClick(int mX) {
 		// relative to textbox origin and ind respect to fullScrollWidth
-		int clickedPos = mX - getOffsetXWindow() + scrollPosition - paddingLeft;
+		int clickedPos = mX - getOffsetXToWindow() + scrollPosition - getPaddingLeft();
 		float wide = 0;
 		for (int i = 0; i < text.length(); i++) {
 			float letterWidth = textWidth(text.substring(i, i + 1));
@@ -698,7 +722,7 @@ public class Textbox extends HScrollContainer {
 				selectionEnd = selectionInitial;
 			}
 
-			int x0 = getOffsetXWindow();
+			int x0 = getOffsetXToWindow();
 
 			// scroll a bit when at left or right edge
 			if (e.getX() - x0 < 10) {
@@ -871,7 +895,7 @@ public class Textbox extends HScrollContainer {
 	 * Normal shortcuts are not executed if this textbox has focus. 
 	 */
 	@Override
-	protected boolean overridesFrameShortcuts() {
+	protected boolean overridesRegisteredShortcuts() {
 		return true;
 	}
 

@@ -210,10 +210,12 @@ public class Container extends TextBased {
 	 * Remove item at position in item list. Throws error if index is bad.
 	 * 
 	 * @param index position
+	 * @return returns the removed item
 	 */
-	public void remove(int index) {
-		items.remove(index);
+	public Control remove(int index) {
+		Control removedItem = items.remove(index);
 		update();
+		return removedItem;
 	}
 
 	/**
@@ -258,7 +260,7 @@ public class Container extends TextBased {
 	 * @param index index of requested item
 	 * @return item
 	 */
-	public Control get(int index) {
+	public Control getItem(int index) {
 		return items.get(index);
 	}
 
@@ -433,7 +435,8 @@ public class Container extends TextBased {
 
 	/**
 	 * Get a list of arbitrarly nested child elements that given coordinates go through, ordered by
-	 * layer on the screen. This version takes relative coordinates of this object.
+	 * layer on the screen. This version takes relative coordinates of this object. Invisible and disabled
+	 * elements are ignored.
 	 * 
 	 * @param x x coordinate on this element
 	 * @param y y coordinate on this element
@@ -456,13 +459,13 @@ public class Container extends TextBased {
 	 */
 	public ArrayList<Control> traceAbsoluteCoordinates(int x, int y) {
 		coordinateTrace.clear();
-		traceCoordsImpl(x - getOffsetXWindow(), y - getOffsetYWindow());
+		traceCoordsImpl(x - getOffsetXToWindow(), y - getOffsetYToWindow());
 		return coordinateTrace;
 	}
 
 	@Override
 	protected void traceCoordsImpl(int relativeX, int relativeY) {
-		if (visible && enabled && relativeCoordsAreWithin(relativeX, relativeY)) {
+		if (isVisible() && isEnabled() && relativeCoordsAreWithin(relativeX, relativeY)) {
 			for (int i = items.size() - 1; i >= 0; i--) {
 				items.get(i).traceCoordsImpl(relativeX - offsetX, relativeY - offsetY);
 			}

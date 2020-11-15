@@ -4,9 +4,10 @@ import processing.core.PApplet;
 import processing.event.MouseEvent;
 
 /**
- * A Container that allows both horizontal and vertical scrolling if the content exceeds the
+ * A container that allows both horizontal and vertical scrolling if the content exceeds the
  * ScrollAreas size. It does not layout its content as {@link VScrollContainer} or
- * {@link VScrollContainer} but keeps the relative x and y positions of the items.
+ * {@link VScrollContainer} but keeps the relative x and y positions of the items. Scrollbars are
+ * only displayed if items overflow the size of the ScrollArea. 
  * 
  * @author Mc-Zen
  *
@@ -41,7 +42,6 @@ public class ScrollArea extends Container {
 	@Override
 	protected void render() {
 		drawDefaultBackground();
-
 		fullScrollWidth = 0;
 		fullScrollHeight = 0;
 
@@ -56,7 +56,6 @@ public class ScrollArea extends Container {
 
 		scrollPositionX = PApplet.constrain(scrollPositionX, 0, PApplet.max(0, fullScrollWidth - getWidth()));
 		scrollPositionY = PApplet.constrain(scrollPositionY, 0, PApplet.max(0, fullScrollHeight - getHeight()));
-
 
 
 		for (Control c : items) {
@@ -338,13 +337,13 @@ public class ScrollArea extends Container {
 		if (isDraggingScrollHandle()) {
 			if (whichScrollBar == H_SCROLLBAR) {
 
-				int newScrollHandle_Pos = e.getX() - getOffsetXWindow() - startHandleDragPos;
+				int newScrollHandle_Pos = e.getX() - getOffsetXToWindow() - startHandleDragPos;
 				int newScrollPosition = newScrollHandle_Pos * (fullScrollWidth - getWidth()) / (scrollbar_width() - scrollhandle_width());
 				setScrollPositionX(newScrollPosition);
 
 			} else if (whichScrollBar == V_SCROLLBAR) {
 
-				int newScrollHandle_Pos = e.getY() - getOffsetYWindow() - startHandleDragPos;
+				int newScrollHandle_Pos = e.getY() - getOffsetYToWindow() - startHandleDragPos;
 				int newScrollPosition = newScrollHandle_Pos * (fullScrollHeight - getHeight()) / (scrollbar_height() - scrollhandle_height());
 				setScrollPositionY(newScrollPosition);
 

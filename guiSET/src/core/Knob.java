@@ -3,6 +3,7 @@ package guiSET.core;
 import java.math.RoundingMode;
 import java.text.DecimalFormat;
 
+import processing.core.PApplet;
 import processing.event.MouseEvent;
 
 
@@ -62,9 +63,9 @@ public class Knob extends Slider {
 		pg.fill(getForegroundColor());
 
 		// Draw arc in pie style
-		float angle = (3 * PI / 2) / Math.abs(maxValue - minValue) * (value - minValue);
+		float angle = (3 * Constants.PI / 2) / Math.abs(maxValue - minValue) * (value - minValue);
 		pg.noStroke();
-		pg.arc(getWidth() * 0.5f, getHeight() * 0.5f, valueCircleRadius, valueCircleRadius, 3 * PI / 4, 3 * PI / 4 + angle, PIE);
+		pg.arc(getWidth() * 0.5f, getHeight() * 0.5f, valueCircleRadius, valueCircleRadius, 3 * Constants.PI / 4, 3 * (float)Math.PI / 4 + angle, PApplet.PIE);
 
 		// Remove center of pie
 		pg.fill(getBackgroundColor());
@@ -73,7 +74,7 @@ public class Knob extends Slider {
 
 		// Draw value as text
 		pg.fill(GuisetColor.BLACK);
-		pg.textAlign(CENTER, CENTER);
+		pg.textAlign(Constants.CENTER, Constants.CENTER);
 		pg.textSize(outerCircleRadius / 5);
 
 		/*
@@ -132,30 +133,30 @@ public class Knob extends Slider {
 	protected void drag(MouseEvent e) {
 		int mouse;
 		if (orientation == Orientation.HORIZONTAL)
-			mouse = e.getX() - getOffsetXWindow() - getWidth() / 2; // 0 is center of knob
+			mouse = e.getX() - getOffsetXToWindow() - getWidth() / 2; // 0 is center of knob
 		else
-			mouse = -(e.getY() - getOffsetYWindow() - getHeight() / 2);
+			mouse = -(e.getY() - getOffsetYToWindow() - getHeight() / 2);
 		setValue(startValue + (mouse - startPos) / 100f * getIntervalLength() * dragSpeed);
 	}
 
 
 	@Override
 	protected void press(MouseEvent e) {
-		int mouseX = e.getX() - getOffsetXWindow() - getWidth() / 2; // 0 is center of knob
-		int mouseY = e.getY() - getOffsetYWindow() - getHeight() / 2;		// 0 is center of know
+		int mouseX = e.getX() - getOffsetXToWindow() - getWidth() / 2; // 0 is center of knob
+		int mouseY = e.getY() - getOffsetYToWindow() - getHeight() / 2;		// 0 is center of know
 
 		// Transform into polar coordinates
 		double r = Math.sqrt(mouseX * mouseX + mouseY * mouseY);
 		double phi = Math.atan((float) -mouseX / mouseY);
 
 		if (mouseY < 0)
-			phi -= PI;
+			phi -= Math.PI;
 		if (phi <= 0)
-			phi += 2 * PI;
+			phi += 2 * Math.PI;
 
 		// Dont react to center of know and lower part between min and max
-		if (r > 15 && phi >= PI / 4 && phi <= 7 * PI / 4) {
-			double value = (phi - PI / 4) / (3 * PI / 2) * getIntervalLength() + minValue;
+		if (r > 15 && phi >= Math.PI / 4 && phi <= 7 * Math.PI / 4) {
+			double value = (phi - Math.PI / 4) / (3 * Math.PI / 2) * getIntervalLength() + minValue;
 			setValue((float) value);
 		}
 

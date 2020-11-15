@@ -8,10 +8,11 @@ import java.lang.reflect.Method;
 
 
 /**
- * Animations enable the user of the library to create transitions of numeric
- * values easily.
+ * Animations enable the user of the library to create transitions of numeric values easily.
  * 
- * Just call the animate(String attribute, int aimedValue, double milliseconds)
+ * No instances of this class need to be created explicitly, just call the method
+ * {@link Control#animate(String, float, double)}.
+ * 
  */
 public class Animation {
 
@@ -43,9 +44,9 @@ public class Animation {
 	private Invoker invoker;
 
 	/**
-	 * Create a new animation. The time in milliseconds will not be precise though.
-	 * At the moment this is only estimated through the current framerate of the
-	 * sketch.
+	 * Create a new animation. The time in milliseconds will not be ultimately precise though. At the
+	 * moment this is only estimated through the current framerate of the sketch (assuming 60 fps when
+	 * in {@link Frame#NO_LOOP} mode).
 	 * 
 	 * 
 	 * @param attributeName Attribute to animate as String
@@ -169,7 +170,6 @@ public class Animation {
 	 * 
 	 * @return false if animation finished
 	 */
-
 	protected boolean animate() {
 		if (cancel)
 			return false;
@@ -177,7 +177,7 @@ public class Animation {
 
 		// check if there's still work to do
 		if (counter <= numberOfSteps) {
-			
+
 			switch (animationType) {
 			case NUMBER:
 				currentValue = valueStart + (valueEnd - valueStart) / (float) numberOfSteps * counter;

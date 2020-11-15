@@ -67,7 +67,7 @@ public class Checkbox extends TextBased {
 		setCheckedBackgroundColor(GuisetDefaultValues.checkboxCheckedColor); 
 		setCheckmarkColor(GuisetDefaultValues.checkboxCheckmarkColor); 
 		setText(text);
-		setTextAlign(LEFT);
+		setTextAlign(Constants.LEFT);
 		setPaddingLeft(checkboxSize + checkboxSize / 4);
 		setPaddingRight(2);
 		this.checked = checked; // no setChecked()
@@ -75,12 +75,21 @@ public class Checkbox extends TextBased {
 
 	public Checkbox(String text, String toggleEventMethodName) {
 		this(text, false);
-		addToggleListener(toggleEventMethodName);
+		setToggleListener(toggleEventMethodName);
+	}
+	public Checkbox(String text, Predicate toggleCallback) {
+		this(text, false);
+		setToggleListener(toggleCallback);
 	}
 
 	public Checkbox(String text, String toggleEventMethodName, boolean checked) {
 		this(text, checked);
-		addToggleListener(toggleEventMethodName);
+		setToggleListener(toggleEventMethodName);
+	}
+
+	public Checkbox(String text, Predicate toggleCallback, boolean checked) {
+		this(text, checked);
+		setToggleListener(toggleCallback);
 	}
 
 
@@ -92,7 +101,7 @@ public class Checkbox extends TextBased {
 		// draw checkbox
 		pg.fill(isChecked() ? checkedBackgroundColor : uncheckedBackgroundColor);
 		pg.strokeWeight(checkboxSize / 20f);
-		pg.stroke(borderColor);
+		pg.stroke(getBorderColor());
 		pg.rect(1, 1 + getPaddingTop(), checkboxSize - 2, checkboxSize - 2, 2);
 
 		// draw check mark
@@ -107,7 +116,7 @@ public class Checkbox extends TextBased {
 		drawDefaultText();
 
 		// grey out checkbox if disabled
-		if (!enabled) {
+		if (!isEnabled()) {
 			pg.noStroke();
 			pg.fill(150, 150);
 			pg.rect(1, 1 + getPaddingTop(), checkboxSize - 2, checkboxSize - 2, 2);
@@ -246,42 +255,42 @@ public class Checkbox extends TextBased {
 	protected EventListener toggleListener;
 
 	/**
-	 * Add a listener for when the checkbox has been checked/unchecked. Only triggered when the user
-	 * presses the Checkbox and not if set programatically.
+	 * Set a listener for when the checkbox has been checked/unchecked. Only triggered when the user
+	 * presses the checkbox and not if set programatically.
 	 * 
 	 * @param methodName method name
 	 * @param target     object
 	 */
-	public void addToggleListener(String methodName, Object target) {
+	public void setToggleListener(String methodName, Object target) {
 		toggleListener = createEventListener(methodName, target, Checkbox.class);
 	}
 
-	public void addToggleListener(String methodName) {
-		addToggleListener(methodName, getPApplet());
+	public void setToggleListener(String methodName) {
+		setToggleListener(methodName, getPApplet());
 	}
 
 	/**
-	 * Add a listener lambda for when the checkbox has been checked/unchecked. Only triggered when
+	 * Set a listener lambda for when the checkbox has been checked/unchecked. Only triggered when
 	 * the user presses the Checkbox and not if set programatically.
 	 * 
 	 * Event arguments: the {@link Checkbox} whose state has changed
 	 * 
-	 * @param p lambda expression with {@link Checkbox} parameter
+	 * @param lambda lambda expression with {@link Checkbox} parameter
 	 */
-	public void addToggleListener(Predicate1<Checkbox> p) {
-		toggleListener = new LambdaEventListener1<Checkbox>(p);
+	public void setToggleListener(Predicate1<Checkbox> lambda) {
+		toggleListener = new LambdaEventListener1<Checkbox>(lambda);
 	}
 
 	/**
-	 * Add a listener lambda for when the checkbox has been checked/unchecked. Only triggered when
+	 * Set a listener lambda for when the checkbox has been checked/unchecked. Only triggered when
 	 * the user presses the Checkbox and not if set programatically.
 	 * 
 	 * Event arguments: none
 	 * 
-	 * @param p lambda expression
+	 * @param lambda lambda expression
 	 */
-	public void addToggleListener(Predicate p) {
-		toggleListener = new LambdaEventListener(p);
+	public void setToggleListener(Predicate lambda) {
+		toggleListener = new LambdaEventListener(lambda);
 	}
 
 	public void removeToggleListener() {
@@ -294,8 +303,8 @@ public class Checkbox extends TextBased {
 	@Override
 	protected void press(MouseEvent e) {
 		if (!reactToEntireField) {
-			int x_ = e.getX() - getOffsetXWindow();
-			int y_ = e.getY() - getOffsetYWindow();
+			int x_ = e.getX() - getOffsetXToWindow();
+			int y_ = e.getY() - getOffsetYToWindow();
 			if (!(x_ < checkboxSize && y_ > getPaddingTop() && y_ < checkboxSize + getPaddingTop()))
 				return;
 		}

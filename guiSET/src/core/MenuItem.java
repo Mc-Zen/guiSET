@@ -10,7 +10,6 @@ import java.util.TimerTask;
 
 
 
-
 /**
  * The MenuItems aren't displayed and rendered at the position of the hierachy
  * they are added to. Instead they create (if they have children/subitems at
@@ -45,7 +44,7 @@ class MenuSurface extends Container {
 			staticMS = this;
 			getFrame().add(this);
 			setVisible(false);
-			setAnchors(LEFT, 0, RIGHT, 0, TOP, 0, BOTTOM, 0); // Fill entire Frame
+			setAnchors(Constants.LEFT, 0, Constants.RIGHT, 0, Constants.TOP, 0, Constants.BOTTOM, 0); // Fill entire Frame
 			setZ(Constants.MenuSurfaceZIndex);
 			setBackgroundColor(GuisetColor.TRANSPARENT);
 		}
@@ -78,10 +77,6 @@ class MenuSurface extends Container {
 		staticMS.setVisible(false);
 	}
 
-	protected static void closeAllMenus() {
-		MenuItem.closeOpenHeaders();
-		closeMenuSurface();
-	}
 
 
 	// Definitely called after all MenuItems got the event.
@@ -89,7 +84,7 @@ class MenuSurface extends Container {
 	// been pressed.
 	@Override
 	protected void press(MouseEvent e) {
-		closeAllMenus();
+		MenuItem.closeAllMenus();
 
 		// now that the menu has closed, allow pressing immediately with the same
 		// click on other elements (even dragging works this way).
@@ -218,7 +213,7 @@ public class MenuItem extends TextBased {
 	 */
 	public MenuItem(String text, String selectCallback) {
 		this(text);
-		addSelectListener(selectCallback);
+		setSelectListener(selectCallback);
 	}
 
 	/**
@@ -230,7 +225,7 @@ public class MenuItem extends TextBased {
 	 */
 	public MenuItem(String text, Predicate selectCallback) {
 		this(text);
-		addSelectListener(selectCallback);
+		setSelectListener(selectCallback);
 	}
 
 	/**
@@ -275,14 +270,14 @@ public class MenuItem extends TextBased {
 		this(text, methodName);
 		setShortcut(shortcut);
 		getFrame().registerShortcut(shortcut, methodName, getPApplet(), strong);
-		addSelectListener(methodName);
+		setSelectListener(methodName);
 	}
 
 	// Used by MenuParser
 	protected void registerShortcutAndMethod(String methodName, Shortcut shortcut) {
 		setShortcut(shortcut);
 		getFrame().registerShortcut(shortcut, methodName);
-		addSelectListener(methodName);
+		setSelectListener(methodName);
 	}
 
 
@@ -292,17 +287,11 @@ public class MenuItem extends TextBased {
 		// change color if open
 		if (open) {
 			if (type == Type.MENU_HEADER)
-				visualBackgroundColor = pressedColor;
+				visualBackgroundColor = getPressedColor();
 			else
-				visualBackgroundColor = hoverColor;
+				visualBackgroundColor = getHoverColor();
 		}
 
-		/*
-		 * gray out if disabled
-		 */
-		int temp = foregroundColor;
-		if (!enabled)
-			foregroundColor = GuisetColor.create(120);
 
 		drawDefaultBackground();
 		drawDefaultText();
@@ -314,7 +303,7 @@ public class MenuItem extends TextBased {
 			 * Draw triangle to indicate that this item has subitems
 			 */
 			if (items.size() > 0) {
-				pg.fill(enabled ? GuisetGlobalValues.menuItemTriangleEnabledColor : GuisetGlobalValues.menuItemTriangleDisabledColor);
+				pg.fill(isEnabled() ? GuisetGlobalValues.menuItemTriangleEnabledColor : GuisetGlobalValues.menuItemTriangleDisabledColor);
 				pg.stroke(0);
 				pg.strokeWeight(0);
 				pg.triangle(getWidth() - 4, getHeight() / 2, getWidth() - 7, getHeight() / 2 + 3, getWidth() - 7, getHeight() / 2 - 3);
@@ -325,17 +314,17 @@ public class MenuItem extends TextBased {
 			 */
 			if (shortcut != null) {
 				String textBKP = text;
-				textRenderer.setTextAlign(RIGHT); // temporary RIGHT (no need to reset), no setter!! dont wanna call update always
+				textRenderer.setTextAlign(Constants.RIGHT); // temporary RIGHT (no need to reset), no setter!! dont wanna call update always
 				text = shortcut.toString() + " ";
 				drawDefaultText();
 				text = textBKP;
-				textRenderer.setTextAlign(LEFT); // temporary RIGHT (no need to reset)
+				textRenderer.setTextAlign(Constants.LEFT); // temporary RIGHT (no need to reset)
 			}
 
 			/*
 			 * Draw checkmark
 			 */
-			if (checked) {
+			if (isChecked()) {
 				pg.fill(GuisetGlobalValues.menuItemCheckmarkFillColor);
 				pg.stroke(GuisetGlobalValues.menuItemCheckmarkStrokeColor);
 				pg.rect(2, 3, 18, 18, 2); 	// box
@@ -345,9 +334,7 @@ public class MenuItem extends TextBased {
 				pg.line(10, 16, 15, 8);
 			}
 		}
-		foregroundColor = temp;
 	}
-
 
 
 
@@ -358,17 +345,16 @@ public class MenuItem extends TextBased {
 
 	@Override
 	protected void addedToParent() {
-		determineTypeAndSetup();
+		determineTypeAndPerformSetup();
 	}
 
-	protected void determineTypeAndSetup() {
+	protected void determineTypeAndPerformSetup() {
 		if (parent instanceof MenuStrip) {
 			type = Type.NESTED_MENU_ITEM;
 			setStyleOfNestedMenuItem();
 
-
 			// If this whole strip (that this item just has been added to) is already added
-			// to a MenuBar or similar, we need to add the dropDown for this item separately
+			// to a MenuBar or similar, we need to add the dropDown for this item separately.
 			if (isHeaderStripConnected()) {
 				addMenuStrips(); // add all menustrips recursively (preserve right z-order)
 			}
@@ -389,25 +375,26 @@ public class MenuItem extends TextBased {
 	}
 
 	private void setStyleOfNestedMenuItem() {
-		setTextAlign(LEFT);
+		setTextAlign(Constants.LEFT);
 		setHoverColor(GuisetDefaultValues.menuItemHoverColor);
 		setPaddingLeft(Constants.MenuItemPaddingLeft);
 		setPaddingRight(Constants.MenuItemPaddingRight);
 	}
 
 	private void setStyleOfMenuHeader() {
-		setTextAlign(CENTER);
+		setTextAlign(Constants.CENTER);
 		setHoverColor(GuisetDefaultValues.menuHeaderHoverColor);
 	}
 
+	// Returns true if this item is assigned to a menu header and this headers drawing parent is known
 	protected boolean isHeaderStripConnected() {
-		return headerStrip != null && (headerStrip.parent != null || headerStrip instanceof ContextMenu);
+		return headerStrip != null && (headerStrip.getParent() != null || headerStrip instanceof ContextMenu);
 	}
 
 
 	protected void addMenuStrips() {
 		if (dropDown != null) {
-			if (dropDown.parent == null)
+			if (dropDown.getParent() == null)
 				MenuSurface.addMenuStrip(dropDown);
 			for (Control c : items) {
 				((MenuItem) c).addMenuStrips();
@@ -417,20 +404,22 @@ public class MenuItem extends TextBased {
 
 
 
+	private static final int ADDITIONAL_SHORCUT_PADDING = 30;
+
 	@Override
 	protected int autoWidth() {
-		float shortcutWidth = (shortcut != null ? textWidth(shortcut.toString()) + 30 : 0);
-		int baseWidth = (int) (textWidth(text) + shortcutWidth);
+		float shortcutWidth = (shortcut != null ? textWidth(shortcut.toString()) + ADDITIONAL_SHORCUT_PADDING : 0);
+		int baseWidth = (int) (textWidth(getText()) + shortcutWidth);
 
 		/*
 		 * if subitem, then only require this as minimal width; as header it's the
 		 * actual width
 		 */
 		if (type == Type.NESTED_MENU_ITEM) {
-			setMinWidth(baseWidth + paddingLeft + paddingRight); // 27 is the left padding
-			return (int) (baseWidth + shortcutWidth + paddingLeft + paddingRight);
+			setMinWidth(baseWidth + getPaddingLeft() + getPaddingRight()); // 27 is the left padding
+			return (int) (baseWidth + shortcutWidth + getPaddingLeft() + getPaddingRight());
 		} else if (type == Type.MENU_HEADER) {
-			return baseWidth + paddingLeft + paddingRight;
+			return baseWidth + getPaddingLeft() + getPaddingRight();
 		} else {
 			// undefined state (before this item has fully been initialized).
 			// At least when called in addedToParent(), the type is defined.
@@ -451,176 +440,6 @@ public class MenuItem extends TextBased {
 		}
 	}
 
-
-
-
-	/*
-	 * Internal method for opening this strip properly. Called by press event, long
-	 * hover and hover over header if other header already open.
-	 * 
-	 * If it has no subitems, select item
-	 */
-	protected void open() {
-		if (items.size() > 0) { // has subitems itself -> open them
-
-			if (type == Type.MENU_HEADER) {
-				closeOpenHeaders();
-			} else {
-				// first close all potentially open siblings
-				try {
-					for (Control c : ((MenuStrip) parent).items) {
-						((MenuItem) c).close();
-					}
-				} catch (ClassCastException cce) {
-					// ignore casting errors
-				} catch (NullPointerException e) {
-					//
-				}
-			}
-
-			open = true;
-
-			/*
-			 * Draw first layer items BENEATH this item and all other layers always NEXT to
-			 * this item
-			 */
-			if (type == Type.MENU_HEADER) {
-				dropDown.x = offsetX;
-				dropDown.y = Constants.MenuItemHeight;
-
-				// reset timer (when closing the strip the timer is always ceased)
-				hoverTimer = new Timer();
-			} else {
-				dropDown.x = getOffsetXWindow() + getWidth() - 10;
-				dropDown.y = getOffsetYWindow() - MenuSurface.staticMS.offsetY;
-			}
-
-
-
-			// make dropdown (menustrip) visible
-			dropDown.show();
-
-
-		} else { // has no subitems -> close everything
-
-			// mark it open at first, so it will be closed properly
-			open = true;
-
-			// notify header that an item has been selected, header will start the closing
-			if (headerStrip != null) {
-				headerStrip.childSelected(this);
-			} else {
-
-				// only used for free MenuStrip unbound to a menu
-				((MenuStrip) parent).itemSelected(this);
-			}
-		}
-	}
-
-
-
-
-
-
-	/**
-	 * Close this item/strip. Recursively closes all subitems.
-	 */
-	public void close() {
-		if (open) {
-			visualBackgroundColor = backgroundColor;
-
-			open = false;
-
-			// close sub items
-			for (Control c : items) {
-				((MenuItem) c).close();
-			}
-
-			if (dropDown != null) {
-				dropDown.hide();
-			}
-			update();
-
-			// headers need to stop the timer and close the surface
-			if (type == Type.MENU_HEADER) {
-
-				MenuSurface.closeMenuSurface();
-
-				if (hoverTimerTask != null) {
-					hoverTimerTask.cancel();
-					hoverTimerTask = null;
-
-					// cease timer completely
-					hoverTimer.cancel();
-					hoverTimer.purge();
-				}
-			}
-		}
-	}
-
-
-	protected static void closeOpenHeaders() {
-		for (MenuItem header : headers) {
-			header.close();
-		}
-	}
-
-	/**
-	 * Set the displayed shortcut (shortcut has no real effect unless set manually at Frame).
-	 * 
-	 * @param shortcut shortcut
-	 */
-	public void setShortcut(Shortcut shortcut) {
-		this.shortcut = shortcut;
-		autosize();
-	}
-
-	public Shortcut getShortcut() {
-		return shortcut;
-	}
-
-
-	/*
-	 * Only for header items. When an item is selected by clicking then it calls
-	 * this method for its header. The header then closes up the entire strip.
-	 */
-	protected void childSelected(MenuItem item) {
-		close();
-		if (item != this) { // not sure if this can even happen
-			item.selected(item);
-		}
-		handleEvent(childSelectListener, item);
-	}
-
-	/*
-	 * For all items. Header calls this after being selected
-	 */
-	protected void selected(MenuItem item) {
-		handleEvent(selectListener, item);
-	}
-
-
-
-
-
-
-
-
-
-	/**
-	 * MenuItems can be checked / unchecked with this method (little icon on the left of the MenuItem
-	 * text).
-	 * 
-	 * @param checked checked
-	 */
-	public void setChecked(boolean checked) {
-		this.checked = checked;
-		update();
-	}
-
-	public boolean isChecked() {
-		return checked;
-	}
 
 	/*
 	 * There are two cases in which the dropdown should be added to the MenuSurface.
@@ -652,7 +471,169 @@ public class MenuItem extends TextBased {
 
 
 
+
 	/*
+	 * Internal method for opening this strip properly. Called by press event, long
+	 * hover and hover over header if other header already open.
+	 * 
+	 * If it has no subitems, select item (and close). 
+	 */
+	protected void open() {
+		if (items.size() > 0) { // has subitems itself -> open them
+
+			if (type == Type.MENU_HEADER) {
+				closeOpenHeaders();
+			} else {
+				closeSiblings();
+			}
+
+			open = true; // Exactly here!
+
+			// Before setting position!
+			// show() also sets the correct size for the dropdown which is needed for positioning
+			dropDown.show();
+			autoPosition();
+
+		} else { // has no subitems -> close everything
+
+			open = true; // It will be closed immediately but mark it open at first, so it will be closed properly
+
+			// notify header that an item has been selected, header will start the closing
+			if (headerStrip != null) {
+				headerStrip.childSelected(this);
+			} else {
+
+				// only used for free MenuStrip unbound to a menu
+				((MenuStrip) parent).itemSelected(this);
+			}
+		}
+	}
+
+
+	/**
+	 * Close this item/strip. Recursively closes all subitems.
+	 */
+	public void close() {
+		if (open) {
+			visualBackgroundColor = getBackgroundColor();
+
+			closeChildren();
+
+			if (dropDown != null) {
+				dropDown.hide();
+			}
+			open = false;
+			update();
+
+			// headers need to stop the timer and close the surface
+			if (type == Type.MENU_HEADER) {
+
+				MenuSurface.closeMenuSurface();
+
+				if (hoverTimerTask != null) {
+					hoverTimerTask.cancel();
+					hoverTimerTask = null;
+
+					// cease timer completely
+					hoverTimer.cancel();
+					hoverTimer.purge();
+				}
+			}
+		}
+	}
+
+
+	// Close all sibling items.
+	private void closeSiblings() {
+		// first close all potentially open siblings
+		try {
+			for (Control c : ((MenuStrip) parent).items) {
+				((MenuItem) c).close();
+			}
+		} catch (ClassCastException | NullPointerException e) {
+			// ignore casting errors, they are okay
+		}
+	}
+
+	// close sub items
+	void closeChildren() {
+		for (Control c : items) {
+			((MenuItem) c).close();
+		}
+	}
+
+	protected static void closeOpenHeaders() {
+		for (MenuItem header : headers) {
+			header.close();
+		}
+	}
+
+	protected static void closeAllMenus() {
+		closeOpenHeaders();
+		MenuSurface.closeMenuSurface();
+	}
+
+
+	// Substrips (dropdowns) overlap with their logical parents by this amount.
+	private static final int SUBSTRIP_X_OFFSET = 10;
+
+	private void autoPosition() {
+		/*
+		 * Draw first layer items BENEATH this item and all other layers always NEXT to
+		 * this item
+		 */
+		if (type == Type.MENU_HEADER) {
+			if (!(this instanceof ContextMenu)) { // Context Menus are positioned differently
+				dropDown.setPosition(offsetX, headerStrip.getOffsetYToWindow() + headerStrip.getHeight());
+				dropDown.setY(headerStrip.getOffsetYToWindow()  + headerStrip.getHeight());
+			} 
+			// reset timer (when closing the strip, the timer is always ceased)
+			hoverTimer = new Timer();
+		} else {
+			int offsetXToWindow = getOffsetXToWindow();
+			int right = offsetXToWindow + getWidth();
+			if (right - SUBSTRIP_X_OFFSET + dropDown.getWidth() < dropDown.getParent().getWidth()) {
+				dropDown.setX(right - SUBSTRIP_X_OFFSET);
+			} else {
+				dropDown.setX(offsetXToWindow - dropDown.getWidth());
+			}
+			// if (dropDown)
+			dropDown.setY(Math.min(getOffsetYToWindow() - MenuSurface.staticMS.getOffsetY() /*should be zero*/, dropDown.getParent().getHeight() - dropDown.getHeight()));
+		}
+	}
+
+
+
+
+	/*
+	 * Only for header items. When an item is selected by clicking then it calls
+	 * this method for its header. The header then closes up the entire strip.
+	 */
+	protected void childSelected(MenuItem item) {
+		close();
+		if (item != this) { // not sure if this can even happen
+			item.selected(item);
+		}
+		handleEvent(childSelectListener, item);
+	}
+
+	/*
+	 * For all items. Header calls this after being selected
+	 */
+	protected void selected(MenuItem item) {
+		handleEvent(selectListener, item);
+	}
+
+
+
+
+
+
+
+
+
+	/*
+	 * __________________
 	 * Content Operations
 	 */
 
@@ -803,6 +784,55 @@ public class MenuItem extends TextBased {
 
 
 
+
+	/*
+	 * ______________________________
+	 * Additional Getters and Setters
+	 */
+
+	/**
+	 * Set the displayed shortcut (shortcut has no real effect unless set manually at Frame).
+	 * 
+	 * @param shortcut shortcut
+	 */
+	public void setShortcut(Shortcut shortcut) {
+		this.shortcut = shortcut;
+		autosize();
+	}
+
+	public Shortcut getShortcut() {
+		return shortcut;
+	}
+
+
+	/**
+	 * MenuItems can be checked / unchecked with this method (little icon on the left of the MenuItem
+	 * text).
+	 * 
+	 * @param checked checked
+	 */
+	public void setChecked(boolean checked) {
+		this.checked = checked;
+		update();
+	}
+
+	public boolean isChecked() {
+		return checked;
+	}
+
+
+
+	@Override
+	public void setEnabled(boolean enabled) {
+		super.setEnabled(enabled);
+		if (isEnabled()) {
+			setTextColor(GuisetDefaultValues.textColor);
+		} else {
+			setTextColor(GuisetColor.create(120));
+		}
+	}
+
+
 	/*
 	 * Listeners
 	 */
@@ -812,41 +842,41 @@ public class MenuItem extends TextBased {
 	protected EventListener childSelectListener;
 
 	/**
-	 * Add a listener for the item selected event (called when this item has been selected).
+	 * Set a listener for the item selected event (called when this item has been selected).
 	 * 
 	 * Event arguments: this {@link #MenuItem()}
 	 * 
 	 * @param methodName method name
 	 * @param target     target
 	 */
-	public void addSelectListener(String methodName, Object target) {
+	public void setSelectListener(String methodName, Object target) {
 		selectListener = createEventListener(methodName, target, MenuItem.class);
 	}
 
-	public void addSelectListener(String methodName) {
-		addSelectListener(methodName, getPApplet());
+	public void setSelectListener(String methodName) {
+		setSelectListener(methodName, getPApplet());
 	}
 
 	/**
-	 * Add a listener lambda for when this item is selected.
+	 * Set a listener lambda for when this item is selected.
 	 * 
 	 * Event arguments: this {@link #MenuItem()}
 	 * 
-	 * @param p lambda expression with {@link #MenuItem()} parameter
+	 * @param lambda lambda expression with {@link #MenuItem()} parameter
 	 */
-	public void addSelectListener(Predicate1<MenuItem> p) {
-		selectListener = new LambdaEventListener1<MenuItem>(p);
+	public void setSelectListener(Predicate1<MenuItem> lambda) {
+		selectListener = new LambdaEventListener1<MenuItem>(lambda);
 	}
 
 	/**
-	 * Add a listener lambda for when this item is selected.
+	 * Set a listener lambda for when this item is selected.
 	 * 
 	 * Event arguments: none
 	 * 
-	 * @param p lambda expression
+	 * @param lambda lambda expression
 	 */
-	public void addSelectListener(Predicate p) {
-		selectListener = new LambdaEventListener(p);
+	public void setSelectListener(Predicate lambda) {
+		selectListener = new LambdaEventListener(lambda);
 	}
 
 	public void removeSelectListener() {
@@ -856,41 +886,41 @@ public class MenuItem extends TextBased {
 
 
 	/**
-	 * Add a listener for when a child of this header has been selected.
+	 * Set a listener for when a child of this header has been selected.
 	 * 
 	 * Event arguments: the selected child {@link #MenuItem()}
 	 * 
 	 * @param methodName method name
 	 * @param target     target
 	 */
-	public void addChildSelectListener(String methodName, Object target) {
+	public void setChildSelectListener(String methodName, Object target) {
 		childSelectListener = createEventListener(methodName, target, MenuItem.class);
 	}
 
-	public void addChildSelectListener(String methodName) {
-		addChildSelectListener(methodName, getPApplet());
+	public void setChildSelectListener(String methodName) {
+		setChildSelectListener(methodName, getPApplet());
 	}
 
 	/**
-	 * Add a listener for when a child of this header has been selected.
+	 * Set a listener for when a child of this header has been selected.
 	 * 
 	 * Event arguments: the selected child {@link #MenuItem()}
 	 * 
-	 * @param p lambda expression with {@link #MenuItem()} parameter
+	 * @param lambda lambda expression with {@link #MenuItem()} parameter
 	 */
-	public void addChildSelectListener(Predicate1<MenuItem> p) {
-		childSelectListener = new LambdaEventListener1<MenuItem>(p);
+	public void setChildSelectListener(Predicate1<MenuItem> lambda) {
+		childSelectListener = new LambdaEventListener1<MenuItem>(lambda);
 	}
 
 	/**
-	 * Add a listener for when a child of this header has been selected.
+	 * Set a listener for when a child of this header has been selected.
 	 * 
 	 * Event arguments: none
 	 * 
-	 * @param p lambda expression
+	 * @param lambda lambda expression
 	 */
-	public void addChildSelectListener(Predicate p) {
-		childSelectListener = new LambdaEventListener(p);
+	public void setChildSelectListener(Predicate lambda) {
+		childSelectListener = new LambdaEventListener(lambda);
 	}
 
 	public void removeChildSelectListener() {
@@ -960,7 +990,7 @@ public class MenuItem extends TextBased {
 
 	@Override
 	protected void enter(MouseEvent e) { // when clicked hovering is sufficient for changing the dropdown
-		visualBackgroundColor = hoverColor;
+		visualBackgroundColor = getHoverColor();
 
 		if (type == Type.NESTED_MENU_ITEM) {
 			startHoverTimer();
@@ -995,7 +1025,7 @@ public class MenuItem extends TextBased {
 		if (type == Type.MENU_HEADER) {
 			if (open) {
 				close();
-				visualBackgroundColor = hoverColor;
+				visualBackgroundColor = getHoverColor();
 			} else {
 				open();
 			}
@@ -1018,7 +1048,70 @@ public class MenuItem extends TextBased {
 		stopPropagation();
 	}
 
+	/**
+	 * Parse a string as menu. This can be a lot easier than creating a menu by hand. Items are wrapped
+	 * by {@code "<>"} and start with their text, followed by an optional {@code ":"} after which the
+	 * callback method comes. Finally a shortcut can be specified by starting with {@code "-"}. The
+	 * MenuParser is still a bit experimental, but seems to work so far.
+	 * 
+	 * Examples:
+	 * 
+	 * <br>
+	 * <br>
+	 * {@code "<File <New><Open><Recent <File 1><File 2><File3>><Save><Save As>> <Edit<Undo><Redo>>"}
+	 * <br>
+	 * <br>
+	 * 
+	 * With shortcuts (different possibilities: separated by + or -; case does not matter; Ctrl is as
+	 * valid as control or CONTROL etc.; SHIFT or shft etc.; order does not matter): <br>
+	 * <br>
+	 * 
+	 * {@code "<File <New -Ctrl+N><Open -Ctrl+O><Recent <File 1><File 2><File3>><Save -Ctrl-S><Save As -Ctrl-Shift-S>> <Edit<Undo -Control-Z><Redo -CONTROL+Y>>"}
+	 * <br>
+	 * <br>
+	 * 
+	 * With callback method, executed when item is clicked or shortcut executed: <br>
+	 * <br>
+	 * {@code "<File <New:newFile -Ctrl+N><Open:openFile -Ctrl+O><Recent <File 1><File 2><File3>><Save -Ctrl-S><Save As -Ctrl-Shift-S>> <Edit<Undo:undo -Control-Z><Redo:redo -CONTROL+Y>>"}
+	 * <br>
+	 * <br>
+	 * 
+	 * (given that the methods {@code newFile()} {@code openFile()} etc. have been declared)
+	 * 
+	 * Shortcuts can also be given without giving a callback method and the other way round.
+	 * 
+	 * The instruction sequences for starting the callback/shortcut details can be set by calling
+	 * {@link #parseMenu(String, MenuBar, String, String)} or
+	 * {@link #parseMenu(String, ContextMenu, String, String)}.
+	 * 
+	 * 
+	 * @param menuString string container menu coding information
+	 * @param menubar    the menu bar that the menus should be added to
+	 */
+	public static void parseMenu(String menuString, MenuBar menubar) {
+		new MenuParser(menuString, menubar);
+	}
 
+
+	public static void parseMenu(String menuString, MenuBar menubar, String shortcutIntroduceSequence, String callbackIntroduceSequence) {
+		new MenuParser(menuString, menubar, shortcutIntroduceSequence, callbackIntroduceSequence);
+	}
+
+
+	/**
+	 * Same as {@link #parseMenu(String, MenuBar)} but for context menus.
+	 * 
+	 * @see MenuItem#parseMenu(String, MenuBar)
+	 * @param menuString  string container menu coding information
+	 * @param contextMenu the context menu that the menus should be added to
+	 */
+	public static void parseMenu(String menuString, ContextMenu contextMenu) {
+		new MenuParser(menuString, contextMenu);
+	}
+
+	public static void parseMenu(String menuString, ContextMenu contextMenu, String shortcutIntroduceSequence, String callbackIntroduceSequence) {
+		new MenuParser(menuString, contextMenu, shortcutIntroduceSequence, callbackIntroduceSequence);
+	}
 }
 
 
@@ -1038,23 +1131,13 @@ class MenuStrip extends Container {
 		setBoxShadow(4, 7, 7, GuisetColor.BLACK, .4f);
 	}
 
+	@Override
+	protected void prerender() {
+
+	}
 
 	@Override
 	protected void render() {
-		// obtain needed width (maximum of item minWidth)
-		int w = 100;
-		for (Control item : items) {
-			w = Math.max(w, item.minWidth);
-		}
-		setWidth(w);
-
-		// obtain needed height (sum of item heights), also set items width
-		int h = 1;
-		for (Control item : items) {
-			h += item.getHeight();
-			item.setWidthNoUpdate(getWidth()); // is already being updated
-		}
-		setHeight(h);
 
 		// only if parent is not a ParentGraphicsRenderer (temporary solution)
 		if (pg != parent.pg) {
@@ -1074,12 +1157,12 @@ class MenuStrip extends Container {
 		pg.stroke(255);
 		pg.line(23, 0 + 3, 23, getHeight() - 3);
 
-		int usedSpace = paddingTop;
+		int usedSpace = getPaddingTop();
 
 		for (Control item : items) {
-			if (item.visible) {
-				renderItem(item, item.marginLeft + paddingLeft, usedSpace + item.marginTop);
-				usedSpace += (item.getHeight() + item.marginTop + item.marginBottom);
+			if (item.isVisible()) {
+				renderItem(item, item.getMarginLeft() + getPaddingLeft(), usedSpace + item.getMarginTop());
+				usedSpace += (item.getHeight() + item.getMarginTop() + item.getMarginBottom());
 			}
 		}
 	}
@@ -1094,6 +1177,24 @@ class MenuStrip extends Container {
 		}
 	}
 
+	@Override
+	public void fitContent() {
+		// obtain needed width (maximum of item minWidth)
+		int w = 100;
+		for (Control item : items) {
+			w = Math.max(w, item.getMinWidth());
+		}
+		setWidthNoUpdate(w);
+
+		// obtain needed height (sum of item heights), also set items width
+		int h = 1;
+		for (Control item : items) {
+			h += item.getHeight();
+			item.setWidthNoUpdate(getWidth()); // is already being updated
+		}
+		setHeightNoUpdate(h);
+	}
+
 
 	// also used internally by MenuItem
 	/**
@@ -1102,6 +1203,7 @@ class MenuStrip extends Container {
 	public void show() {
 		MenuSurface.openMenuSurface();
 		setVisible(true);
+		fitContent();
 	}
 
 
@@ -1132,6 +1234,303 @@ class MenuStrip extends Container {
 	protected void itemSelected(MenuItem item) {
 		item.close();
 		hide();
+	}
+
+
+}
+
+
+
+/**
+ * Parse a string as menu. This can be a lot easier than creating a menu by hand. Items are wrapped
+ * by {@code "<>"} and start with their text, followed by an optional {@code ":"} after which the
+ * callback method comes. Finally a shortcut can be specified by starting with {@code "-"}. The
+ * MenuParser is still a bit experimental, but seems to work so far.
+ * 
+ * Examples:
+ * 
+ * <br>
+ * <br>
+ * {@code "<File <New><Open><Recent <File 1><File 2><File3>><Save><Save As>> <Edit<Undo><Redo>>"}
+ * <br>
+ * <br>
+ * 
+ * With shortcuts (different possibilities: separated by + or -; case does not matter; Ctrl is as
+ * valid as control or CONTROL etc.; SHIFT or shft etc.; order does not matter): <br>
+ * <br>
+ * 
+ * {@code "<File <New -Ctrl+N><Open -Ctrl+O><Recent <File 1><File 2><File3>><Save -Ctrl-S><Save As -Ctrl-Shift-S>> <Edit<Undo -Control-Z><Redo -CONTROL+Y>>"}
+ * <br>
+ * <br>
+ * 
+ * With callback method, executed when item is clicked or shortcut executed: <br>
+ * <br>
+ * {@code "<File <New:newFile -Ctrl+N><Open:openFile -Ctrl+O><Recent <File 1><File 2><File3>><Save -Ctrl-S><Save As -Ctrl-Shift-S>> <Edit<Undo:undo -Control-Z><Redo:redo -CONTROL+Y>>"}
+ * <br>
+ * <br>
+ * 
+ * (given that the methods {@code newFile()} {@code openFile()} etc. have been declared)
+ * 
+ * Shortcuts can also be given without giving a callback method and the other way round.
+ * 
+ * The instruction sequence for starting the callback/shortcut details can be changed by changing
+ * {@link #callbackIntroduceSequence} and {@link #shortcutIntroduceSequence}.
+ * 
+ * 
+ * @author E-Bow
+ *
+ */
+
+class MenuParser {
+
+	private Node root;
+
+
+	public MenuParser(String s, MenuBar menubar, String shortcutIntroduceSequence, String callbackIntroduceSequence) {
+		this(s, shortcutIntroduceSequence, callbackIntroduceSequence);
+
+		for (Node n : root.children) {
+			n.finish();
+			menubar.add(n.item);
+		}
 
 	}
+
+	public MenuParser(String s, MenuBar menubar) {
+		this(s);
+
+		for (Node n : root.children) {
+			n.finish();
+			menubar.add(n.item);
+		}
+
+	}
+
+	public MenuParser(String s, ContextMenu contextMenu, String shortcutIntroduceSequence, String callbackIntroduceSequence) {
+		this(s, shortcutIntroduceSequence, callbackIntroduceSequence);
+
+		for (Node n : root.children) {
+			n.finish();
+			contextMenu.add(n.item);
+		}
+	}
+
+	public MenuParser(String s, ContextMenu contextMenu) {
+		this(s);
+
+		for (Node n : root.children) {
+			n.finish();
+			contextMenu.add(n.item);
+		}
+	}
+
+	private MenuParser(String s, String shortcutIntroduceSequence, String callbackIntroduceSequence) {
+		this.shortcutIntroduceSequence = shortcutIntroduceSequence;
+		this.callbackIntroduceSequence = callbackIntroduceSequence;
+		root = new Node();
+		current = root;
+
+		try {
+			parse(s);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+
+	private MenuParser(String s) {
+		root = new Node();
+		current = root;
+
+		try {
+			parse(s);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
+	}
+
+
+
+	private class Node {
+		Node() {
+			item = new MenuItem();
+		}
+
+		ArrayList<Node> children = new ArrayList<Node>(0);
+		Node parent;
+
+		void add(Node n) {
+			children.add(n);
+			n.parent = this;
+		}
+
+		MenuItem item;
+
+		// add real items of child nodes to item of this node
+		void finish() {
+			for (Node n : children) {
+				n.finish();
+				item.add(n.item);
+			}
+		}
+
+	}
+
+	private void parse(String s) throws Exception {
+		for (int i = 0; i < s.length(); i++) {
+			char c = s.charAt(i);
+			switch (c) {
+			case '<':
+				beginItem();
+				break;
+			case '>':
+				endItem();
+				break;
+			default:
+				content += c;
+			}
+		}
+	}
+
+	private Node current;
+	private String content = ""; // content always contains the part INSIDE the <> pair - aka the content of an item (<> excluded)
+
+	private boolean beganItem = false;
+
+	// begin a new item (and might need to finish an opened one)
+	private void beginItem() {
+		finishItem();
+
+		Node newNode = new Node();
+		printDebug("begin item");
+		current.add(newNode);
+		current = newNode;
+		beganItem = true;
+		debugPrintLevel++;
+	}
+
+
+	// finish an item if one has been started by filling in the info from the
+	// content string
+	private void finishItem() {
+		if (beganItem)
+			fillInItem();
+	}
+
+
+	private void endItem() throws Exception {
+		finishItem();
+		debugPrintLevel--;
+
+		printDebug("end item", current.children);
+
+		current = current.parent;
+		if (current == null)
+			throw new Exception("parse error");
+		beganItem = false;
+	}
+
+	/**
+	 * Sequence that tells the parser the shortcut comes next. Default is {@code "-"}. It can be
+	 * changed, if the hyphen is used inside the name.
+	 */
+	public String shortcutIntroduceSequence = "-";
+	public String callbackIntroduceSequence = ":";
+
+
+
+	// take the current content string and parse text, callback method name and
+	// shortcut
+	void fillInItem() {
+		if (content.isEmpty())
+			return;
+
+		String methodName = null;
+		Shortcut shortcut = null;
+
+		int shortcutIndex = content.indexOf(shortcutIntroduceSequence);
+		int methodIndex = content.indexOf(callbackIntroduceSequence);
+
+		if (shortcutIndex > -1) {
+			String shortcutText = content.substring(shortcutIndex + 1).trim();
+			shortcut = parseShortcut(shortcutText);
+			content = content.substring(0, shortcutIndex);
+		}
+		if (methodIndex > -1) {
+			methodName = content.substring(methodIndex + 1).trim();
+			content = content.substring(0, methodIndex);
+		}
+
+		if (methodName != null) {
+			if (shortcut != null) {
+				current.item.registerShortcutAndMethod(methodName, shortcut);
+			} else {
+				// PApplet.println(methodName);
+				current.item.setSelectListener(methodName);
+			}
+		} else {
+			current.item.setShortcut(shortcut);
+		}
+
+		current.item.setText(content.trim());
+		content = "";
+		printDebug("Fill in", current.item.text, current.item.getShortcut() != null ? current.item.getShortcut().toString() : "");
+	}
+
+	// parse a shortcut
+	private Shortcut parseShortcut(String str) {
+		String[] pieces = str.split("[-+]");
+		boolean ctrl = false, alt = false, shift = false;
+		char key = 0;
+
+		for (String piece : pieces) {
+			if (piece.length() == 0)
+				continue;
+			switch (piece.toLowerCase()) {
+			case "control":
+			case "ctrl":
+			case "steuerung":
+			case "strg":
+				ctrl = true;
+				break;
+			case "shift":
+			case "shft":
+			case "umschalt":
+				shift = true;
+				break;
+			case "alt":
+				alt = true;
+				break;
+			default:
+				key = piece.charAt(0);
+			}
+		}
+		if (key != 0) {
+			Shortcut s = new Shortcut(key, ctrl, shift, alt);
+			return s;
+		}
+		return null;
+	}
+
+
+
+	private int debugPrintLevel;
+	private boolean debug = false;
+
+
+	private void printDebug(Object... items) {
+		if (debug) {
+			Control.print(whitespace(), items);
+		}
+	}
+
+	// according to level, return level*2 whitespaces (for debugging)
+	private String whitespace() {
+		String s = "";
+		for (int i = 0; i < debugPrintLevel; i++) {
+			s += "  ";
+		}
+		return s;
+	}
 }
+

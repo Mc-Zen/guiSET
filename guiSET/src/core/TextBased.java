@@ -13,7 +13,7 @@ import processing.core.PGraphics;
  */
 
 /**
- * Abstract base class for all components that display text.
+ * Abstract base class for all components that display text. Implements the text drawing facilities.
  * 
  * @author Mc-Zen
  *
@@ -29,8 +29,8 @@ abstract public class TextBased extends Control {
 
 
 	/**
-	 * Standard text drawing method accounting padding, align, color etc. This
-	 * method can be used by any control for drawing its text.
+	 * Standard text drawing method accounting padding, align, color etc. This method can be used by any
+	 * control for drawing its text.
 	 */
 	protected void drawDefaultText() {
 		textRenderer.draw(text);
@@ -67,8 +67,7 @@ abstract public class TextBased extends Control {
 	}
 
 	/**
-	 * Set the text content. Some elements do not display any text (i.e. most
-	 * containers).
+	 * Set the text content. Some elements do not display any text (i.e. most containers).
 	 * 
 	 * @param text text
 	 */
@@ -79,8 +78,7 @@ abstract public class TextBased extends Control {
 	}
 
 	/**
-	 * If the second parameter is true, then the element will not be resized to fit
-	 * the text.
+	 * If the second parameter is true, then the element will not be resized to fit the text.
 	 * 
 	 * @param text       text
 	 * @param noautosize noautosize
@@ -107,7 +105,7 @@ abstract public class TextBased extends Control {
 	 * @param align LEFT, CENTER, RIGHT
 	 */
 	public void setTextAlign(int align) {
-		if (align == CENTER || align == LEFT || align == RIGHT) {
+		if (align == Constants.CENTER || align == Constants.LEFT || align == Constants.RIGHT) {
 			textRenderer.setTextAlign(align);
 		}
 		update();
@@ -119,7 +117,7 @@ abstract public class TextBased extends Control {
 	 * @param align TOP, MIDDLE, BOTTOM
 	 */
 	public void setTextAlignY(int align) {
-		if (align == CENTER || align == TOP || align == BOTTOM) {
+		if (align == Constants.CENTER || align == Constants.TOP || align == Constants.BOTTOM) {
 			textRenderer.setTextAlignY(align);
 		}
 		update();
@@ -143,8 +141,7 @@ abstract public class TextBased extends Control {
 	}
 
 	/**
-	 * For multiline text, set the line height in literal percent: for 100% pass 100
-	 * and not 1.
+	 * For multiline text, set the line height in literal percent: for 100% pass 100 and not 1.
 	 * 
 	 * @param lineHeight line height in percent
 	 */
@@ -192,9 +189,8 @@ abstract public class TextBased extends Control {
 	/**
 	 * Base interface for all text renderers.
 	 * 
-	 * By default, all elements have the {@link BasicTextRenderer} as textRenderer.
-	 * Setting properties like font, bold, italic etc. will replace the renderer by
-	 * a {@link ExtendedTextRenderer}.
+	 * By default, all elements have the {@link BasicTextRenderer} as textRenderer. Setting properties
+	 * like font, bold, italic etc. will replace the renderer by a {@link ExtendedTextRenderer}.
 	 * 
 	 * In future, something like a RichTextRenderer might be implemented.
 	 */
@@ -245,8 +241,8 @@ abstract public class TextBased extends Control {
 	class BasicTextRenderer implements TextRenderer {
 		protected float size = Math.max(1, GuisetDefaultValues.fontSize);
 		protected int color = GuisetDefaultValues.textColor;
-		protected int textAlign = CENTER;
-		protected int textAlignY = CENTER;
+		protected int textAlign = Constants.CENTER;
+		protected int textAlignY = Constants.CENTER;
 
 		/*
 		 * If positive, then this dscribes the line height in pixel. 
@@ -262,7 +258,7 @@ abstract public class TextBased extends Control {
 			// alignment is handled in TextRenderer and not done by Processing as we need
 			// the position
 			// info anyway
-			pg.textAlign(LEFT, BASELINE); // this is not expensive
+			pg.textAlign(Constants.LEFT, Constants.BASELINE); // this is not expensive
 			pg.fill(color);
 			pg.textSize(size);
 
@@ -270,15 +266,15 @@ abstract public class TextBased extends Control {
 
 			// textAscent=size is not the real size, depending on font, this is actually
 			// smaller, 0.8 is jst a guess that seems to work good.
-			float posY = paddingTop + size * TEXTHEIGHT_FACTOR;
+			float posY = getPaddingTop() + size * TEXTHEIGHT_FACTOR;
 			String[] lines = text.split("\n");
 			float textHeight = realLineHeight * (lines.length - 1) + size * TEXTHEIGHT_FACTOR; // descent is ignored
 
 			switch (textAlignY) {
-			case CENTER:
+			case Constants.CENTER:
 				posY += (getAvailableHeight() - textHeight) / 2f;  // somehow alignY center by processing is not quite exact in middle
 				break;
-			case BOTTOM:
+			case Constants.BOTTOM:
 				posY += getAvailableHeight() - textHeight - textDescent(); // cant ignore descent here
 				break;
 			}
@@ -292,13 +288,13 @@ abstract public class TextBased extends Control {
 		// We could use all the implementation from PGraphics but we need to compute a
 		// lot of these values anyway
 		protected void textLineAlignImpl(String text, int posX, int posY) {
-			posX += paddingLeft;
+			posX += getPaddingLeft();
 			switch (textAlign) {
-			case CENTER:
+			case Constants.CENTER:
 				// posX = (width - paddingRight - paddingLeft) / 2 + paddingLeft;
 				posX += (getAvailableWidth() - textWidth(text)) / 2f;
 				break;
-			case RIGHT:
+			case Constants.RIGHT:
 				posX += getAvailableWidth() - textWidth(text);
 				break;
 			}
@@ -423,7 +419,7 @@ abstract public class TextBased extends Control {
 				pg.textFont(pfont);
 			}
 			// for underline and strike-through. Strokes are not added to text itself
-			pg.strokeWeight(size / 15); 
+			pg.strokeWeight(size / 15);
 			pg.stroke(color);
 
 			super.draw(text);
@@ -434,8 +430,8 @@ abstract public class TextBased extends Control {
 		public void setFontSize(float fontSize) {
 			this.size = fontSize;
 		}
-		
-		
+
+
 		/*
 		 * ExtendedTextRenderer specific setters/getters
 		 */
@@ -481,12 +477,12 @@ abstract public class TextBased extends Control {
 		@Override
 		protected void textLineAlignImpl(String text, int posX, int posY) {
 			float tw = textWidthDuringDraw(text);
-			posX += paddingLeft;
+			posX += getPaddingLeft();
 			switch (textAlign) {
-			case CENTER:
+			case Constants.CENTER:
 				posX += (getAvailableWidth() - tw) / 2f;
 				break;
-			case RIGHT:
+			case Constants.RIGHT:
 				posX += getAvailableWidth() - tw;
 				break;
 			}
@@ -544,13 +540,12 @@ abstract public class TextBased extends Control {
 
 
 	/**
-	 * A 1x1 dummy graphics is used for getting textwidth etc. without needing to
-	 * create the pgraphics before for each control method for getting width of text
-	 * making autoFit calculations easier and more independant.
+	 * A 1x1 dummy graphics is used for getting textwidth etc. without needing to create the pgraphics
+	 * before for each control method for getting width of text making autoFit calculations easier and
+	 * more independant.
 	 * 
-	 * It is intialized when a Frame is created first time and only then ready. We
-	 * can't just use a PFont as the different renderers (Java2D, OpenGL, ...) have
-	 * different text implementations.
+	 * It is intialized when a Frame is created first time and only then ready. We can't just use a
+	 * PFont as the different renderers (Java2D, OpenGL, ...) have different text implementations.
 	 */
 	protected static PGraphics textInfo_graphics;
 
@@ -645,8 +640,7 @@ abstract public class TextBased extends Control {
 
 
 	/**
-	 * Set the text bold attribute. Changes the internal textRenderer to
-	 * ExtendedTextRenderer.
+	 * Set the text bold attribute. Changes the internal textRenderer to ExtendedTextRenderer.
 	 * 
 	 * @param bold bold
 	 */
@@ -656,8 +650,7 @@ abstract public class TextBased extends Control {
 	}
 
 	/**
-	 * Set the text italic attribute. Changes the internal textRenderer to
-	 * ExtendedTextRenderer.
+	 * Set the text italic attribute. Changes the internal textRenderer to ExtendedTextRenderer.
 	 * 
 	 * @param italic italic
 	 */
@@ -667,8 +660,7 @@ abstract public class TextBased extends Control {
 	}
 
 	/**
-	 * Set the text underline attribute. Changes the internal textRenderer to
-	 * ExtendedTextRenderer.
+	 * Set the text underline attribute. Changes the internal textRenderer to ExtendedTextRenderer.
 	 * 
 	 * @param underline underline
 	 */
@@ -678,8 +670,7 @@ abstract public class TextBased extends Control {
 	}
 
 	/**
-	 * Set the text strike-through attribute. Changes the internal textRenderer to
-	 * ExtendedTextRenderer.
+	 * Set the text strike-through attribute. Changes the internal textRenderer to ExtendedTextRenderer.
 	 * 
 	 * @param strike strike
 	 */

@@ -43,7 +43,7 @@ public class Slider extends Control {
 
 	protected boolean wheelEnabled = true;
 	protected float relativeWheelSpeed = GuisetDefaultValues.sliderRelativeWheelSpeed; // Percentage-based scroll speed. Value of 1 means from min to max in one wheel
-																					 // movement
+																						 // movement
 
 
 
@@ -296,42 +296,42 @@ public class Slider extends Control {
 
 
 	/**
-	 * Add a value-change listener. The event is also triggered when the value is changed
+	 * Set a value-change listener. The event is also triggered when the value is changed
 	 * programatically.
 	 * 
 	 * @param methodName methodName
 	 * @param target     target
 	 */
-	public void addValueChangeListener(String methodName, Object target) {
+	public void setValueChangeListener(String methodName, Object target) {
 		valueChangeListener = createEventListener(methodName, target, Slider.class);
 	}
 
-	public void addValueChangeListener(String methodName) {
-		addValueChangeListener(methodName, getPApplet());
+	public void setValueChangeListener(String methodName) {
+		setValueChangeListener(methodName, getPApplet());
 	}
 
 	/**
-	 * Add a value-change listener lambda. The event is also triggered when the value is changed
+	 * Set a value-change listener lambda. The event is also triggered when the value is changed
 	 * programatically.
 	 * 
 	 * Event arguments: the {@link Slider} whose state has changed
 	 * 
-	 * @param p lambda expression with {@link Slider} parameter
+	 * @param lambda lambda expression with {@link Slider} parameter
 	 */
-	public void addValueChangeListener(Predicate1<Slider> p) {
-		valueChangeListener = new LambdaEventListener1<Slider>(p);
+	public void setValueChangeListener(Predicate1<Slider> lambda) {
+		valueChangeListener = new LambdaEventListener1<Slider>(lambda);
 	}
 
 	/**
-	 * Add a value-changed lambda listener. The event is also triggered when the value is changed
+	 * Set a value-changed lambda listener. The event is also triggered when the value is changed
 	 * programatically.
 	 * 
 	 * Event arguments: none
 	 * 
-	 * @param p lambda expression
+	 * @param lambda lambda expression
 	 */
-	public void addValueChangeListener(Predicate p) {
-		valueChangeListener = new LambdaEventListener(p);
+	public void setValueChangeListener(Predicate lambda) {
+		valueChangeListener = new LambdaEventListener(lambda);
 	}
 
 	public void removeValueChangeListener() {
@@ -360,12 +360,12 @@ public class Slider extends Control {
 
 	@Override
 	protected void drag(MouseEvent e) {
-		setBallPosition(orientation == Orientation.HORIZONTAL ? e.getX() - getOffsetXWindow() : e.getY() - getOffsetYWindow());
+		setBallPosition(orientation == Orientation.HORIZONTAL ? e.getX() - getOffsetXToWindow() : e.getY() - getOffsetYToWindow());
 	}
 
 	@Override
 	protected void press(MouseEvent e) {
-		setBallPosition(orientation == Orientation.HORIZONTAL ? e.getX() - getOffsetXWindow() : e.getY() - getOffsetYWindow());
+		setBallPosition(orientation == Orientation.HORIZONTAL ? e.getX() - getOffsetXToWindow() : e.getY() - getOffsetYToWindow());
 	}
 
 	@Override
