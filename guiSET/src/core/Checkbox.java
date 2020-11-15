@@ -101,7 +101,7 @@ public class Checkbox extends TextBased {
 		// draw checkbox
 		pg.fill(isChecked() ? checkedBackgroundColor : uncheckedBackgroundColor);
 		pg.strokeWeight(checkboxSize / 20f);
-		pg.stroke(borderColor);
+		pg.stroke(getBorderColor());
 		pg.rect(1, 1 + getPaddingTop(), checkboxSize - 2, checkboxSize - 2, 2);
 
 		// draw check mark
@@ -116,7 +116,7 @@ public class Checkbox extends TextBased {
 		drawDefaultText();
 
 		// grey out checkbox if disabled
-		if (!enabled) {
+		if (!isEnabled()) {
 			pg.noStroke();
 			pg.fill(150, 150);
 			pg.rect(1, 1 + getPaddingTop(), checkboxSize - 2, checkboxSize - 2, 2);

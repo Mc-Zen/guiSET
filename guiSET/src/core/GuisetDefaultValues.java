@@ -41,7 +41,7 @@ public class GuisetDefaultValues {
 	public static float sliderMinValue = 0;
 	public static float sliderMaxValue = 100;
 	public static int sliderBackgroundColor = -2302756;
-	public static int sliderForegroundColor = -1926085;
+	public static int sliderForegroundColor = GuisetColor.create(100, 100, 200);//-1926085;
 	public static float sliderRelativeWheelSpeed = 0.02f;
 
 	public static int checkboxUncheckedColor = -6250336; // gray

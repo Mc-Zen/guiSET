@@ -16,9 +16,6 @@ void setup(){
     f = new Frame(this);        // this is important to do first !
     myButton = new Button();
     myTextbox = new Textbox();
-    
-    // In Processing 4, you also will be able to use Lambda Expressions as callback functions:
-    // myButton = new Button("Hello World", ()->println("Pressed Hello World, the textbox' content is: \"" + myTextbox.getText() + "\""));
 
     f.add(myButton, myTextbox); // adds both components to the Frame
 
@@ -29,6 +26,9 @@ void setup(){
     // This is called a "listener". When myButton is clicked we want the 
     //   myButton_clicked() method (see below) to be called. 
     myButton.setClickListener("myButton_clicked");
+    
+    // In coming Processing 4, you also will be able to use Lambda Expressions as callback functions:
+    //myButton.setClickListener(()->println("Pressed Hello World, the textbox' content is: \"" + myTextbox.getText() + "\""));
 
     myTextbox.setPosition(20, 70);            // set the position of the textbox on the sketch in pixel
     myTextbox.setWidth(myButton.getWidth());  // make width match with button 

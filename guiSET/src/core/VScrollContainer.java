@@ -264,7 +264,7 @@ public class VScrollContainer extends VFlowContainer {
 
 	@Override
 	public int getAvailableWidth() {
-		return getWidth() - paddingLeft - paddingRight - scrollHandleStrength - 1;
+		return getWidth() - getPaddingLeft() - getPaddingRight() - scrollHandleStrength - 1;
 	}
 
 

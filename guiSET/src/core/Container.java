@@ -465,7 +465,7 @@ public class Container extends TextBased {
 
 	@Override
 	protected void traceCoordsImpl(int relativeX, int relativeY) {
-		if (visible && enabled && relativeCoordsAreWithin(relativeX, relativeY)) {
+		if (isVisible() && isEnabled() && relativeCoordsAreWithin(relativeX, relativeY)) {
 			for (int i = items.size() - 1; i >= 0; i--) {
 				items.get(i).traceCoordsImpl(relativeX - offsetX, relativeY - offsetY);
 			}

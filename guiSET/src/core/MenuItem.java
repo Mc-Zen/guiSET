@@ -287,17 +287,11 @@ public class MenuItem extends TextBased {
 		// change color if open
 		if (open) {
 			if (type == Type.MENU_HEADER)
-				visualBackgroundColor = pressedColor;
+				visualBackgroundColor = getPressedColor();
 			else
-				visualBackgroundColor = hoverColor;
+				visualBackgroundColor = getHoverColor();
 		}
 
-		/*
-		 * gray out if disabled
-		 */
-		int temp = foregroundColor;
-		if (!enabled)
-			foregroundColor = GuisetColor.create(120);
 
 		drawDefaultBackground();
 		drawDefaultText();
@@ -309,7 +303,7 @@ public class MenuItem extends TextBased {
 			 * Draw triangle to indicate that this item has subitems
 			 */
 			if (items.size() > 0) {
-				pg.fill(enabled ? GuisetGlobalValues.menuItemTriangleEnabledColor : GuisetGlobalValues.menuItemTriangleDisabledColor);
+				pg.fill(isEnabled() ? GuisetGlobalValues.menuItemTriangleEnabledColor : GuisetGlobalValues.menuItemTriangleDisabledColor);
 				pg.stroke(0);
 				pg.strokeWeight(0);
 				pg.triangle(getWidth() - 4, getHeight() / 2, getWidth() - 7, getHeight() / 2 + 3, getWidth() - 7, getHeight() / 2 - 3);
@@ -330,7 +324,7 @@ public class MenuItem extends TextBased {
 			/*
 			 * Draw checkmark
 			 */
-			if (checked) {
+			if (isChecked()) {
 				pg.fill(GuisetGlobalValues.menuItemCheckmarkFillColor);
 				pg.stroke(GuisetGlobalValues.menuItemCheckmarkStrokeColor);
 				pg.rect(2, 3, 18, 18, 2); 	// box
@@ -340,9 +334,7 @@ public class MenuItem extends TextBased {
 				pg.line(10, 16, 15, 8);
 			}
 		}
-		foregroundColor = temp;
 	}
-
 
 
 
@@ -353,17 +345,16 @@ public class MenuItem extends TextBased {
 
 	@Override
 	protected void addedToParent() {
-		determineTypeAndSetup();
+		determineTypeAndPerformSetup();
 	}
 
-	protected void determineTypeAndSetup() {
+	protected void determineTypeAndPerformSetup() {
 		if (parent instanceof MenuStrip) {
 			type = Type.NESTED_MENU_ITEM;
 			setStyleOfNestedMenuItem();
 
-
 			// If this whole strip (that this item just has been added to) is already added
-			// to a MenuBar or similar, we need to add the dropDown for this item separately
+			// to a MenuBar or similar, we need to add the dropDown for this item separately.
 			if (isHeaderStripConnected()) {
 				addMenuStrips(); // add all menustrips recursively (preserve right z-order)
 			}
@@ -395,14 +386,15 @@ public class MenuItem extends TextBased {
 		setHoverColor(GuisetDefaultValues.menuHeaderHoverColor);
 	}
 
+	// Returns true if this item is assigned to a menu header and this headers drawing parent is known
 	protected boolean isHeaderStripConnected() {
-		return headerStrip != null && (headerStrip.parent != null || headerStrip instanceof ContextMenu);
+		return headerStrip != null && (headerStrip.getParent() != null || headerStrip instanceof ContextMenu);
 	}
 
 
 	protected void addMenuStrips() {
 		if (dropDown != null) {
-			if (dropDown.parent == null)
+			if (dropDown.getParent() == null)
 				MenuSurface.addMenuStrip(dropDown);
 			for (Control c : items) {
 				((MenuItem) c).addMenuStrips();
@@ -412,20 +404,22 @@ public class MenuItem extends TextBased {
 
 
 
+	private static final int ADDITIONAL_SHORCUT_PADDING = 30;
+
 	@Override
 	protected int autoWidth() {
-		float shortcutWidth = (shortcut != null ? textWidth(shortcut.toString()) + 30 : 0);
-		int baseWidth = (int) (textWidth(text) + shortcutWidth);
+		float shortcutWidth = (shortcut != null ? textWidth(shortcut.toString()) + ADDITIONAL_SHORCUT_PADDING : 0);
+		int baseWidth = (int) (textWidth(getText()) + shortcutWidth);
 
 		/*
 		 * if subitem, then only require this as minimal width; as header it's the
 		 * actual width
 		 */
 		if (type == Type.NESTED_MENU_ITEM) {
-			setMinWidth(baseWidth + paddingLeft + paddingRight); // 27 is the left padding
-			return (int) (baseWidth + shortcutWidth + paddingLeft + paddingRight);
+			setMinWidth(baseWidth + getPaddingLeft() + getPaddingRight()); // 27 is the left padding
+			return (int) (baseWidth + shortcutWidth + getPaddingLeft() + getPaddingRight());
 		} else if (type == Type.MENU_HEADER) {
-			return baseWidth + paddingLeft + paddingRight;
+			return baseWidth + getPaddingLeft() + getPaddingRight();
 		} else {
 			// undefined state (before this item has fully been initialized).
 			// At least when called in addedToParent(), the type is defined.
@@ -446,182 +440,6 @@ public class MenuItem extends TextBased {
 		}
 	}
 
-
-
-
-	/*
-	 * Internal method for opening this strip properly. Called by press event, long
-	 * hover and hover over header if other header already open.
-	 * 
-	 * If it has no subitems, select item
-	 */
-	protected void open() {
-		if (items.size() > 0) { // has subitems itself -> open them
-
-			if (type == Type.MENU_HEADER) {
-				closeOpenHeaders();
-			} else {
-				// first close all potentially open siblings
-				try {
-					for (Control c : ((MenuStrip) parent).items) {
-						((MenuItem) c).close();
-					}
-				} catch (ClassCastException cce) {
-					// ignore casting errors
-				} catch (NullPointerException e) {
-					//
-				}
-			}
-
-			open = true;
-
-			/*
-			 * Draw first layer items BENEATH this item and all other layers always NEXT to
-			 * this item
-			 */
-			if (type == Type.MENU_HEADER) {
-				dropDown.x = offsetX;
-				dropDown.y = Constants.MenuItemHeight;
-
-				// reset timer (when closing the strip the timer is always ceased)
-				hoverTimer = new Timer();
-			} else {
-				dropDown.x = getOffsetXToWindow() + getWidth() - 10;
-				dropDown.y = getOffsetYToWindow() - MenuSurface.staticMS.offsetY;
-			}
-
-
-
-			// make dropdown (menustrip) visible
-			dropDown.show();
-
-
-		} else { // has no subitems -> close everything
-
-			// mark it open at first, so it will be closed properly
-			open = true;
-
-			// notify header that an item has been selected, header will start the closing
-			if (headerStrip != null) {
-				headerStrip.childSelected(this);
-			} else {
-
-				// only used for free MenuStrip unbound to a menu
-				((MenuStrip) parent).itemSelected(this);
-			}
-		}
-	}
-
-
-
-
-
-
-	/**
-	 * Close this item/strip. Recursively closes all subitems.
-	 */
-	public void close() {
-		if (open) {
-			visualBackgroundColor = backgroundColor;
-
-			open = false;
-
-			// close sub items
-			for (Control c : items) {
-				((MenuItem) c).close();
-			}
-
-			if (dropDown != null) {
-				dropDown.hide();
-			}
-			update();
-
-			// headers need to stop the timer and close the surface
-			if (type == Type.MENU_HEADER) {
-
-				MenuSurface.closeMenuSurface();
-
-				if (hoverTimerTask != null) {
-					hoverTimerTask.cancel();
-					hoverTimerTask = null;
-
-					// cease timer completely
-					hoverTimer.cancel();
-					hoverTimer.purge();
-				}
-			}
-		}
-	}
-
-
-	protected static void closeOpenHeaders() {
-		for (MenuItem header : headers) {
-			header.close();
-		}
-	}
-
-	protected static void closeAllMenus() {
-		closeOpenHeaders();
-		MenuSurface.closeMenuSurface();
-	}
-
-
-	/**
-	 * Set the displayed shortcut (shortcut has no real effect unless set manually at Frame).
-	 * 
-	 * @param shortcut shortcut
-	 */
-	public void setShortcut(Shortcut shortcut) {
-		this.shortcut = shortcut;
-		autosize();
-	}
-
-	public Shortcut getShortcut() {
-		return shortcut;
-	}
-
-
-	/*
-	 * Only for header items. When an item is selected by clicking then it calls
-	 * this method for its header. The header then closes up the entire strip.
-	 */
-	protected void childSelected(MenuItem item) {
-		close();
-		if (item != this) { // not sure if this can even happen
-			item.selected(item);
-		}
-		handleEvent(childSelectListener, item);
-	}
-
-	/*
-	 * For all items. Header calls this after being selected
-	 */
-	protected void selected(MenuItem item) {
-		handleEvent(selectListener, item);
-	}
-
-
-
-
-
-
-
-
-
-	/**
-	 * MenuItems can be checked / unchecked with this method (little icon on the left of the MenuItem
-	 * text).
-	 * 
-	 * @param checked checked
-	 */
-	public void setChecked(boolean checked) {
-		this.checked = checked;
-		update();
-	}
-
-	public boolean isChecked() {
-		return checked;
-	}
 
 	/*
 	 * There are two cases in which the dropdown should be added to the MenuSurface.
@@ -653,7 +471,169 @@ public class MenuItem extends TextBased {
 
 
 
+
 	/*
+	 * Internal method for opening this strip properly. Called by press event, long
+	 * hover and hover over header if other header already open.
+	 * 
+	 * If it has no subitems, select item (and close). 
+	 */
+	protected void open() {
+		if (items.size() > 0) { // has subitems itself -> open them
+
+			if (type == Type.MENU_HEADER) {
+				closeOpenHeaders();
+			} else {
+				closeSiblings();
+			}
+
+			open = true; // Exactly here!
+
+			// Before setting position!
+			// show() also sets the correct size for the dropdown which is needed for positioning
+			dropDown.show();
+			autoPosition();
+
+		} else { // has no subitems -> close everything
+
+			open = true; // It will be closed immediately but mark it open at first, so it will be closed properly
+
+			// notify header that an item has been selected, header will start the closing
+			if (headerStrip != null) {
+				headerStrip.childSelected(this);
+			} else {
+
+				// only used for free MenuStrip unbound to a menu
+				((MenuStrip) parent).itemSelected(this);
+			}
+		}
+	}
+
+
+	/**
+	 * Close this item/strip. Recursively closes all subitems.
+	 */
+	public void close() {
+		if (open) {
+			visualBackgroundColor = getBackgroundColor();
+
+			closeChildren();
+
+			if (dropDown != null) {
+				dropDown.hide();
+			}
+			open = false;
+			update();
+
+			// headers need to stop the timer and close the surface
+			if (type == Type.MENU_HEADER) {
+
+				MenuSurface.closeMenuSurface();
+
+				if (hoverTimerTask != null) {
+					hoverTimerTask.cancel();
+					hoverTimerTask = null;
+
+					// cease timer completely
+					hoverTimer.cancel();
+					hoverTimer.purge();
+				}
+			}
+		}
+	}
+
+
+	// Close all sibling items.
+	private void closeSiblings() {
+		// first close all potentially open siblings
+		try {
+			for (Control c : ((MenuStrip) parent).items) {
+				((MenuItem) c).close();
+			}
+		} catch (ClassCastException | NullPointerException e) {
+			// ignore casting errors, they are okay
+		}
+	}
+
+	// close sub items
+	void closeChildren() {
+		for (Control c : items) {
+			((MenuItem) c).close();
+		}
+	}
+
+	protected static void closeOpenHeaders() {
+		for (MenuItem header : headers) {
+			header.close();
+		}
+	}
+
+	protected static void closeAllMenus() {
+		closeOpenHeaders();
+		MenuSurface.closeMenuSurface();
+	}
+
+
+	// Substrips (dropdowns) overlap with their logical parents by this amount.
+	private static final int SUBSTRIP_X_OFFSET = 10;
+
+	private void autoPosition() {
+		/*
+		 * Draw first layer items BENEATH this item and all other layers always NEXT to
+		 * this item
+		 */
+		if (type == Type.MENU_HEADER) {
+			if (!(this instanceof ContextMenu)) { // Context Menus are positioned differently
+				dropDown.setPosition(offsetX, headerStrip.getOffsetYToWindow() + headerStrip.getHeight());
+				dropDown.setY(headerStrip.getOffsetYToWindow()  + headerStrip.getHeight());
+			} 
+			// reset timer (when closing the strip, the timer is always ceased)
+			hoverTimer = new Timer();
+		} else {
+			int offsetXToWindow = getOffsetXToWindow();
+			int right = offsetXToWindow + getWidth();
+			if (right - SUBSTRIP_X_OFFSET + dropDown.getWidth() < dropDown.getParent().getWidth()) {
+				dropDown.setX(right - SUBSTRIP_X_OFFSET);
+			} else {
+				dropDown.setX(offsetXToWindow - dropDown.getWidth());
+			}
+			// if (dropDown)
+			dropDown.setY(Math.min(getOffsetYToWindow() - MenuSurface.staticMS.getOffsetY() /*should be zero*/, dropDown.getParent().getHeight() - dropDown.getHeight()));
+		}
+	}
+
+
+
+
+	/*
+	 * Only for header items. When an item is selected by clicking then it calls
+	 * this method for its header. The header then closes up the entire strip.
+	 */
+	protected void childSelected(MenuItem item) {
+		close();
+		if (item != this) { // not sure if this can even happen
+			item.selected(item);
+		}
+		handleEvent(childSelectListener, item);
+	}
+
+	/*
+	 * For all items. Header calls this after being selected
+	 */
+	protected void selected(MenuItem item) {
+		handleEvent(selectListener, item);
+	}
+
+
+
+
+
+
+
+
+
+	/*
+	 * __________________
 	 * Content Operations
 	 */
 
@@ -802,6 +782,55 @@ public class MenuItem extends TextBased {
 	}
 
 
+
+
+
+	/*
+	 * ______________________________
+	 * Additional Getters and Setters
+	 */
+
+	/**
+	 * Set the displayed shortcut (shortcut has no real effect unless set manually at Frame).
+	 * 
+	 * @param shortcut shortcut
+	 */
+	public void setShortcut(Shortcut shortcut) {
+		this.shortcut = shortcut;
+		autosize();
+	}
+
+	public Shortcut getShortcut() {
+		return shortcut;
+	}
+
+
+	/**
+	 * MenuItems can be checked / unchecked with this method (little icon on the left of the MenuItem
+	 * text).
+	 * 
+	 * @param checked checked
+	 */
+	public void setChecked(boolean checked) {
+		this.checked = checked;
+		update();
+	}
+
+	public boolean isChecked() {
+		return checked;
+	}
+
+
+
+	@Override
+	public void setEnabled(boolean enabled) {
+		super.setEnabled(enabled);
+		if (isEnabled()) {
+			setTextColor(GuisetDefaultValues.textColor);
+		} else {
+			setTextColor(GuisetColor.create(120));
+		}
+	}
 
 
 	/*
@@ -961,7 +990,7 @@ public class MenuItem extends TextBased {
 
 	@Override
 	protected void enter(MouseEvent e) { // when clicked hovering is sufficient for changing the dropdown
-		visualBackgroundColor = hoverColor;
+		visualBackgroundColor = getHoverColor();
 
 		if (type == Type.NESTED_MENU_ITEM) {
 			startHoverTimer();
@@ -996,7 +1025,7 @@ public class MenuItem extends TextBased {
 		if (type == Type.MENU_HEADER) {
 			if (open) {
 				close();
-				visualBackgroundColor = hoverColor;
+				visualBackgroundColor = getHoverColor();
 			} else {
 				open();
 			}
@@ -1102,23 +1131,13 @@ class MenuStrip extends Container {
 		setBoxShadow(4, 7, 7, GuisetColor.BLACK, .4f);
 	}
 
+	@Override
+	protected void prerender() {
+
+	}
 
 	@Override
 	protected void render() {
-		// obtain needed width (maximum of item minWidth)
-		int w = 100;
-		for (Control item : items) {
-			w = Math.max(w, item.minWidth);
-		}
-		setWidth(w);
-
-		// obtain needed height (sum of item heights), also set items width
-		int h = 1;
-		for (Control item : items) {
-			h += item.getHeight();
-			item.setWidthNoUpdate(getWidth()); // is already being updated
-		}
-		setHeight(h);
 
 		// only if parent is not a ParentGraphicsRenderer (temporary solution)
 		if (pg != parent.pg) {
@@ -1138,12 +1157,12 @@ class MenuStrip extends Container {
 		pg.stroke(255);
 		pg.line(23, 0 + 3, 23, getHeight() - 3);
 
-		int usedSpace = paddingTop;
+		int usedSpace = getPaddingTop();
 
 		for (Control item : items) {
-			if (item.visible) {
-				renderItem(item, item.marginLeft + paddingLeft, usedSpace + item.marginTop);
-				usedSpace += (item.getHeight() + item.marginTop + item.marginBottom);
+			if (item.isVisible()) {
+				renderItem(item, item.getMarginLeft() + getPaddingLeft(), usedSpace + item.getMarginTop());
+				usedSpace += (item.getHeight() + item.getMarginTop() + item.getMarginBottom());
 			}
 		}
 	}
@@ -1158,6 +1177,24 @@ class MenuStrip extends Container {
 		}
 	}
 
+	@Override
+	public void fitContent() {
+		// obtain needed width (maximum of item minWidth)
+		int w = 100;
+		for (Control item : items) {
+			w = Math.max(w, item.getMinWidth());
+		}
+		setWidthNoUpdate(w);
+
+		// obtain needed height (sum of item heights), also set items width
+		int h = 1;
+		for (Control item : items) {
+			h += item.getHeight();
+			item.setWidthNoUpdate(getWidth()); // is already being updated
+		}
+		setHeightNoUpdate(h);
+	}
+
 
 	// also used internally by MenuItem
 	/**
@@ -1166,6 +1203,7 @@ class MenuStrip extends Container {
 	public void show() {
 		MenuSurface.openMenuSurface();
 		setVisible(true);
+		fitContent();
 	}
 
 
@@ -1196,7 +1234,6 @@ class MenuStrip extends Container {
 	protected void itemSelected(MenuItem item) {
 		item.close();
 		hide();
-
 	}
 
 

@@ -379,6 +379,19 @@ public class Textbox extends HScrollContainer {
 	}
 
 	/**
+	 * Set selection. If end is less than start, they will we swapped.
+	 * 
+	 * @param start selection start position
+	 * @param end   selection end position
+	 */
+	public void setSelection(int start, int end) {
+		int s = Math.min(start, end);
+		int e = Math.max(start, end);
+		setSelectionStart(s);
+		setSelectionEnd(e);
+	}
+
+	/**
 	 * Set highlight color of selection.
 	 * 
 	 * @param selectionColor rgb integer color
@@ -466,7 +479,7 @@ public class Textbox extends HScrollContainer {
 
 	@Override
 	protected int autoHeight() {
-		return (int) getFontSize() + paddingTop + paddingBottom;
+		return (int) getFontSize() + getPaddingTop() + getPaddingBottom();
 	}
 
 
@@ -649,12 +662,23 @@ public class Textbox extends HScrollContainer {
 	@Override
 	protected void press(MouseEvent e) {
 		if (e.getCount() < 2) {
-			setCursorByClick(e.getX());
+//			setCursorByClick(e.getX());
+//
+//			selectionInitial = cursorPosition;
+//			selectionStart = cursorPosition;
+//			selectionEnd = cursorPosition;
+			
+			if (e.isShiftDown()) {
+				int selStart = cursorPosition > selectionStart ? selectionStart : selectionEnd;
+				setCursorByClick(e.getX());
+				setSelection(selStart, cursorPosition);
+			} else {
+				setCursorByClick(e.getX());
 
-			selectionInitial = cursorPosition;
-			selectionStart = cursorPosition;
-			selectionEnd = cursorPosition;
-
+				selectionInitial = cursorPosition;
+				// selectionStart = cursorPosition;
+				// selectionEnd = cursorPosition;
+			}
 			// should not be necessary as every control gets focus upon pressing it
 			// this.focus();
 		} else { // double click
@@ -667,7 +691,7 @@ public class Textbox extends HScrollContainer {
 
 	protected void setCursorByClick(int mX) {
 		// relative to textbox origin and ind respect to fullScrollWidth
-		int clickedPos = mX - getOffsetXToWindow() + scrollPosition - paddingLeft;
+		int clickedPos = mX - getOffsetXToWindow() + scrollPosition - getPaddingLeft();
 		float wide = 0;
 		for (int i = 0; i < text.length(); i++) {
 			float letterWidth = textWidth(text.substring(i, i + 1));
@@ -871,7 +895,7 @@ public class Textbox extends HScrollContainer {
 	 * Normal shortcuts are not executed if this textbox has focus. 
 	 */
 	@Override
-	protected boolean overridesFrameShortcuts() {
+	protected boolean overridesRegisteredShortcuts() {
 		return true;
 	}
 

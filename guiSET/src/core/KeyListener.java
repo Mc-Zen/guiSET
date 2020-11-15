@@ -86,7 +86,7 @@ public class KeyListener {
 
 
 
-		if (c.enabled) {
+		if (c.isEnabled()) {
 			switch (event.getAction()) {
 			case KeyEvent.PRESS:
 				c.keyPress(event);

@@ -15,7 +15,7 @@ public class ContextMenu extends MenuItem {
 	public ContextMenu() {
 		createDropDownIfNecessary();
 		setVisible(false); // Needs never to be visible
-		determineTypeAndSetup();
+		determineTypeAndPerformSetup();
 
 		// This is also always the header of the strip
 	}
@@ -24,8 +24,18 @@ public class ContextMenu extends MenuItem {
 	 * Show this tool strip. Position is automatically set to current mouse position.
 	 */
 	public void show() {
+		show(currentMouseEvent.getX(), currentMouseEvent.getY()); // after open
+	}
+
+	/**
+	 * Show this tool strip and provide absolute position.
+	 *
+	 * @param x x coordinate
+	 * @param y y coordinate
+	 */
+	public void show(int x, int y) {
 		open();
-		dropDown.setPosition(currentMouseEvent.getX(), currentMouseEvent.getY()); // after open
+		dropDown.setPosition(x, y);
 	}
 
 	/**

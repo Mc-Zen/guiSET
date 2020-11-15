@@ -266,7 +266,7 @@ abstract public class TextBased extends Control {
 
 			// textAscent=size is not the real size, depending on font, this is actually
 			// smaller, 0.8 is jst a guess that seems to work good.
-			float posY = paddingTop + size * TEXTHEIGHT_FACTOR;
+			float posY = getPaddingTop() + size * TEXTHEIGHT_FACTOR;
 			String[] lines = text.split("\n");
 			float textHeight = realLineHeight * (lines.length - 1) + size * TEXTHEIGHT_FACTOR; // descent is ignored
 
@@ -288,7 +288,7 @@ abstract public class TextBased extends Control {
 		// We could use all the implementation from PGraphics but we need to compute a
 		// lot of these values anyway
 		protected void textLineAlignImpl(String text, int posX, int posY) {
-			posX += paddingLeft;
+			posX += getPaddingLeft();
 			switch (textAlign) {
 			case Constants.CENTER:
 				// posX = (width - paddingRight - paddingLeft) / 2 + paddingLeft;
@@ -477,7 +477,7 @@ abstract public class TextBased extends Control {
 		@Override
 		protected void textLineAlignImpl(String text, int posX, int posY) {
 			float tw = textWidthDuringDraw(text);
-			posX += paddingLeft;
+			posX += getPaddingLeft();
 			switch (textAlign) {
 			case Constants.CENTER:
 				posX += (getAvailableWidth() - tw) / 2f;

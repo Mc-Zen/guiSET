@@ -165,8 +165,9 @@ public void setup() {
   vscrollcontainer.add(
     new Textbox("A textbox", 150), new Textbox("Another textbox", 130), 
     new Textbox("Yet another textbox", 130), new Textbox("Geez"));
-  slider2.setForegroundColor(color(0x757AB2));
+  slider2.setForegroundColor(color(20, 120, 120));
   slider2.setWheelEnabled(true); // allow changing slider value with mouse wheel
+    slider2.setValue(-5);
   slider3.setThickness(2);
   slider3.setBallSize(4);
   slider3.setMargin(10, 5);

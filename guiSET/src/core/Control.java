@@ -4,24 +4,24 @@ import processing.core.*;
 import processing.event.*;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
-
 import java.lang.reflect.InvocationTargetException;
 
 
 /*
  * The code in this class is divided in a few sections:
 
-	1. Most fields that deal with UI and UX
+	1. Fields that deal with UI and UX (mostly visual properties)
 	
 	2. Constructor
 	
 	3. Methods to be overriden by other classes:
 			- initialized()
 			- addedToParent()
+			- overridesRegisteredShortcuts()
 			
-	5. Focus
+	4. Focus
 	
-	4. Rendering methods, classes, default draw methods. 
+	5. Drawing and rendering methods, classes, default draw methods. 
 	
 	6. Anchors and Resizing
 	
@@ -29,13 +29,15 @@ import java.lang.reflect.InvocationTargetException;
 	
 	8. Getters
 	
-	9. EventListener
+	9. Style copying, doForAll(), animate()
 	
-	10. Mouse event methods and protected static fields
+	10. EventListener
 	
-	11. Event methods to be overriden by other classes
+	11. Mouse event implementation and related protected static fields
 	
-	12. Debugging functions
+	12. Event methods to be overriden by other classes
+	
+	13. Debugging functions
 	
  */
 
@@ -68,7 +70,8 @@ public abstract class Control {
 	/**
 	 * Image object that always contains the updated looks of this element. When parents are rendered
 	 * they project the PGraphics of their children onto themselves. In this way only the changed parts
-	 * have to be re-rendered and not the entire gui.
+	 * have to be re-rendered and not the entire gui. If one of the "unbuffered" renderers is selected,
+	 * this is set to the parents graphics (and so on...).
 	 */
 	protected PGraphics pg;
 
@@ -91,52 +94,78 @@ public abstract class Control {
 	/*
 	 * Status properties
 	 */
-	protected boolean focusable = true; 		// Determines if this control can be focused at all
+	private boolean focusable = true; 		// Determines if this control can be focused at all
 	protected boolean focused = false; 			// Don't change focused, Frame does that
-	protected boolean stickyFocus = false; 		// If true, then its focused state can't be overridden by other elements requesting focus, only when
+	private boolean stickyFocus = false; 		// If true, then its focused state can't be overridden by other elements requesting focus, only when
 											 		// itself calls blur
 
-	protected boolean enabled = true; 			// If false, then will not receive mouse events, also different look can be implemented
-	protected boolean visible = true;
+	private boolean enabled = true; 			// If false, then will not receive mouse events, also different look can be implemented
+	private boolean visible = true;
 
 
 
-	// Coordinates and size relative to container (won't be changed by a flow/scroll container!).
-	protected int x;
-	protected int y;
-	// z-index of element; only has an effect when element is in a panelcontainer (not a flow- or scroll
-	// container)
-	protected int z;
+	/*
+	 * Coordinates and size relative to container (won't be changed by a flow/scroll container!).
+	 */
+	private int x;
+	private int y;
+	private int z;// z-index; only has an effect when element is in a panelcontainer (not a flow- or scroll container)
 
 	private int width; 					// Is always between minWidth and maxWidth
 	private int height; 				// Is always between minHeight and maxHeight
 
-	protected int minWidth = Constants.MinimalMinWidth; 		// Never below Constants.MinimalMinWidth
-	protected int maxWidth = Constants.DefaultMaxWidth;
-	protected int minHeight = Constants.MinimalMinHeight; 		// Never below Constants.MinimalMinHeight
-	protected int maxHeight = Constants.DefaultMaxHeight;
-
-	protected int marginLeft; 			// Margins are not included in width/height and honored by containers when layouting their items
-	protected int marginTop;
-	protected int marginRight;
-	protected int marginBottom;
-
-	protected int paddingLeft; 			// Paddings are included in width/height and regarded when performing autosize
-	protected int paddingRight;
-	protected int paddingTop;
-	protected int paddingBottom;
-
+	private int minWidth = Constants.MinimalMinWidth; 		// Never below Constants.MinimalMinWidth
+	private int maxWidth = Constants.DefaultMaxWidth;
+	private int minHeight = Constants.MinimalMinHeight; 		// Never below Constants.MinimalMinHeight
+	private int maxHeight = Constants.DefaultMaxHeight;
 
 	/*
-	 * Visuals
+	 * Spacing: margins (space to siblings) and paddings (space to content)
 	 */
-	protected PImage image;
-	protected ImageMode imageMode = ImageMode.FILL_DISTORT;
+	private int marginLeft; 			// Margins are not included in width/height and honored by containers when layouting their items
+	private int marginTop;
+	private int marginRight;
+	private int marginBottom;
+
+	private int paddingLeft; 			// Paddings are included in width/height and regarded when performing autosize
+	private int paddingRight;
+	private int paddingTop;
+	private int paddingBottom;
+
+	/*
+	 * Colors
+	 */
+	private int backgroundColor;
+	private int foregroundColor;
+	private int borderColor;
+	private int hoverColor; 			// First set automatically with backgroundColor, can be changed programatically
+	private int pressedColor; 		// First set automatically with backgroundColor, can be changed programatically
+
+	/*
+	 * Visual background color is the actually displayed bg-color, while
+	 * backgroundColor is only the color in normal state (neither hovered on or
+	 * pressed). When entering/pressing the elements visualBackgroundColor is set to
+	 * hoverColor/pressedColor and back to backgroundColor when exiting/releasing
+	 * the element.
+	 */
+	protected int visualBackgroundColor;
+
+	private int borderWidth;
+	private int borderRadius;
+
+	private int cursor = PApplet.ARROW;	// Type of cursor to display when hovering over this control
+
+	private float opacity = 1.0f; 	// Opacity in percent from 0 to 1
+
+
+	private PImage image;
+	private ImageMode imageMode = ImageMode.FILL_DISTORT;
 
 
 	/*
 	 * IMAGE MODES:
 	 */
+
 	/**
 	 * Fill modes for background images. The element can either be filled with given image (and if
 	 * necessary, the image is distorted) or the iamge is not distorted and resized to fill the entire
@@ -162,48 +191,11 @@ public abstract class Control {
 	 */
 	public static final ImageMode FIT_INSIDE = ImageMode.FIT_INSIDE;
 
-	protected int backgroundColor;
-	protected int foregroundColor;
-	protected int borderColor;
-	protected int hoverColor; 			// First set automatically with backgroundColor, can be changed programatically
-	protected int pressedColor; 		// First set automatically with backgroundColor, can be changed programatically
-
-	/*
-	 * Visual background color is the actually displayed bg-color, while
-	 * backgroundColor is only the color in normal state (neither hovered on or
-	 * pressed). When entering/pressing the elements visualBackgroundColor is set to
-	 * hoverColor/pressedColor and back to backgroundColor when exiting/releasing
-	 * the element.
-	 */
-	protected int visualBackgroundColor;
-
-	protected int borderWidth;
-	protected int borderRadius;
-
-	protected int cursor = PApplet.ARROW;	// Type of cursor to display when hovering over this control
-
-	protected float opacity = 1.0f; 	// Opacity in percent from 0 to 1
-
-
-	/*
-	 * Events
-	 */
-
-	// previous hovered/pressed state
-	protected boolean pHovered = false;
-	protected boolean pPressed = false;
 
 
 
 
-	/*
-	 * If true, then shortcuts registered to frame won't be handled if this element
-	 * is focused. I.e. useful for textboxes (ctrl-c, x etc.)
-	 */
 
-	protected boolean overridesFrameShortcuts() {
-		return false;
-	}
 
 
 	/**
@@ -260,7 +252,7 @@ public abstract class Control {
 		public static final int SCROLL_HANDLE_STRENGTH_SLIM = 3;
 
 		public static final float PI = (float) Math.PI;
-		
+
 		public static final int LEFT = PApplet.LEFT;
 		public static final int RIGHT = PApplet.RIGHT;
 		public static final int TOP = PApplet.TOP;
@@ -309,8 +301,6 @@ public abstract class Control {
 
 
 
-
-
 	/**
 	 * Called before rendering the first time. Don't call {@link #setZ(int)}(int) in
 	 * {@link #initialize()} nor call any function or constructor (like {@link guiSET.core.MenuSurface})
@@ -320,7 +310,6 @@ public abstract class Control {
 
 	}
 
-
 	/*
 	 * Called by containers when they add this object to their content list.
 	 */
@@ -328,7 +317,19 @@ public abstract class Control {
 
 	}
 
+	/*
+	 * If true, then shortcuts registered to frame won't be handled if this element
+	 * is focused. I.e. useful for textboxes (ctrl-c, x etc.)
+	 */
 
+	protected boolean overridesRegisteredShortcuts() {
+		return false;
+	}
+
+
+	protected boolean hasStickyFocus() {
+		return stickyFocus;
+	}
 
 
 
@@ -364,19 +365,18 @@ public abstract class Control {
 		blur();
 	}
 
-	protected boolean hasStickyFocus() {
-		return stickyFocus;
-	}
 
 
-
-	/*
+	/*__________________________________________________________________________________________________________
+	 * 
 	 * DRAWING AND RENDERING
 	 */
 
 	/*
 	 * Dimensions (width, height) from previous frame. Used to check if size
 	 * changed. If so, the PGraphics needs to be created new with updated size.
+	 * 
+	 * TODO: This can be done better and without additional fields 
 	 */
 	protected int pWidth, pHeight = -1;
 
@@ -394,6 +394,10 @@ public abstract class Control {
 			pg.beginDraw();
 			pg.clear();
 		}
+	}
+
+	protected void prerender() {
+
 	}
 
 
@@ -473,18 +477,6 @@ public abstract class Control {
 	}
 
 	abstract class UnbufferedRenderer extends Renderer {
-
-//		protected void clip(PGraphics parentGraphics) {
-//			// Old: only works with a nesting level of 2. 
-//			// constrain drawing to this elements area and its parents area
-////			int x0 = Math.max(0, offsetX), y0 = Math.max(0, offsetY);
-////			int x1 = Math.min(offsetX + getWidth(), parent.getWidth()), y1 = Math.min(offsetY + getHeight(), parent.getHeight());
-////			parentGraphics.clip(x0, y0, x1 - x0, y1 - y0);
-//			
-//			
-//			
-//		}
-
 
 		protected void prepareGraphics(PGraphics parentGraphics) {
 			intersectClip(offsetX, offsetY, offsetX + getWidth(), offsetY + getHeight());
@@ -658,7 +650,7 @@ public abstract class Control {
 		void renderAll(int x, int y, PGraphics parentGraphics) {
 			offsetX = x;
 			offsetY = y;
-
+			prerender();
 			int dx0 = clipX0, dy0 = clipY0, dx1 = clipX1, dy1 = clipY1; // child items change the clip and we need to be able to reset it.
 			prepareGraphics(parentGraphics);
 			PFont f = parentGraphics.textFont;
@@ -697,6 +689,7 @@ public abstract class Control {
 			if (opacity == 0)
 				return;
 
+			prerender();
 			if (shadowInformation != null) {
 				drawBoxShadow(parentGraphics, shadowInformation);
 			}
@@ -1106,52 +1099,6 @@ public abstract class Control {
 	}
 	*/
 
-//	protected void drawShadow(PGraphics pg, int w, int h, int size, int offset) {
-//		pg.noFill();
-//		pg.strokeWeight(1);
-//		pg.translate(offsetX, offsetY);
-//		// pg.beginShape(PApplet.LINES);
-//		for (int i = 0; i < size; i++) {
-//			int alpha = 117 - 29 * i;
-//			pg.stroke(Color.create(0, alpha));
-//			// pg.stroke(Color.create(0, cl[i]));
-//			pg.line(w + i, offset - i + 1, w + i, h + i - 1); // v line
-//			pg.line(offset - i + 1, h + i, w + i, h + i); // lower h line
-//			pg.line(offset - i, h, offset - i, h + i); // left v line
-//			pg.line(w, size - i, w + i, size - i); // upper h line
-//			// pg.rect((offset - 1) * 2 - i, (offset - 1) * 2 - i, w - 2 * (size-1 - i), h - 2 * (size-1 - i));
-//			// pg.line(x1, y1, x2, y2);
-//		}
-//		pg.translate(-(offsetX), -(offsetY));
-//		// pg.endShape();
-//	}
-
-//	public void drawBoxShadow(PGraphics pg, int size, int offsetX, int offsetY, int color, float transparency) {
-//		int r = (color >> 16) & 0xFF;
-//		int g = (color >> 8) & 0xFF;
-//		int b = color & 0xFF;
-//		int halfsize = size / 2;
-//		int x = Control.this.offsetX + offsetX - halfsize;
-//		int y = Control.this.offsetY + offsetY - halfsize;
-//
-//		pg.translate(x, y);
-//		pg.fill(Color.create(r, g, b, transparency * 255));
-//		pg.noStroke();
-//		pg.rect(0, 0, width - size, height - size);
-//
-//		pg.noFill();
-//		pg.strokeWeight(1);
-//		// getPApplet().red();
-//		// pg.beginShape(PApplet.LINES);
-//		for (int i = 1; i < size; i++) {
-//			int alpha = Math.max(0, (int) (transparency * (255 - i * (255 / size))));
-//			pg.stroke(Color.create(r, g, b, alpha));
-//			pg.rect(-i, -i, width + 2 * i - 1 - size, height + 2 * i - 1 - size);
-//		}
-//		pg.translate(-x, -y);
-//		// pg.endShape();
-//	}
-
 
 
 	/**
@@ -1174,7 +1121,7 @@ public abstract class Control {
 
 		} else {
 
-			// All this stuff does not work :( now using mask() instead
+			// All this stuff does not work :( now using mask() instead (see below)
 			/*pg.beginShape(PApplet.QUADS);
 			
 			if (borderRadius != 0) {
@@ -1929,6 +1876,25 @@ public abstract class Control {
 	 * @param x x-coordinate in pixel
 	 */
 	public void setX(int x) {
+		setXNoUpdate(x);
+		update();
+	}
+
+
+
+
+	/**
+	 * Set y-coordinate of element relative to parent. Does not apply if element is added to containers
+	 * that provide some own layout.
+	 * 
+	 * @param y y-coordinate in pixel
+	 */
+	public void setY(int y) {
+		setYNoUpdate(y);
+		update();
+	}
+
+	protected void setXNoUpdate(int x) {
 		if (x == this.x)
 			return;
 		this.x = x;
@@ -1942,18 +1908,9 @@ public abstract class Control {
 				setAnchorImpl(RIGHT_ANCHOR, parent.getWidth() - getWidth() - getX());
 			}
 		}
-		update();
 	}
 
-
-
-	/**
-	 * Set y-coordinate of element relative to parent. Does not apply if element is added to containers
-	 * that provide some own layout.
-	 * 
-	 * @param y y-coordinate in pixel
-	 */
-	public void setY(int y) {
+	protected void setYNoUpdate(int y) {
 		if (y == this.y)
 			return;
 		this.y = y;
@@ -1967,7 +1924,6 @@ public abstract class Control {
 				setAnchorImpl(BOTTOM_ANCHOR, parent.getHeight() - getHeight() - getY());
 			}
 		}
-		update();
 	}
 
 	/**
@@ -2679,9 +2635,13 @@ public abstract class Control {
 
 	/* __________________________________________________________________________________________________________
 	 * 
-	 * STYLE GETTERS
+	 * GETTERS
 	 * 
 	 */
+
+	public Control getParent() {
+		return parent;
+	}
 
 	public int getX() {
 		return x;
@@ -3167,6 +3127,7 @@ public abstract class Control {
 	/**
 	 * Functional interface for a lambda expression with no parameters.
 	 */
+	@FunctionalInterface
 	public interface Predicate {
 		void run();
 	}
@@ -3176,6 +3137,7 @@ public abstract class Control {
 	 *
 	 * @param <T> lambda parameter type
 	 */
+	@FunctionalInterface
 	public interface Predicate1<T> {
 		void run(T args);
 	}
@@ -3186,6 +3148,7 @@ public abstract class Control {
 	 * @param <T> first parameter type
 	 * @param <U> second parameter type
 	 */
+	@FunctionalInterface
 	public interface Predicate2<T, U> {
 		void run(T arg1, U arg2);
 	}
@@ -3348,8 +3311,8 @@ public abstract class Control {
 	 * 
 	 * Event parameters: none
 	 * 
-	 * @param type see {@link #setMouseListener(String, String)}
-	 * @param lambda    lambda expression
+	 * @param type   see {@link #setMouseListener(String, String)}
+	 * @param lambda lambda expression
 	 */
 	public void setMouseListener(String type, Predicate lambda) {
 		switch (type) {
@@ -3383,8 +3346,8 @@ public abstract class Control {
 	 * 
 	 * Event parameters: {@link MouseEvent}
 	 * 
-	 * @param type see {@link #setMouseListener(String, String)}
-	 * @param lambda    lambda expression with a {@link MouseEvent} as argument.
+	 * @param type   see {@link #setMouseListener(String, String)}
+	 * @param lambda lambda expression with a {@link MouseEvent} as argument.
 	 */
 	public void setMouseListener(String type, Predicate1<MouseEvent> lambda) {
 		switch (type) {
@@ -3580,6 +3543,9 @@ public abstract class Control {
 	 * 
 	 */
 
+	// previous hovered/pressed state
+	protected boolean pHovered = false;
+	protected boolean pPressed = false;
 	// Origin coordinates relative to parent. Set by parent in containerRenderItem(Control, int, int)
 	protected int offsetX = 0, offsetY = 0;
 
@@ -3862,7 +3828,7 @@ public abstract class Control {
 	 * @return version
 	 */
 	static public String getVersionString() {
-		return "Version 0.0.12";
+		return "Version 0.1.2";
 	}
 
 }

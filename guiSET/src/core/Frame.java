@@ -496,7 +496,7 @@ public class Frame extends Container {
 		/*
 		 * re-render if graphics have been changed
 		 */
-		if (visible) {
+		if (isVisible()) {
 			render();
 		}
 
@@ -762,7 +762,7 @@ public class Frame extends Container {
 		if (sd != null) {
 			// Don't handle shortcut if focused element overrides shortcuts. Exception: Shortcuts that
 			// "executeEvenIfFocusedElementOverridesNormalShortcuts" xD
-			if (!focusedElement.overridesFrameShortcuts() || sd.executeEvenIfFocusedElementOverridesNormalShortcuts()) {
+			if (!focusedElement.overridesRegisteredShortcuts() || sd.executeEvenIfFocusedElementOverridesNormalShortcuts()) {
 				sd.handle();
 			}
 			return true;
@@ -941,7 +941,7 @@ public class Frame extends Container {
 	 */
 	public void setMaximumWindowSize(int maxWidth, int maxHeight) {
 		if (awtFrame != null) {
-			awtFrame.setMaximumSize(new Dimension(minWidth, minHeight));
+			awtFrame.setMaximumSize(new Dimension(getMinWidth(), getMinHeight()));
 		} else {
 			System.err.println("In P2D/P3D mode maximum window size is not supported.");
 		}
@@ -1353,8 +1353,8 @@ public class Frame extends Container {
 
 		// enter currently hovered element
 		if (hoveredElement != null) {
-			if (hoveredElement.cursor != currentCursor) {
-				currentCursor = hoveredElement.cursor;
+			if (hoveredElement.getCursor() != currentCursor) {
+				currentCursor = hoveredElement.getCursor();
 				papplet.cursor(currentCursor);
 			}
 
