@@ -29,7 +29,7 @@
                 <li><a href="animations.html">Animations</a></li>
                 <li><a href="help,-something-doesn't-work.html">Common errors</a></li>
                 <li><a href="creating-own-components.html">Creating own components</a></li>
-                <li><a href="draw-modes.html">Draw modes</a></li>
+                <li><a href="refresh-modes.html">Refresh modes</a></li>
                 <li><a href="dynamic-resizing-and-anchors.html">Dynamic resizing and anchors</a></li>
                 <li><a href="global-keyboard-shortcuts.html">Global keyboard shortcuts</a></li>
                 <li><a href="installing-guiset.html">Installing guiSET</a></li>
@@ -152,75 +152,80 @@ void draw(){
 
 
 
-		<h1 id="listeners">Listeners</h1>
-		<p>
-			What would a program be without listeners? Let us see how to create some with <b>guiSET</b>. Wait, what is a
-			listener? An (event) listener is something that "listens" all the time for something specific to happen and
-			then notifies you. For example a <i>key listener</i> (to be more precise for example a <i>keydown
-				listener</i>) "listens" for presses on the keyboard and tells you when it happens by calling a method
-			(so-called <i>callback method</i>) that you need to specify at the beginning.
-		</p>
-		<p>
-			In our example we would probably want to do something when the button is clicked, i.e. print a message. In
-			<code>setup()</code> we write: <code>myButton.addMouseListener("press", "myButton_pressed");</code> and
-			create a suitable method
-			somewhere:
-		</p>
-		<pre class="prettyprint">
+			<h1 id="listeners">Listeners</h1>
+			<p>
+				What would a program be without listeners? Let us see how to create some with <b>guiSET</b>. Wait, what
+				is a
+				listener? An (event) listener is something that "listens" all the time for something specific to happen
+				and
+				then notifies you. For example a <i>key listener</i> (to be more precise for example a <i>keydown
+					listener</i>) "listens" for presses on the keyboard and tells you when it happens by calling a
+				method
+				(so-called <i>callback method</i>) that you need to specify at the beginning.
+			</p>
+			<p>
+				In our example we would probably want to do something when the button is clicked, i.e. print a message.
+				In
+				<code>setup()</code> we write: <code>myButton.setMouseListener("press", "myButton_pressed");</code> and
+				create a suitable method
+				somewhere:
+			</p>
+			<pre class="prettyprint">
 void myButton_pressed(){
     println("I've been pressed"); 
 }</pre>
-		<p>
-			"press" means the listener will listen for a downpress of the mouse. Alternatives are
-			<code>myButton.addMouseListener("release", "myButton_pressed");</code> or "drag", "wheel" and some more, and
-			of course
-			you could name the method <code>myButton_pressed()</code> just like you wish.
-		</p>
-		<p>
-			If you need details about the mouse event (say you need the x-coordinate), then re-write your so-called
-			callback method to:
-		</p>
-		<pre class="prettyprint">
+			<p>
+				"press" means the listener will listen for a downpress of the mouse. Alternatives are
+				<code>myButton.setMouseListener("release", "myButton_pressed");</code> or "drag", "wheel" and some more,
+				and
+				of course
+				you could name the method <code>myButton_pressed()</code> just like you wish.
+			</p>
+			<p>
+				If you need details about the mouse event (say you need the x-coordinate), then re-write your so-called
+				callback method to:
+			</p>
+			<pre class="prettyprint">
 void myButton_pressed(MouseEvent e){
     println(e.getX());
 }</pre>
 
-		<p>
-			The <code>MouseEvent</code> object works just like when using the
-			<code>void mousePressed(MouseEvent e)</code> or similar methods from
-			Processing.
-		</p>
-		<p>
-			Let's try something new:
-		</p>
-		<pre class="prettyprint">
+			<p>
+				The <code>MouseEvent</code> object works just like when using the
+				<code>void mousePressed(MouseEvent e)</code> or similar methods from
+				Processing.
+			</p>
+			<p>
+				Let's try something new:
+			</p>
+			<pre class="prettyprint">
 Frame f;
 Button myButton;
 Textbox myTextbox;
 
 void setup() {
-	size(300, 200);
-	f = new Frame(this);
-	myButton = new Button();
-	myTextbox = new Textbox();
+    size(300, 200);
+    f = new Frame(this);
+    myButton = new Button();
+    myTextbox = new Textbox();
 
     f.add(myButton, myTextbox); 
 
     myButton.setText("This is a button"); 
     myButton.setBackgroundColor(color(200, 150, 200));
     myButton.setPosition(20, 20);
-    myButton.addMouseListener("press", "myButton_pressed");
+    myButton.setMouseListener("press", "myButton_pressed");
 
     myTextbox.setPosition(20, 70);
 
     /*
      * New Part
      */
-    myTextbox.addTextChangedListener("myTextbox_textChanged");
+    myTextbox.setTextChangeListener("myTextbox_textChanged");
 }
 
 void myButton_pressed(MouseEvent e){
-	println(e.getX());
+    println(e.getX());
 }
 
 void myTextbox_textChanged(){
@@ -228,53 +233,89 @@ void myTextbox_textChanged(){
 }
 void draw() {
 }</pre>
-		<p>
-			Now every time you change the text of the textbox by entering or deleting stuff, the text of the button is
-			changed.
-		</p>
-		<hr>
-		<p>
-			There is a lot more to say about listeners but for now just be aware that the standard listeners implemented
-			in each component of this library are
-		</p>
-		<ul>
-			<li>press</li>
-			<li>release</li>
-			<li>enter (mouse enters this element)</li>
-			<li>exit (mouse leaves this element)</li>
-			<li>drag (mouse is pressed down on element and dragged somewhere)</li>
-			<li>move (happens all the time when mouse is moved over this element - called VERY often)</li>
-			<li>wheel (mouse scroll wheel rotated)</li>
-			<li>focus (fires when this element gets focus (i.e. a textbox gets focus when you click it so you can enter
-				text)</li>
-			<li>resize (width/height of this element has changed in any way except autosize)</li>
-		</ul>
-		<p>
-			While all mouse events are added with <code>addMouseListener(String type, String methodname)</code>, focus
-			and resize
-			listener are added with <code>addFocusListener(String methodname)</code> and
-			<code>addResizeListener(String methodname)</code>.
-		</p>
-		<p>
-			Other components have further listeners, like the <code>Textbox</code> which features:
-		</p>
-		<ul>
-			<li>textChange - <code>addTextChangeListener(String methodName)</code></li>
-			<li>submit - <code>addSubmitListener(String methodName)</code> (called when you press <kb>ENTER</kb> while
-				textbox
-				has focus)
-			</li>
-			<li> keyPress - <code>addKeyPressListener(String methodName)</code></li>
-		</ul>
-		<p>
-			Oh, and each type of listener can be added only once to each individual object. For example, one button can
-			have a press, drag and move listener, another button also a (different) press listener but not the same
-			button two listeners.
-		</p>
-		<p>
-			Listeners can be removed by calling things like <code>myElement.removeMouseListener("press")</code> or
-			<code>myElement.removeFocusListener()</code>.
-		</p>
+			<p>
+				Now every time you change the text of the textbox by entering or deleting stuff, the text of the button
+				is
+				changed.
+			</p>
+
+			<p>
+				But it gets even better! You can use lambda functions to inline the whole callback (only Processing
+				doesn't allow Java 8 and therefore lambdas yet, but will probably soon; in Eclipse it works of course):
+			</p>
+			<pre class="prettyprint">
+Frame f;
+Button myButton;
+Textbox myTextbox;
+
+void setup() {
+    size(300, 200);
+    f = new Frame(this);
+    myButton = new Button();
+    myTextbox = new Textbox();
+
+    f.add(myButton, myTextbox); 
+
+    myButton.setText("This is a button"); 
+    myButton.setBackgroundColor(color(200, 150, 200));
+    myButton.setPosition(20, 20);
+    myButton.setMouseListener("press", (MouseEvent e) -> println(e.getX()));
+
+    myTextbox.setPosition(20, 70);
+    myTextbox.setTextChangeListener(() -> { myButton.setText(myTextbox.getText()); });
+}
+
+void draw() {
+}</pre>
+
+			<hr>
+
+			<p>
+				There is a lot more to say about listeners but for now just be aware that the standard listeners
+				implemented in each component of this library are
+			</p>
+			<ul>
+				<li>press</li>
+				<li>release</li>
+				<li>enter (mouse enters this element)</li>
+				<li>exit (mouse leaves this element)</li>
+				<li>drag (mouse is pressed down on element and dragged somewhere)</li>
+				<li>move (happens all the time when mouse is moved over this element - called VERY often)</li>
+				<li>wheel (mouse scroll wheel rotated)</li>
+				<li>focus (fires when this element gets focus (i.e. a textbox gets focus when you click it so you can
+					enter
+					text)</li>
+				<li>resize (width/height of this element has changed in any way except autosize)</li>
+			</ul>
+			<p>
+				While all mouse events are added with <code>setMouseListener(String type, String methodname)</code>,
+				focus
+				and resize
+				listener are added with <code>setFocusListener(String methodname)</code> and
+				<code>setResizeListener(String methodname)</code>.
+			</p>
+			<p>
+				Other components have further listeners, like the <code>Textbox</code> which features:
+			</p>
+			<ul>
+				<li>textChange - <code>setTextChangeListener(String methodName)</code></li>
+				<li>submit - <code>setSubmitListener(String methodName)</code> (called when you press <kb>ENTER</kb>
+					while
+					textbox
+					has focus)
+				</li>
+				<li> keyPress - <code>setKeyPressListener(String methodName)</code></li>
+			</ul>
+			<p>
+				Oh, and each type of listener can be added only once to each individual object. For example, one button
+				can
+				have a press, drag and move listener, another button also a (different) press listener but not the same
+				button two listeners.
+			</p>
+			<p>
+				Listeners can be removed by calling things like <code>myElement.removeMouseListener("press")</code> or
+				<code>myElement.removeFocusListener()</code>.
+			</p>
 
 
 
@@ -284,13 +325,15 @@ void draw() {
 
 
 
-		<h1 id="about-trees">About Trees</h1>
-		<p>
-			In programming, a tree is an important data structure which starts off with one element (called root) that
-			has one or more children which in turn can have children etc. The same idea is used here. Our root is the
-			<code>Frame</code> and all the other elements need to be children. I'll explain that with an example:
-		</p>
-		<pre class="prettyprint">
+			<h1 id="about-trees">About Trees</h1>
+			<p>
+				In programming, a tree is an important data structure which starts off with one element (called root)
+				that
+				has one or more children which in turn can have children etc. The same idea is used here. Our root is
+				the
+				<code>Frame</code> and all the other elements need to be children. I'll explain that with an example:
+			</p>
+			<pre class="prettyprint">
 import guiSET.core.*;
 
 Frame f;
@@ -320,7 +363,7 @@ void setup() {
     f.add(outerContainer, vfc, mySwitch);
     vfc.add(button1, button2);
     outerContainer.add(innerContainer);
-	innerContainer.add(label);
+    innerContainer.add(label);
 	
 
     outerContainer.setPosition(10, 10);
@@ -330,7 +373,7 @@ void setup() {
 
     vfc.setPosition(outerContainer.getWidth() + outerContainer.getX() + 5, 10);
     vfc.setBackgroundColor(color(200));
-	vfc.setPadding(5);
+    vfc.setPadding(5);
 	
     mySwitch.setPosition(vfc.getX() + vfc.getWidth() + 5, 40);
   
@@ -340,24 +383,28 @@ void setup() {
 void draw() {
 }</pre>
 
-		<p>
-			Running this sketch gives following surface:
-		</p>
-		<img src="../media/Tree_example_screenshot.png">
-		<p>
-			The <code>outerContainer</code>, the <code>vfc</code> and <code>mySwitch</code> are added to <code>f</code>.
-			<code>innerContainer</code> is added to
-			<code>outerContainer</code> and
-			<code>label</code> to that one. The buttons are children of <code>vfc</code>. Alltogether, the structure of
-			all elements looks like
-			this:
-		</p>
-		<img src="../media/tree_schematic_small.jpg">
-		<p>
-			This way we can create arbitrarily complex structures - and the good thing: if you move a container, all the
-			children go with it (same if you set the visiblity or enabled to false). This comes in handy if you need to
-			position/move a lot of elements.
-		</p>
+			<p>
+				Running this sketch gives following surface:
+			</p>
+			<img src="../media/Tree_example_screenshot.png">
+			<p>
+				The <code>outerContainer</code>, the <code>vfc</code> and <code>mySwitch</code> are added to
+				<code>f</code>.
+				<code>innerContainer</code> is added to
+				<code>outerContainer</code> and
+				<code>label</code> to that one. The buttons are children of <code>vfc</code>. Alltogether, the structure
+				of
+				all elements looks like
+				this:
+			</p>
+			<img src="../media/tree_schematic_small.jpg">
+			<p>
+				This way we can create arbitrarily complex structures - and the good thing: if you move a container, all
+				the
+				children go with it (same if you set the visiblity or enabled to false). This comes in handy if you need
+				to
+				position/move a lot of elements.
+			</p>
 
 	</div> <!-- .main_container -->
 

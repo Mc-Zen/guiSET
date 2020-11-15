@@ -29,7 +29,7 @@
                 <li><a href="animations.html">Animations</a></li>
                 <li><a href="help,-something-doesn't-work.html">Common errors</a></li>
                 <li><a href="creating-own-components.html">Creating own components</a></li>
-                <li><a href="draw-modes.html">Draw modes</a></li>
+                <li><a href="refresh-modes.html">Refresh modes</a></li>
                 <li><a href="dynamic-resizing-and-anchors.html">Dynamic resizing and anchors</a></li>
                 <li><a href="global-keyboard-shortcuts.html">Global keyboard shortcuts</a></li>
                 <li><a href="installing-guiset.html">Installing guiSET</a></li>
@@ -112,6 +112,10 @@
 
         <h1 id="s2">Graphics and updating</h1>
         <p>
+            TODO: Default behaviour is now "unbuffered rendering", meaning no temporary <code>PGraphics</code> are
+            created. This is more memory-efficient. Should be explained properly in this section.
+        </p>
+        <p>
             Each instance of a component has a <code>PGraphics</code> object that stores the current look as pixel
             image. Its content
             is only changed within the <code>render()</code> method. Containers draw the <code>PGraphics</code> of
@@ -170,8 +174,8 @@ protected void render() {
   drawDefaultBackground();
 
   for (Control c : content) {
-    if (c.visible) {
-      renderItem(c, c.x, c.y);
+    if (c.isVisible()) {
+      renderItem(c, c.getX(), c.getY());
     }
   }
   drawDefaultDisabled();
@@ -186,12 +190,12 @@ protected void render() {
 protected void render() {
   drawDefaultBackground();
 
-  int usedSpace = paddingTop;
+  int usedSpace = getPaddingTop();
 
   for (Control c : items) {
-    if (c.visible) {
-      renderItem(c, c.marginLeft + paddingLeft, usedSpace + c.marginTop);
-      usedSpace += (c.getHeight() + c.marginTop + c.marginBottom);
+    if (c.isVisible()) {
+      renderItem(c, c.getMarginLeft() + getPaddingLeft(), usedSpace + c.getMarginTop());
+      usedSpace += (c.getHeight() + c.getMarginTop() + c.getMarginBottom());
     }
   }
   drawDefaultDisabled();
@@ -202,6 +206,9 @@ protected void render() {
 
 
         <h1 id="s3">More details about the render procedure</h1>
+        <p>
+            TODO: Explain the different "renderers" (unbuffered/buffered).
+        </p>
         <p>
             The actual rendering takes place like this: the container usually draws its own background and then
             calls
@@ -318,7 +325,7 @@ protected void render() {
         <p>
             Moreover classes like <code>Frame</code> and <code>Textbox</code> feature key listeners or an
             itemchanged-listener (<code>ListView</code>, <code>MenuItem</code>). These listeners are usually
-            assigned with extra methods like <code>addItemChangeListener()</code> etc.
+            assigned with extra methods like <code>setItemChangeListener()</code> etc.
         </p>
 
         <h2>
@@ -336,11 +343,11 @@ protected void render() {
 
         <pre class="prettyprint">
 protected EventListener myListener;
-public void addMyListener(String methodName, Object target) {
+public void setMyListener(String methodName, Object target) {
     myListener = createEventListener(methodName, target, null);
 }
-public void addMyListener(String methodName) {
-    addMyListener(methodName, getPApplet());
+public void setMyListener(String methodName) {
+    setMyListener(methodName, getPApplet());
 }
 public void removeMyListener(){
     myListener = null; // setting listener to null is the way to do it
@@ -355,11 +362,11 @@ protected void someFunctionThatChangesObervedState(){
 
         <pre class="prettyprint">
 protected EventListener myListener;
-public void addMyListener(String methodName, Object target) {
+public void setMyListener(String methodName, Object target) {
     myListener = createEventListener(methodName, target, MouseEvent.class);
 }
-public void addMyListener(String methodName) {
-    addMyListener(methodName, getPApplet());
+public void setMyListener(String methodName) {
+    setMyListener(methodName, getPApplet());
 }
 public void removeMyListener(){
     myListener = null; // setting listener to null is the way to do it

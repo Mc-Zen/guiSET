@@ -2,7 +2,7 @@
 <html>
 
 <head>
-    <title>guiSET Wiki</title>
+    <title>Refresh modes</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="shortcut icon" type="image/x-icon" href="../favicon.ico">
     <link rel="stylesheet" href="../css/main.css">
@@ -42,45 +42,40 @@
     </div>
 
     <div class="main_container wiki_main_container">
-        <h1 id="header">Wiki</h1>
+        <h1 id="header">Refresh modes</h1>
         <p>
-            Welcome to the guiSET wiki!
+            <b>guiSET</b> provides three different draw modes which affect how often the GUI will be drawn. The mode
+            mostly matters if you want to draw own things on top of the GUI in the famous <code>draw()</code> method. It
+            can be set using
         </p>
-        <p>
-            We've got a lot of documentation and tutorials around, so take a look.
-        </p>
-        <p>
-            Find Information on:
-        </p>
-
-        <ul class="spaced-list">
-            <li><a href="installing-guiset.html">Installing guiSET</a></li>
-            <li><a href="introduction-for-beginners.html">Introduction for beginners</a></li>
-            <li><a href="list-of-components.html">List of available components</a></li>
-            <li><a href="help,-something-doesn't-work.html">Help, something doesn't work (common errors)</a></li>
-
+        <ul>
+            <li><code>myFrame.setRefreshMode(Frame.EFFICIENT)</code>,</li>
+            <li><code>myFrame.setRefreshMode(Frame.CONTINOUS)</code> or</li>
+            <li><code>myFrame.setRefreshMode(Frame.NO_LOOP)</code>.</li>
         </ul>
-
-
         <p>
-            Specific stuff
+            The default and for most use cases recommended mode is <code>Frame.EFFICIENT</code>. The GUI will be drawn
+            onto the application surface only when something changed (i.e. hovered over a button which then changes
+            color).
+            This is good but maybe you also use the standard draw methods at the same time in your sketch. Then, if you
+            draw things each frame (each time <code>draw()</code> runs), your drawings will only be cleared out when the
+            GUI updates. You could call <code>myFrame.forceRender()</code> each time - or choose the
+            <code>CONTINOUS</code> mode. It will draw the finished GUI image each frame onto the window.
         </p>
-        <ul class="spaced-list">
-            <li><a href="animations.html">Animations</a></li>
-            <li><a href="the-box-model.html">The box model</a></li>
-            <li><a href="draw-modes.html">Draw modes</a></li>
-            <li><a href="dynamic-resizing-and-anchors.html">Dynamic resizing and <i>anchors</i></a></li>
-            <li><a href="global-keyboard-shortcuts.html">Global keyboard shortcuts</a></li>
-        </ul>
-
         <p>
-            Advanced and developers
+            <code>Frame.NO_LOOP</code> is the most efficient (or spartanic) mode. It turns off the <code>draw()</code>
+            loop and is only updated through mouse and key events. Now it also works to resize the sketch in this mode.
+            Animations do not work in this mode (yet).
         </p>
-        <ul class="spaced-list">
-            <li><a href="creating-own-components.html">Creating own components (subclassing Control)</a></li>
-            <li><a href="the-deep-shit.html">The deep shit</a></li>
-        </ul>
+        <p>
+            <span style="color:red">ATTENTION!</span> It seems that <code>NO_LOOP</code> might not be that efficient
+            after all. Somehow, the Processing sketch still needs a lot of CPU power while waiting for events. 
+        </p>
+
     </div>
+    <div id="footer"><a href="https://github.com/Mc-Zen/guiSET"><img
+                src="../media/GitHub-Mark-32px.png"><span>GitHub</span></a></div>
+
 </body>
 
 </html>
