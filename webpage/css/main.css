@@ -224,7 +224,10 @@ pre.prettyprint{
     vertical-align: middle;
 }
 
-
+table .tab, .tab th, .tab td {
+    border: 1px solid gray;
+    padding: 5px;
+}
 
 
 
