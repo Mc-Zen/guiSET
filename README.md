@@ -6,6 +6,8 @@ Create advanced graphical user interfaces in Processing  &nbsp;&nbsp;&nbsp;&nbsp
 Ok, so once I was working on a rather complex project with Processing and badly needed some GUI functionality such as a multi-line textbox, special lists, individual styling etc. and my requirements could not be satisfied with the existing libraries so I created the predecessor to this library. Over time the thing got bigger and as I had a lot of fun here I kept on developing this project. Now I thought I might as well share this with the great Processing community for everyone to use and improve. 
 
 
+Visit the [webpage](https://mc-zen.github.io/guiSET/) for information :)
+
 ### What is this?
 
 _guiSET_ is a large library to include proper **graphica** user interfaces_ in Processing sketches. It features quite a few classes to create Buttons, Textboxes, Lists, nested Containers and many more (for a complete list look [here](https://mc-zen.github.io/guiSET/webpage/wiki/list-of-components.html)).
