@@ -23,9 +23,13 @@ nav {
     flex-wrap: wrap;
 }
 
-    nav a.sel {
-        background-color: #3b4a65;
+    nav a {
+        text-align: center;
     }
+
+        nav a.sel {
+            background-color: #3b4a65;
+        }
 
 
 .mlink {
