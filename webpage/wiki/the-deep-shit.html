@@ -13,11 +13,11 @@
 
 <body>
     <nav>
-        <li><a class="mlink" href="../../index.html">Home</a></li>
-        <li><a class="mlink sel" href="wiki.html">Wiki</a></li>
-        <li><a class="mlink" href="../examples/examples.html">Examples</a></li>
-        <li><a class="mlink" href="../../guiSET/reference/index.html" target="_blank">Documentation</a>
-        <li><a class="mlink" href="https://github.com/Mc-Zen/guiSET" target="_blank">Source Code</a>
+        <a class="mlink" href="../../index.html">Home</a>
+        <a class="mlink sel" href="wiki.html">Wiki</a>
+        <a class="mlink" href="../examples/examples.html">Examples</a>
+        <a class="mlink" href="../../guiSET/reference/index.html" target="_blank">Documentation</a>
+        <a class="mlink" href="https://github.com/Mc-Zen/guiSET" target="_blank">Source Code</a>
     </nav>
 
     <div id="sidebar">
@@ -42,7 +42,7 @@
     </div>
 
     <div class="main_container wiki_main_container">
-        <h1 id="header">The deep shit</h1>
+        <h1 id="header">The intricate stuff</h1>
         <p>
             So you made it here. Congratulations!
         </p>
@@ -70,14 +70,22 @@
         </p>
         <ul>
             <li><a href="#s1">Inheritance of the component classes</a></li>
-            <li><a href="#s2">Graphics and updating</a>: In this part the concept of storing and applying the look of an
-                item as well as the communication between elements about changes is layed out.</li>
-            <li><a href="#s3">More details about render procedure</a>: Implementation of the stuff that happens around
-                the actual rendering.</li>
-            <li><a href="#s4">Mouse events</a>: Handling and passing of mouse events. Determining if mouse is over a
-                certain item.</li>
-            <li><a href="#s5">Events in general</a>: About the way event callbacks are registered, stored and executed.
-                Also something about creating new events.</li>
+            <li>
+                <a href="#s2">Graphics and updating</a>: In this part the concept of storing and applying the look of an
+                item as well as the communication between elements about changes is layed out.
+            </li>
+            <li>
+                <a href="#s3">More details about render procedure</a>: Implementation of the stuff that happens around
+                the actual rendering.
+            </li>
+            <li>
+                <a href="#s4">Mouse events</a>: Handling and passing of mouse events. Determining if mouse is over a
+                certain item.
+            </li>
+            <li>
+                <a href="#s5">Events in general</a>: About the way event callbacks are registered, stored and executed.
+                Also something about creating new events.
+            </li>
             <li><a href="#s6">PApplet and the static Frame</a></li>
         </ul>
         <hr>
@@ -159,8 +167,10 @@
             <code>render()</code>
             method it calls the function <code><b>renderItem(Control c, int x, int y)</b></code> for each item,
             specifying with <code>x</code> and <code>y</code> where the item shall be placed on the containers own
-            <code>PGraphics</code>. <code>renderItem(Control
-            c, int x, int y)</code> takes care of checking if the item is '<code>dirty</code>' or (semi-) transparent
+            <code>PGraphics</code>. <code>
+                renderItem(Control
+                c, int x, int y)
+            </code> takes care of checking if the item is '<code>dirty</code>' or (semi-) transparent
             (but does not check
             for visibility). Here is also where i.e. flow or scroll containers give their items a new location.
         </p>
@@ -417,8 +427,11 @@ handleEvent(myListener, eventThatWeGotFromSomewhere);
 
 
     </div>
-    <div id="footer"><a href="https://github.com/Mc-Zen/guiSET"><img
-                src="../media/GitHub-Mark-32px.png"><span>GitHub</span></a></div>
+    <div id="footer">
+        <a href="https://github.com/Mc-Zen/guiSET">
+            <img src="../media/GitHub-Mark-32px.png"><span>GitHub</span>
+        </a>
+    </div>
 
 
 
